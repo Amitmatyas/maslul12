@@ -13,7 +13,6 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Network first (so updates arrive), cache as offline fallback.
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
@@ -28,7 +27,6 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// status written by the app
 function idbGet(key) {
   return new Promise((resolve) => {
     const r = indexedDB.open('maslul12', 1);
@@ -70,7 +68,6 @@ async function buildNotification(p) {
       requireInteraction: true
     };
   }
-  // morning (and test)
   if (day) {
     return { title: `נמרץ · ${day.title}`, body: day.body || 'בהצלחה היום!', tag: 'morning' };
   }

@@ -7,16 +7,12 @@ const ROOT = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
 
-// load the plan code from index.html
-const a = html.indexOf('/* helpers */');
-const b = html.indexOf('/* storage */');
-const i = html.indexOf('/* calendar */');
-const j = html.indexOf('/* week */');
-if ([a, b, i, j].some((x) => x < 0)) throw new Error('Plan code markers not found in index.html');
+const a = html.indexOf('const $=(s,r=document)');
+const b = html.indexOf("const KEY='maslul12:v1'");
+if ([a, b].some((x) => x < 0)) throw new Error('Plan code markers not found in index.html');
 const ctx = vm.createContext({ TextEncoder, console, window: {}, location: { protocol: 'file:' } });
-const P = vm.runInContext(html.slice(a, b) + html.slice(i, j) + ';({baseDay,DAYS,diffDays})', ctx);
+const P = vm.runInContext(html.slice(a, b) + ';({baseDay,DAYS,diffDays})', ctx);
 
-// today in Israel
 const tz = cfg.timezone || 'Asia/Jerusalem';
 const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false }).formatToParts(new Date());
 const get = (t) => parts.find((p) => p.type === t).value;
@@ -46,7 +42,6 @@ const payload = {
   body: `שבוע ${week}/12 · ${base.d}`
 };
 
-// subscriptions + keys
 let subs = [];
 try {
   const raw = JSON.parse(process.env.PUSH_SUBSCRIPTIONS || '[]');

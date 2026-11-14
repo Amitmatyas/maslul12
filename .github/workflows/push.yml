@@ -2,8 +2,8 @@ name: Nimratz push
 
 on:
   schedule:
-    - cron: '0 5 * * *'   # 07:00 Israel time (winter, UTC+2)
-    - cron: '0 18 * * *'  # 20:00 Israel time (winter, UTC+2)
+    - cron: '0 5 * * *'
+    - cron: '0 18 * * *'
   workflow_dispatch:
     inputs:
       type:
@@ -37,7 +37,6 @@ jobs:
           VAPID_SUBJECT: https://${{ github.repository_owner }}.github.io
           PUSH_TYPE: ${{ inputs.type }}
           SCHEDULE: ${{ github.event.schedule }}
-      # keeps the schedule active (GitHub pauses it after 60 idle days)
       - name: Keep schedule alive
         if: github.event.schedule == '0 5 * * *'
         run: |
