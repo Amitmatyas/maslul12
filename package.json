@@ -1,0 +1,9 @@
+{
+  "name": "maslul12",
+  "private": true,
+  "type": "commonjs",
+  "description": "מסלול 12 — push notifications sender",
+  "dependencies": {
+    "web-push": "3.6.7"
+  }
+}

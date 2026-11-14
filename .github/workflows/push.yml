@@ -1,0 +1,50 @@
+name: Maslul 12 push
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 07:00 Israel time (winter, UTC+2)
+    - cron: '0 18 * * *'  # 20:00 Israel time (winter, UTC+2)
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Which notification to send now'
+        required: true
+        default: test
+        type: choice
+        options: [test, morning, evening]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: push
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --omit=dev --no-audit --no-fund
+      - name: Send notification
+        run: node push/send.js
+        env:
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          PUSH_SUBSCRIPTIONS: ${{ secrets.PUSH_SUBSCRIPTIONS }}
+          VAPID_SUBJECT: https://${{ github.repository_owner }}.github.io
+          PUSH_TYPE: ${{ inputs.type }}
+          SCHEDULE: ${{ github.event.schedule }}
+      # GitHub pauses scheduled workflows after 60 days without activity.
+      # The plan is 84 days, so a tiny empty commit on the 1st and 15th keeps it running.
+      - name: Keep schedule alive
+        if: github.event.schedule == '0 5 * * *'
+        run: |
+          d=$(date -u +%d)
+          if [ "$d" = "01" ] || [ "$d" = "15" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "keepalive" && git push
+          fi

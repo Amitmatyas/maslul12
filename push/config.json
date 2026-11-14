@@ -1,0 +1,6 @@
+{
+  "start": "2026-11-22",
+  "timezone": "Asia/Jerusalem",
+  "morningCron": "0 5 * * *",
+  "eveningCron": "0 18 * * *"
+}
