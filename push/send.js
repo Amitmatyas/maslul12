@@ -42,18 +42,10 @@ const payload = {
   body: `שבוע ${week}/12 · ${base.d}`
 };
 
-let subs = [];
-try {
-  const raw = JSON.parse(process.env.PUSH_SUBSCRIPTIONS || '[]');
-  subs = Array.isArray(raw) ? raw : [raw];
-} catch (err) {
-  console.error('PUSH_SUBSCRIPTIONS is not valid JSON. Copy it again from the app (gear → העתק קוד מכשיר).');
-  process.exit(1);
-}
-if (!subs.length) {
-  console.error('No device yet. In the app: gear → הפעל התראות → העתק קוד מכשיר, then save it as the PUSH_SUBSCRIPTIONS secret.');
-  process.exit(1);
-}
+const SB_URL = 'https://oboxnalkzusytnwrcstr.supabase.co/rest/v1/rpc/';
+const SB_KEY = (html.match(/SB_KEY='([^']+)'/) || [])[1];
+const rpc = (fn, body) => fetch(SB_URL + fn, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
 const pubMatch = html.match(/const VAPID_PUBLIC='([^']+)'/);
 const publicKey = process.env.VAPID_PUBLIC || (pubMatch && pubMatch[1]);
 const privateKey = process.env.VAPID_PRIVATE;
@@ -64,6 +56,19 @@ if (!publicKey || !privateKey) {
 webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'https://github.com', publicKey, privateKey);
 
 (async () => {
+  const subs = [];
+  const seen = new Set();
+  const add = (x) => { if (x && x.endpoint && !seen.has(x.endpoint)) { seen.add(x.endpoint); subs.push(x); } };
+  if (process.env.PUSH_TOKEN) {
+    const r = await rpc('push_list', { t: process.env.PUSH_TOKEN });
+    if (r.ok) (await r.json()).forEach(add);
+    else console.error('Device list failed:', r.status, await r.text());
+  }
+  try { [].concat(JSON.parse(process.env.PUSH_SUBSCRIPTIONS || '[]')).forEach(add); } catch (err) {}
+  if (!subs.length) {
+    console.error('No devices yet. Turn on notifications in the app.');
+    process.exit(1);
+  }
   let ok = 0;
   for (const sub of subs) {
     try {
@@ -71,7 +76,8 @@ webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'https://github.com', publi
       ok++;
     } catch (err) {
       if (err.statusCode === 404 || err.statusCode === 410) {
-        console.error('A device is no longer subscribed. Enable notifications again in the app and update PUSH_SUBSCRIPTIONS.');
+        console.error('Removed an expired device.');
+        if (process.env.PUSH_TOKEN) await rpc('push_drop', { t: process.env.PUSH_TOKEN, ep: sub.endpoint });
       } else {
         console.error('Send failed:', err.statusCode || '', err.body || err.message);
       }

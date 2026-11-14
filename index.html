@@ -875,7 +875,7 @@ function bQuality(d,b){const q=b.q,K=KIND[q.kind];const main=q.reps>1?`${q.reps}
   <p class="lead">${b.txt}</p>
   <p class="hint">${S.cfg.warm} דק׳ חימום → הסט → ${S.cfg.cool} דק׳ שחרור. ${K.e}.</p>
   ${loggedLine(d,b)}${actRow(d,b,'התחל אינטרוולים')}
-  ${more(d+b.id,'פרטים ורישום',`${meter(K.rpe[0],K.rpe[1])}<p class="hint">סה״כ כ-8–10 ק״מ כולל חימום ושחרור.${W.q.restGuess?' זמן ההתאוששות לא מצוין בתוכנית לשבוע הזה; בטיימר הוגדרו 2 דק׳ קלות.':''}</p>${runLog(d,b)}`)}`)}
+  ${more(d+b.id,'פרטים ורישום',`${meter(K.rpe[0],K.rpe[1])}<p class="hint">סה״כ כ-8–10 ק״מ כולל חימום ושחרור.${W.q.restGuess?' בין החזרות: 2 דק׳ קלות.':''}</p>${runLog(d,b)}`)}`)}
 function bLong(d,b){return card(d,b,'long',`
   <div class="bt"><h3>${b.title}</h3><div class="big"><span class="bignum">${range(b.min,b.max)}</span><span class="unit">ק״מ</span></div></div>
   <p class="hint">קצב נוח, בלי מרדף אחרי זמנים.</p>
@@ -1199,7 +1199,7 @@ function viewLaunch(){const t=todayIso();const I=info(V.sel);const d=I.st==='in'
   const cards=bl.length?bl.map(b=>{const t2=b.type;const desc=t2==='iron'?`${b.ex.length} תרגילים · משקל, חזרות ומנוחה מובנית`:t2==='quality'?`${b.txt}`:t2==='swim'?'5 שלבים עם טיימר':`${range(b.min,b.max)} ק״מ · שעון רץ והכוונה כל 5 דק׳`;
     return `<div class="lcard t-${t2}"><span class="eyebrow" style="color:var(--c)">${T_LABEL[t2]}${isDone(d,b)?' · בוצע ✓':''}</span><b>${t2==='iron'?b.title:b.title}</b><span>${desc}</span><button class="cta" data-act="live" data-d="${d}" data-b="${b.id}">${ic('play')}התחל</button></div>`}).join('')
     :`<div class="empty">היום יום מנוחה. אין אימון חי — רק לנוח.</div>`;
-  return `<div class="stack"><div><span class="eyebrow">${DAYS[J.dow]} · ${fmtDM(d)}</span><h2 class="h-xl">המאמן החי</h2><p class="muted" style="max-width:60ch;margin-top:8px">בוחרים אימון והמאמן מוביל: אומר בקול מה עושים עכשיו, סופר זמנים, מזכיר טכניקה, נותן משקל מומלץ לכל סט ושומר הכול ביומן. כדאי להגביר את הצליל בטלפון.</p></div>
+  return `<div class="stack"><div><span class="eyebrow">${DAYS[J.dow]} · ${fmtDM(d)}</span><h2 class="h-xl">המאמן החי</h2><p class="muted" style="max-width:60ch;margin-top:8px">בוחרים אימון והמאמן מוביל: אומר בקול מה עושים עכשיו, סופר זמנים, מזכיר טכניקה, נותן משקל מומלץ לכל סט ושומר הכול ביומן. </p></div>
    <div class="launch">${cards}</div>
    <section class="panel"><div class="panel-h"><div><span class="eyebrow">אינטרוולים חופשיים</span><h2>טיימר לפי שבוע</h2></div><span class="muted" style="font-size:13px">לא נשמר ביומן</span></div>
      <div class="wpick">${WEEKS.map((W,i)=>`<button class="${isDeload(i+1)?'dl':''}" data-act="live-free" data-w="${i+1}" aria-label="אינטרוולים של שבוע ${i+1}">${i+1}</button>`).join('')}</div></section>
@@ -1253,7 +1253,7 @@ function viewChat(){const avail=SAMPLE?'yes':'no';
   return `<div class="stack"><div><span class="eyebrow">צ׳אט · AI</span><h2 class="h-xl">שאל את המאמן</h2></div>
   <div class="chat"><div class="chatbox">
     <div class="msgs" id="msgs">${intro}${msgs}</div>
-    ${avail==='no'?`<div class="empty">כדי להפעיל את הצ׳אט מדביקים מפתח Groq בהגדרות (גלגל השיניים).</div>`:''}
+    ${avail==='no'?`<div class="empty">כדי להפעיל את הצ׳אט, הוסף מפתח בהגדרות.</div>`:''}
     <form class="chatform" id="chatf"><textarea id="chatin" rows="1" placeholder="כתוב שאלה למאמן…" ${avail!=='yes'?'disabled':''} aria-label="הודעה למאמן"></textarea>
       ${CH.busy?`<button type="button" class="tbtn" data-act="chat-stop" aria-label="עצור">${ic('stop')}</button>`:`<button type="submit" class="tbtn go" style="min-width:58px;padding:0 18px;--c:var(--tartan)" ${avail!=='yes'?'disabled':''} aria-label="שלח">${ic('send')}</button>`}</form>
   </div>
@@ -1268,7 +1268,7 @@ async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!S
   try{const {text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,onText:({text})=>{CH.live=text;const el=$('#liveTxt');if(el){el.innerHTML=mdLite(text);scrollChat()}}});
     CH.turns.push({role:'assistant',content:ans+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')});saveChat()}
   catch(e){const code=e&&e.code;if(code==='cancelled'){if(e.text)CH.turns.push({role:'assistant',content:e.text+' …'})}
-    else if(code==='bad_key'||code==='no_key'){CH.err='מפתח Groq לא תקין. בדוק אותו בהגדרות (גלגל השיניים).'}
+    else if(code==='bad_key'||code==='no_key'){CH.err='המפתח לא תקין. בדוק אותו בהגדרות.'}
     else if(code==='rate_limited'){CH.err='יותר מדי הודעות כרגע. נסה שוב בעוד כמה דקות.'}
     else{if(e&&e.text)CH.turns.push({role:'assistant',content:e.text+' …'});CH.err='משהו השתבש בחיבור. נסה לשלוח שוב.'}
     saveChat()}
@@ -1309,8 +1309,8 @@ function openImport(msg){const el=$('#sheet');
         <li>הדרך הפשוטה: לחבר את Apple Health ל-Strava (באפליקציית Strava: הגדרות → Applications, Services, and Devices → Health). כל ריצה מהשעון עוברת ל-Strava לבד.</li>
         <li>באתר strava.com (במחשב או בדפדפן בטלפון): פותחים את הריצה → כפתור שלוש הנקודות (···) → Export GPX.</li>
         <li>אפשרות אחרת: אפליקציה כמו HealthFit או RunGap מייצאת ריצות מ-Apple Health כקובצי GPX או TCX ל-Files.</li>
-        <li>מעלים כאן את הקובץ. האתר מזהה תאריך, מרחק, זמן ודופק ומשייך לאימון של אותו יום.</li>
-      </ol><p class="hint" style="margin-top:8px">אתר לא יכול להתחבר ישירות ל-Apple Health, לכן עובדים עם קבצים. ההתאמה האוטומטית של התוכנית משתמשת בקצב ובמרחק שמגיעים מהשעון.</p></details>
+        <li>מעלים כאן את הקובץ. האפליקציה מזהה תאריך, מרחק, זמן ודופק ומשייך לאימון של אותו יום.</li>
+      </ol><p class="hint" style="margin-top:8px">הקצב והמרחק מהשעון נכנסים להתאמה של התוכנית.</p></details>
     </div></div>`;el.hidden=false;
   const dr=$('#drop');if(dr){dr.addEventListener('dragover',ev=>{ev.preventDefault();dr.classList.add('over')});dr.addEventListener('dragleave',()=>dr.classList.remove('over'));dr.addEventListener('drop',ev=>{ev.preventDefault();dr.classList.remove('over');handleFiles([...ev.dataTransfer.files])})}}
 function saveImports(){let n=0;for(const a of IMPORTS){if(!a.use)continue;const e=ent(a.date);const id=a.target==='extra'?'x'+a.start:a.target;e.runs[id]={km:Math.round(a.km*100)/100,sec:a.sec,hr:a.hr,src:'watch'};if(id in {quality:1,easy0:1,easy3:1,long:1})e.done[id]=true;n++}
@@ -1355,7 +1355,7 @@ function viewJournal(){const t=todayIso();let tot=0,dn=0,km=0;const rs=[];
   ${lifts?`<section class="panel"><div class="panel-h"><h2>התקדמות בכוח</h2><span class="muted" style="font-size:12.5px">משקל ראשון → אחרון</span></div><div style="display:flex;flex-direction:column;gap:10px">${lifts}</div></section>`:''}
   <section class="panel"><div class="panel-h"><h2>רישומים אחרונים</h2></div><div class="entries">${list}</div></section>
   <section class="panel"><div class="panel-h"><div><span class="eyebrow">גיבוי</span><h2>לשמור את הנתונים</h2></div></div>
-    <p class="muted" style="margin-bottom:12px">${SB?'הנתונים נשמרים בענן ומסתנכרנים בכל מכשיר שמתחברים ממנו.':'הנתונים נשמרים רק במכשיר הזה. כדי לא לאבד אותם, התחבר לשמירה בענן בהגדרות, או העתק גיבוי.'}</p>
+    <p class="muted" style="margin-bottom:12px">${SB?'הנתונים מסונכרנים לחשבון שלך.':'הנתונים נשמרים רק במכשיר הזה. כדי לא לאבד אותם, התחבר לחשבון בהגדרות.'}</p>
     <textarea class="inp" id="backup" style="min-height:90px;font-size:12px;direction:ltr" placeholder="כאן יופיע או יודבק הגיבוי"></textarea>
     <div class="row" style="margin-top:10px"><button class="ghost" data-act="copy-backup">העתק גיבוי</button><button class="ghost" data-act="import-backup">שחזר מהטקסט</button></div></section>
   </div>`}
@@ -1469,9 +1469,9 @@ async function sbLogin(signup){const em=(($('#sbEmail')||{}).value||'').trim(),p
     if(remote&&(remote.updatedAt||0)>=(local.updatedAt||0)){S=normalize(remote);saveLocal();queueStatus()}else await sbPush();
     SYNC='synced';paintSync();openSettings();render();toast(signup?'החשבון נוצר. הנתונים נשמרים בענן':'מחובר. הנתונים סונכרנו')}
   catch(e){SB=null;sbStore();toast(e.message||'לא הצלחתי להתחבר')}}
-function cloudSection(){return `<div class="remind" id="sbsec"><span class="eyebrow">שמירה בענן</span><div style="margin-top:10px">${SB?
-  `<p style="color:var(--easy);font-weight:600">✓ מחובר: <span dir="ltr">${esc(SB.email||'')}</span></p><p class="hint" style="margin-top:6px">היומן נשמר בענן ומסתנכרן בכל מכשיר שתתחבר ממנו.</p><div class="row" style="margin-top:10px"><button class="ghost" data-act="sb-sync">סנכרן עכשיו</button><button class="ghost" data-act="sb-logout">התנתקות</button></div>`
-  :`<p class="hint">התחבר כדי שהיומן יישמר בענן ולא ילך לאיבוד, ויעבוד בכל מכשיר. בפעם הראשונה: בוחרים מייל וסיסמה ולוחצים "חשבון חדש".</p>
+function cloudSection(){return `<div class="remind" id="sbsec"><span class="eyebrow">חשבון</span><div style="margin-top:10px">${SB?
+  `<p style="color:var(--easy);font-weight:600">✓ מחובר: <span dir="ltr">${esc(SB.email||'')}</span></p><p class="hint" style="margin-top:6px">היומן מסונכרן.</p><div class="row" style="margin-top:10px"><button class="ghost" data-act="sb-sync">סנכרן עכשיו</button><button class="ghost" data-act="sb-logout">התנתקות</button></div>`
+  :`<p class="hint">התחבר כדי שהיומן יישמר ויסתנכרן בין מכשירים.</p>
   <input class="inp" id="sbEmail" type="email" autocomplete="username" placeholder="מייל" dir="ltr" style="margin-top:10px">
   <input class="inp" id="sbPw" type="password" autocomplete="current-password" placeholder="סיסמה (לפחות 6 תווים)" dir="ltr" style="margin-top:8px">
   <div class="row" style="margin-top:10px"><button class="cta" data-act="sb-login">התחברות</button><button class="ghost" data-act="sb-signup">חשבון חדש</button></div>`}</div></div>`}
@@ -1492,9 +1492,9 @@ async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw 
   return {text,truncated:fin==='length'}}
 function gqSample(input,opt){const msgs=typeof input==='string'?[{role:'user',content:input}]:input.map((m,i)=>i===0?{role:'system',content:m.content}:m);
   return gqCall(msgs,{signal:opt&&opt.signal,onText:opt&&opt.onText})}
-function groqSection(){const k=gqKey();return `<div class="remind" id="gqsec"><span class="eyebrow">AI · מפתח Groq</span><div style="margin-top:10px">${k?
-  `<p style="color:var(--easy);font-weight:600">✓ המפתח שמור במכשיר הזה (<span dir="ltr">${esc(k.slice(0,4))}…${esc(k.slice(-4))}</span>)</p><p class="hint" style="margin-top:6px">הצ׳אט מאמן וההתאמה השבועית ב-AI פעילים. המפתח נשמר רק בטלפון: לא בענן ולא ב-GitHub.</p><button class="ghost" data-act="gq-clear" style="margin-top:10px">מחיקת המפתח</button>`
-  :`<p class="hint">מדביקים כאן מפתח מ-console.groq.com (API Keys). הוא נשמר רק בטלפון הזה, ומפעיל את הצ׳אט מאמן ואת ההתאמה השבועית ב-AI.</p>
+function groqSection(){const k=gqKey();return `<div class="remind" id="gqsec"><span class="eyebrow">מאמן AI</span><div style="margin-top:10px">${k?
+  `<p style="color:var(--easy);font-weight:600">✓ מחובר (<span dir="ltr">${esc(k.slice(0,4))}…${esc(k.slice(-4))}</span>)</p><p class="hint" style="margin-top:6px">הצ׳אט וההתאמה השבועית פעילים.</p><button class="ghost" data-act="gq-clear" style="margin-top:10px">מחיקת המפתח</button>`
+  :`<p class="hint">מפעיל את הצ׳אט ואת ההתאמה השבועית. המפתח נשמר רק במכשיר הזה.</p>
   <input class="inp" id="gqIn" type="password" autocomplete="off" placeholder="gsk_…" dir="ltr" style="margin-top:10px"><button class="cta" data-act="gq-save" style="margin-top:10px">שמור מפתח</button>`}</div></div>`}
 
 const clampN=(v,a,b,d)=>{v=Number(v);return isFinite(v)?Math.min(b,Math.max(a,v)):d};
@@ -1518,7 +1518,7 @@ async function aiReview(force){if(AI_BUSY||!gqKey())return;const t=todayIso(),I=
     const j=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));
     S.ai[w]={run:j.run,q:j.q,sets:j.sets,wt:j.wt&&typeof j.wt==='object'?j.wt:{},summary:String(j.summary||'').slice(0,240),why:(Array.isArray(j.why)?j.why:[]).map(x=>String(x).slice(0,160)).slice(0,4),at:t};
     save();render();if(force)toast('השבוע עודכן לפי ה-AI')}
-  catch(e){save();if(force)toast(e&&e.code==='bad_key'?'מפתח Groq לא תקין':e&&e.code==='rate_limited'?'Groq עמוס, נסה שוב בעוד דקה':'בדיקת ה-AI נכשלה. נסה שוב')}
+  catch(e){save();if(force)toast(e&&e.code==='bad_key'?'המפתח לא תקין':e&&e.code==='rate_limited'?'עומס כרגע, נסה שוב בעוד דקה':'בדיקת ה-AI נכשלה. נסה שוב')}
   AI_BUSY=false}
 function aiChanges(X){const c=[];if(!X)return c;if(X.run!==1)c.push(`ריצות: ${X.run<1?'פחות':'יותר'} ${Math.round(Math.abs(1-X.run)*100)}% ק״מ`);
   if(X.q)c.push(`אימון איכות: ${-X.q} חזרות פחות`);if(X.sets)c.push('כוח: סט אחד פחות');
@@ -1546,29 +1546,29 @@ let stT=0;function queueStatus(){if(!WEBAPP)return;clearTimeout(stT);stT=setTime
 function b64uToU8(s){const p='='.repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))}
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const isIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+async function pushRegister(sub){if(!sub)return;const j=sub.toJSON();try{if(localStorage.getItem('maslul12:pushreg')===j.endpoint)return}catch(e){}
+  try{const r=await fetch(SB_URL+'/rest/v1/push_subs',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({endpoint:j.endpoint,sub:j})});
+    if(r.ok||r.status===409)try{localStorage.setItem('maslul12:pushreg',j.endpoint)}catch(e){}}catch(e){}}
 async function initWebApp(){if(!WEBAPP||!('serviceWorker' in navigator))return;
-  try{await navigator.serviceWorker.register('sw.js');const reg=await navigator.serviceWorker.ready;if(reg.pushManager)PUSH.sub=await reg.pushManager.getSubscription()}catch(e){}
+  try{await navigator.serviceWorker.register('sw.js');const reg=await navigator.serviceWorker.ready;if(reg.pushManager)PUSH.sub=await reg.pushManager.getSubscription();if(PUSH.sub&&Notification.permission==='granted')pushRegister(PUSH.sub)}catch(e){}
   PUSH.checked=true;writeStatus();if(!$('#sheet').hidden&&$('#pushsec'))openSettings()}
 async function enablePush(){
-  try{if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('הדפדפן לא תומך בהתראות push');
+  try{if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('המכשיר לא תומך בהתראות');
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){toast('לא אישרת התראות. אפשר לאשר בהגדרות הטלפון → התראות → נמרץ.');openSettings();return}
     const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToU8(VAPID_PUBLIC)});
-    PUSH.sub=sub;writeStatus();openSettings();toast('ההתראות פעילות במכשיר הזה')}
+    PUSH.sub=sub;writeStatus();await pushRegister(sub);openSettings();toast('ההתראות פעילות')}
   catch(e){toast('לא הצלחתי להפעיל התראות: '+(e&&e.message||e))}}
 function notifSection(){
   let body='';
   if(!('serviceWorker' in navigator))body='<p class="hint">הדפדפן הזה לא תומך בהתראות.</p>';
-  else if(isIOS()&&!isStandalone())body=`<ol class="steps"><li>ב-Safari: כפתור השיתוף (ריבוע עם חץ) → <b>הוסף למסך הבית</b>.</li><li>פותחים את <b>נמרץ</b> מהמסך הבית, וחוזרים לכאן (גלגל השיניים).</li><li>שם יופיע הכפתור "הפעל התראות". באייפון התראות עובדות רק מאפליקציה שהותקנה כך (iOS 16.4 ומעלה).</li></ol>`;
-  else if(!('PushManager' in window))body='<p class="hint">במכשיר הזה אין תמיכה ב-push. באייפון צריך iOS 16.4 ומעלה, ולפתוח מהמסך הבית.</p>';
+  else if(isIOS()&&!isStandalone())body=`<ol class="steps"><li>ב-Safari: כפתור השיתוף (ריבוע עם חץ) → <b>הוסף למסך הבית</b>.</li><li>פותחים את <b>נמרץ</b> מהמסך הבית, וחוזרים לכאן (גלגל השיניים).</li></ol>`;
+  else if(!('PushManager' in window))body='<p class="hint">המכשיר הזה לא תומך בהתראות.</p>';
   else if(!PUSH.checked)body='<p class="hint">בודק…</p>';
   else if(!PUSH.sub||Notification.permission!=='granted')body=`<p class="hint">בבוקר מגיעה התראה עם האימון של היום. בערב, אם היום עוד לא סומן, מגיעה תזכורת לעשות או לסמן.</p><button class="cta" data-act="push-enable" style="margin-top:10px">${ic('today')}הפעל התראות</button>`;
-  else body=`<p style="color:var(--easy);font-weight:600">✓ ההתראות פעילות במכשיר הזה</p>
-    <ol class="steps" style="margin-top:8px"><li>לוחצים <b>העתק קוד מכשיר</b>.</li><li>ב-GitHub: המאגר → Settings → Secrets and variables → Actions → <b>PUSH_SUBSCRIPTIONS</b> → מדביקים ושומרים. (פעם אחת בלבד, או אחרי התקנה מחדש.)</li></ol>
-    <div class="row" style="margin-top:10px"><button class="cta" data-act="push-copy">העתק קוד מכשיר</button><button class="ghost" data-act="push-test">התראת בדיקה</button></div>
-    <textarea class="inp" id="subout" hidden style="margin-top:10px;min-height:90px;font-size:11px;direction:ltr"></textarea>`;
-  return `<div class="remind" id="pushsec" style="border-color:color-mix(in srgb,var(--easy) 45%,var(--line2))"><span class="eyebrow">התראות push</span><div style="margin-top:10px">${body}</div></div>`}
+  else body=`<p style="color:var(--easy);font-weight:600">✓ ההתראות פעילות</p><button class="ghost" data-act="push-test" style="margin-top:10px">התראת בדיקה</button>`;
+  return `<div class="remind" id="pushsec" style="border-color:color-mix(in srgb,var(--easy) 45%,var(--line2))"><span class="eyebrow">התראות</span><div style="margin-top:10px">${body}</div></div>`}
 function badge(){const I=info(todayIso());const el=$('#badge');
   if(I.st==='before')el.innerHTML=`מתחילים בעוד <strong>${-I.n}</strong> ימים`;
   else if(I.st==='after')el.innerHTML=`<strong>מחזור 1 הושלם</strong>`;
@@ -1642,13 +1642,12 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'import-backup':{try{const o=JSON.parse($('#backup').value);if(!o||!o.start||!o.days)throw 0;S=normalize(o);save();initSel();render();toast('הנתונים שוחזרו')}catch(err){toast('הטקסט לא נראה כמו גיבוי תקין. העתק אותו שוב במלואו.')}break}
     case 'open-settings':openSettings();break;
     case 'push-enable':enablePush();break;
-    case 'push-copy':{const txt=JSON.stringify([PUSH.sub.toJSON()]);try{navigator.clipboard.writeText(txt).then(()=>toast('הקוד הועתק. הדבק אותו ב-GitHub בסוד PUSH_SUBSCRIPTIONS'),()=>{const o=$('#subout');o.hidden=false;o.value=txt;o.select()})}catch(err){const o=$('#subout');o.hidden=false;o.value=txt;o.select()}break}
     case 'push-test':navigator.serviceWorker.ready.then(r=>{writeStatus();setTimeout(()=>r.active&&r.active.postMessage({type:'test'}),400)});toast('נשלחה התראת בדיקה');break;
     case 'sb-login':sbLogin(false);break;
     case 'sb-signup':sbLogin(true);break;
     case 'sb-sync':sbPull().then(()=>toast(SYNC==='synced'?'מסונכרן':'אין חיבור כרגע'));break;
     case 'sb-logout':SB=null;sbStore();SYNC='local';paintSync();openSettings();toast('התנתקת. הנתונים נשארו גם במכשיר');break;
-    case 'gq-save':{const v=(($('#gqIn')||{}).value||'').trim();if(!/^gsk_\w{20,}/.test(v)){toast('זה לא נראה כמו מפתח Groq (מתחיל ב-gsk_)');break}try{localStorage.setItem(GQ_LS,v)}catch(e){}SAMPLE=gqSample;openSettings();render();toast('המפתח נשמר במכשיר');aiReview(false);break}
+    case 'gq-save':{const v=(($('#gqIn')||{}).value||'').trim();if(!/^gsk_\w{20,}/.test(v)){toast('המפתח לא תקין');break}try{localStorage.setItem(GQ_LS,v)}catch(e){}SAMPLE=gqSample;openSettings();render();toast('המפתח נשמר במכשיר');aiReview(false);break}
     case 'gq-clear':try{localStorage.removeItem(GQ_LS)}catch(e){}SAMPLE=null;openSettings();render();toast('המפתח נמחק');break;
     case 'ai-run':aiReview(true);render();break;
     case 'ai-off':{const w=+a.dataset.w;if(S.ai&&S.ai[w]){S.ai[w].off=!S.ai[w].off;save();render()}break}
