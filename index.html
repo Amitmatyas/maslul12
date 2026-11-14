@@ -763,11 +763,15 @@ function effWeek(w){
   if(lv===2){if(q.reps>1){const r=Math.max(2,q.reps-2);if(r<q.reps){changes.push(`אימון האיכות: ${r} חזרות במקום ${q.reps}`);q.reps=r}}else{q.work=900;changes.push('ריצה מתקדמת: 15 דק׳ במקום 20')}
     txt=qText(q);const nl=[Math.max(10,long[0]-2),Math.max(10,long[1]-2)];changes.push(`ריצה ארוכה: ${range(...nl)} ק״מ במקום ${range(...W.long)}`);long=nl;easy={easy0:[5,6],easy3:[5,6]};changes.push('ריצות קלות: 5–6 ק״מ');changes.push('כוח: סט אחד פחות בכל תרגיל, בלי עליות משקל')}
   if(lv===3){long=[8,10];easy={easy0:[5,6],easy3:[5,6]};changes.push('בלי אימון איכות: ריצה קלה במקום, רק אם אין כאב');changes.push('ריצה ארוכה: 8–10 ק״מ קל');changes.push('כוח: קל, בלי עליות משקל, בלי תרגילים שכואבים')}
-  return {w,W,q,long,txt,easy,changes,lv,level:LV[lv],adaptLv:A.lv,A,ov,cond:!!W.cond&&lv===0,deload:isDeload(w)};
+  const X=ov?null:aiAdj(w,A.lv);
+  if(X){if(X.run!==1){const sc=([a,b])=>[Math.max(3,Math.round(a*X.run)),Math.max(3,Math.round(b*X.run))];long=sc(long);easy={easy0:sc(easy.easy0),easy3:sc(easy.easy3)}}
+    if(X.q&&q.reps>1){const r=Math.max(2,q.reps+X.q);if(r<q.reps){q={...q,reps:r};txt=qText(q)}}
+    for(const c of aiChanges(X))changes.push('AI · '+c)}
+  return {w,W,q,long,txt,easy,changes,lv,level:LV[lv],adaptLv:A.lv,A,ov,X,cond:!!W.cond&&lv===0,deload:isDeload(w)};
 }
 function blocksFor(w,dow,d){
   const E=effWeek(w);const em=d?!!peek(d).easyMode:false;
-  const strength=k=>{const base=STR[k];const light=em||E.lv>=2;const minus=(E.deload?1:0)+(light&&!E.deload?1:0);
+  const strength=k=>{const base=STR[k];const light=em||E.lv>=2;const minus=Math.min(2,(E.deload?1:0)+(light&&!E.deload?1:0)+(E.X&&E.X.sets&&!light&&!E.deload?1:0));
     return {id:k,type:'iron',kind:k,title:base.title,sub:base.sub,dl:E.deload,taper:!!E.W.taper,light,
       ex:base.ex.map(([k2,s,r])=>({k:k2,n:EX[k2].n,s:Math.max(1,s-minus),r,range:rangeOf(r),time:!!EX[k2].time}))}};
   const easyB=(id,rg)=>({id,type:'easy',title:'ריצה קלה',min:rg[0],max:em?rg[0]:rg[1]});
@@ -816,6 +820,7 @@ function recommend(x,d,week,lv){
   else why=`אותו משקל. מנסים להוסיף חזרה בכל סט, עד ${hi}.`;
   if(isDeload(week)&&usesW&&w!=null){w=Math.max(0,roundTo(eq==='as'?w+step:w*0.85,step));up=-1;why='שבוע הקלה: משקל קל יותר וסט אחד פחות.'}
   else if(lv>=2&&up>0&&usesW){w=last.w;up=0;why='השבוע מורידים עומס, אז לא עולים במשקל.'}
+  const AX=aiAdj(week,lv);const af=AX&&AX.wt[k];if(af&&usesW&&w!=null&&!isDeload(week)){const nw=Math.max(0,roundTo(w*af,step));if(nw!==w){why+=` · AI: ${af<1?'מורידים':'מעלים'} ל-${fmtKg(nw)} ק״ג.`;up=nw>w?1:-1;w=nw}}
   return {w,why,up,usesW,eq,E};
 }
 function STR_SETS(k){for(const s of Object.values(STR))for(const [kk,n] of s.ex)if(kk===k)return n;return 2}
@@ -966,7 +971,7 @@ function viewToday(){
   const I=info(V.sel);
   if(I.st==='after'){h+=viewFinished()+'</div>';return h}
   const d=I.st==='in'?V.sel:S.start;
-  return h+dayView(d,info(d))+'</div>';
+  return h+(I.st==='in'?aiLine(I.week):'')+dayView(d,info(d))+'</div>';
 }
 function readySuggest(d,I){const e=peek(d);
   if(e.pain)return {lv:'red',text:'עם כאב לא מתאמנים דרכו. היום: מנוחה או תנועה קלה בלי כאב בכלל, ולספר להורה או למאמן. כאב שמשנה את הריצה = לא רצים. אם הוא נמשך, לפנות לרופא או פיזיותרפיסט.',btn:true};
@@ -1292,13 +1297,13 @@ function mdLite(s){const e=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');const li
   for(const ln of lines){const m=ln.match(/^\s*(?:[-•*]|\d+[.)])\s+(.*)/);if(m){if(!inList){h+='<ul>';inList=true}h+=`<li>${m[1]}</li>`}else{if(inList){h+='</ul>';inList=false}h+=ln.trim()?`<p>${ln}</p>`:''}}
   if(inList)h+='</ul>';return h}
 const QUICK=['מה האימון היום ולמה?','הרגליים כבדות ומחר ארוכה. מה לעשות?','פספסתי אימון, מה עכשיו?','תן לי סיכום של השבוע שלי','איך אני משתפר ב-10 ק״מ?','מה לאכול לפני ריצה ארוכה?'];
-function viewChat(){if(HOSTED)return viewAskClaude();
+function viewChat(){if(HOSTED&&!SAMPLE)return viewAskClaude();
   const avail=SAMPLE?'yes':SAMPLE===null?'no':'wait';
   const msgs=CH.turns.map(t=>t.role==='user'?`<div class="msg me">${esc(t.content)}</div>`:`<div class="msg ai"><div class="who">המאמן</div>${mdLite(t.content)}</div>`).join('')
     +(CH.busy?`<div class="msg ai" id="liveMsg"><div class="who">המאמן</div><div id="liveTxt">${CH.live?mdLite(CH.live):'<span class="typing"><i></i><i></i><i></i></span>'}</div></div>`:'')
     +(CH.err?`<div class="msg ai err"><div class="who">המאמן</div><p>${esc(CH.err)}</p></div>`:'');
   const intro=`<div class="msg ai"><div class="who">המאמן</div><p>היי! אני המאמן שלך במסלול 12. אני רואה את התוכנית, את מה שרשמת ביומן ואת ההתאמות של השבוע. תשאל אותי כל דבר על האימונים.</p></div>`;
-  return `<div class="stack"><div><span class="eyebrow">צ׳אט · מבוסס Claude</span><h2 class="h-xl">שאל את המאמן</h2></div>
+  return `<div class="stack"><div><span class="eyebrow">צ׳אט · ${HOSTED?'Groq AI':'מבוסס Claude'}</span><h2 class="h-xl">שאל את המאמן</h2></div>
   <div class="chat"><div class="chatbox">
     <div class="msgs" id="msgs">${intro}${msgs}</div>
     ${avail==='no'?`<div class="empty">הצ׳אט עובד רק כשפותחים את האתר דרך הקישור ב-claude.ai ומחוברים לחשבון. בקובץ שבמחשב הוא לא זמין.</div>`:''}
@@ -1317,6 +1322,7 @@ async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!S
     CH.turns.push({role:'assistant',content:ans+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')});saveChat()}
   catch(e){const code=e&&e.code;if(code==='cancelled'){if(e.text)CH.turns.push({role:'assistant',content:e.text+' …'})}
     else if(code==='not_granted'||code==='sampling_disabled'){CH.err='לא ניתן אישור להשתמש ב-Claude מהעמוד הזה. אפשר לאשר בפעם הבאה שתשלח הודעה.'}
+    else if(code==='bad_key'||code==='no_key'){CH.err='מפתח Groq לא תקין. בדוק אותו בהגדרות (גלגל השיניים).'}
     else if(code==='rate_limited'){CH.err='יותר מדי הודעות כרגע. נסה שוב בעוד כמה דקות.'}
     else if(code==='session_expired'){CH.err='צריך להתחבר מחדש ל-Claude.'}
     else{if(e&&e.text)CH.turns.push({role:'assistant',content:e.text+' …'});CH.err='משהו השתבש בחיבור. נסה לשלוח שוב.'}
@@ -1447,6 +1453,7 @@ function openSettings(){const el=$('#sheet');const end=addDays(S.start,83);
   el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="הגדרות"><div class="panel-h"><h2>הגדרות</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <label class="field" for="startDate"><span>תאריך תחילת התוכנית (השבוע מתחיל ביום ראשון)</span><input class="inp" type="date" id="startDate" value="${S.start}" style="width:200px"></label>
     <p class="muted" style="font-size:13.5px;margin-bottom:12px">התוכנית רצה מ-${fmtDate(S.start)} עד ${fmtDate(end)}.</p>
+    ${HOSTED?cloudSection()+groqSection():''}
     ${WEBAPP?notifSection():''}
     <div class="remind"><span class="eyebrow">${WEBAPP?'חלופה: תזכורות בלוח השנה':'תזכורות בטלפון'}</span>
       <div class="row" style="margin-top:10px"><label class="km">בוקר<input class="inp sm" type="time" id="amTime" value="${S.cfg.am}"></label><label class="km">ערב<input class="inp sm" type="time" id="pmTime" value="${S.cfg.pm}"></label><label class="km"><input type="checkbox" id="pmOn" ${S.cfg.pmOn?'checked':''}> תזכורת ערב</label></div>
@@ -1455,7 +1462,7 @@ function openSettings(){const el=$('#sheet');const end=addDays(S.start,83);
     </div>
     <div class="setrow"><span>המאמן מדבר בקול</span><button class="switch" role="switch" aria-checked="${S.cfg.voice}" data-act="voice" aria-label="קול המאמן"></button></div>
     <div class="setrow"><span>מנוחה אוטומטית כשרושמים סט</span><button class="switch" role="switch" aria-checked="${S.cfg.autoRest}" data-act="auto-rest" aria-label="מנוחה אוטומטית"></button></div>
-    <div class="setrow"><span>שמירה</span><span class="muted" style="font-size:13px">${DB?'מסונכרן לחשבון שלך':'נשמר רק בדפדפן הזה'}</span></div>
+    <div class="setrow"><span>שמירה</span><span class="muted" style="font-size:13px">${DB||SB?'מסונכרן לחשבון שלך':'נשמר רק בדפדפן הזה'}</span></div>
     <div class="setrow"><span>איפוס כל הנתונים</span><button class="ghost" data-act="reset" style="${V.resetArm?'border-color:var(--bad);color:var(--bad)':''}">${V.resetArm?'בטוח? לחץ שוב':'איפוס'}</button></div>
   </div>`;el.hidden=false}
 function closeSheet(){$('#sheet').hidden=true;V.resetArm=false}
@@ -1495,12 +1502,12 @@ setInterval(()=>{const now=Date.now();liveTick(now);
 let DB=null,DOC=null,SYNC='local',writing=false,pendingW=false,wTimer=0;
 function paintSync(){const el=$('#sync');if(!el)return;el.className='sync '+(SYNC==='synced'?'ok':SYNC==='saving'||SYNC==='connecting'?'busy':'');
   el.querySelector('span').textContent=SYNC==='synced'?'מסונכרן':SYNC==='saving'?'שומר…':SYNC==='connecting'?'מתחבר…':SYNC==='offline'?'אין חיבור · נשמר במכשיר':'נשמר במכשיר'}
-function queueWrite(){if(!DOC)return;clearTimeout(wTimer);SYNC='saving';paintSync();wTimer=setTimeout(flush,1200)}
+function queueWrite(){if(!DOC){sbQueue();return}clearTimeout(wTimer);SYNC='saving';paintSync();wTimer=setTimeout(flush,1200)}
 async function flush(){if(!DOC)return;if(writing){pendingW=true;return}writing=true;
   try{await DOC.set({json:JSON.stringify(S),updatedAt:S.updatedAt||Date.now()});SYNC='synced'}catch(e){SYNC='offline'}
   writing=false;paintSync();if(pendingW){pendingW=false;flush()}}
 async function initCloud(){
-  if(!window.claude||typeof window.claude.use!=='function'){SAMPLE=null;return}
+  if(!window.claude||typeof window.claude.use!=='function'){SAMPLE=gqKey()?gqSample:null;if(SB)sbPull();setTimeout(()=>aiReview(false),2500);return}
   claude.use('sample').then(s=>{SAMPLE=s||null;if(V.view==='chat')render()},()=>{SAMPLE=null;if(V.view==='chat')render()});
   try{const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);if(!db||!user)return;const id=await user.id();if(!id)return;
     DB=db;DOC=db.doc('data/users/'+id+'/state');SYNC='connecting';paintSync();
@@ -1513,6 +1520,102 @@ async function initCloud(){
       ()=>{clearTimeout(tmr);SYNC='offline';paintSync()});
   }catch(e){SYNC='local';paintSync()}}
 function isTyping(){const a=document.activeElement;return a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')&&$('#view').contains(a)}
+
+/* ================= Supabase cloud (web app) ================= */
+const SB_URL='https://oboxnalkzusytnwrcstr.supabase.co',SB_KEY='sb_publishable_RUKYqTtKbZA8pZMf2aZmng_UI6A5kOS',SB_LS='maslul12:sb';
+let SB=(()=>{try{return JSON.parse(localStorage.getItem(SB_LS)||'null')}catch(e){return null}})(),sbTimer=0,sbBusy=false,sbAgain=false;
+function sbStore(){try{SB?localStorage.setItem(SB_LS,JSON.stringify(SB)):localStorage.removeItem(SB_LS)}catch(e){}}
+function sbSess(j){return {at:j.access_token,rt:j.refresh_token,exp:Date.now()+((j.expires_in||3600)-60)*1000,uid:j.user&&j.user.id,email:j.user&&j.user.email}}
+async function sbAuth(path,body){const r=await fetch(SB_URL+'/auth/v1/'+path,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok||!j.access_token){const m=String(j.msg||j.error_description||j.message||'');
+    throw new Error(/invalid login/i.test(m)?'מייל או סיסמה לא נכונים':/already registered|exists/i.test(m)?'המייל כבר רשום. לחץ "התחברות".':/password/i.test(m)?'סיסמה חלשה מדי (לפחות 6 תווים)':m||'שגיאת חיבור')}
+  return sbSess(j)}
+async function sbToken(){if(!SB)return null;if(Date.now()<SB.exp)return SB.at;
+  try{const n=await sbAuth('token?grant_type=refresh_token',{refresh_token:SB.rt});SB=Object.assign(SB,n,{email:n.email||SB.email});sbStore();return SB.at}
+  catch(e){if(navigator.onLine===false)throw e;SB=null;sbStore();SYNC='local';paintSync();return null}}
+async function sbFetch(q,opt){const t=await sbToken();if(!t)throw new Error('auth');opt=opt||{};
+  const r=await fetch(SB_URL+'/rest/v1/'+q,Object.assign({},opt,{headers:Object.assign({apikey:SB_KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'},opt.headers||{})}));
+  if(!r.ok)throw new Error('http '+r.status);const tx=await r.text();return tx?JSON.parse(tx):null}
+async function sbPull(){if(!SB)return;SYNC='connecting';paintSync();
+  try{const rows=await sbFetch('state?select=data');const remote=rows&&rows[0]&&rows[0].data;
+    if(remote&&(remote.updatedAt||0)>(S.updatedAt||0)){S=normalize(remote);saveLocal();queueStatus();if(!isTyping())render();SYNC='synced'}
+    else if(!remote||(S.updatedAt||0)>(remote.updatedAt||0)){await sbPush()}else SYNC='synced'}
+  catch(e){SYNC='offline'}paintSync()}
+async function sbPush(){if(!SB)return;if(sbBusy){sbAgain=true;return}sbBusy=true;
+  try{await sbFetch('state',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:SB.uid,data:S,updated_at:new Date().toISOString()})});SYNC='synced'}
+  catch(e){SYNC='offline'}sbBusy=false;paintSync();if(sbAgain){sbAgain=false;sbPush()}}
+function sbQueue(){if(!SB)return;clearTimeout(sbTimer);SYNC='saving';paintSync();sbTimer=setTimeout(sbPush,1500)}
+async function sbLogin(signup){const em=(($('#sbEmail')||{}).value||'').trim(),pw=($('#sbPw')||{}).value||'';
+  if(!em||!pw){toast('צריך מייל וסיסמה');return}
+  try{SB=await sbAuth(signup?'signup':'token?grant_type=password',{email:em,password:pw});sbStore();
+    const local=S;const rows=await sbFetch('state?select=data');const remote=rows&&rows[0]&&rows[0].data;
+    if(remote&&(remote.updatedAt||0)>=(local.updatedAt||0)){S=normalize(remote);saveLocal();queueStatus()}else await sbPush();
+    SYNC='synced';paintSync();openSettings();render();toast(signup?'החשבון נוצר. הנתונים נשמרים בענן':'מחובר. הנתונים סונכרנו')}
+  catch(e){SB=null;sbStore();toast(e.message||'לא הצלחתי להתחבר')}}
+function cloudSection(){return `<div class="remind" id="sbsec"><span class="eyebrow">שמירה בענן</span><div style="margin-top:10px">${SB?
+  `<p style="color:var(--easy);font-weight:600">✓ מחובר: <span dir="ltr">${esc(SB.email||'')}</span></p><p class="hint" style="margin-top:6px">היומן נשמר בענן ומסתנכרן בכל מכשיר שתתחבר ממנו.</p><div class="row" style="margin-top:10px"><button class="ghost" data-act="sb-sync">סנכרן עכשיו</button><button class="ghost" data-act="sb-logout">התנתקות</button></div>`
+  :`<p class="hint">התחבר כדי שהיומן יישמר בענן ולא ילך לאיבוד, ויעבוד בכל מכשיר. בפעם הראשונה: בוחרים מייל וסיסמה ולוחצים "חשבון חדש".</p>
+  <input class="inp" id="sbEmail" type="email" autocomplete="username" placeholder="מייל" dir="ltr" style="margin-top:10px">
+  <input class="inp" id="sbPw" type="password" autocomplete="current-password" placeholder="סיסמה (לפחות 6 תווים)" dir="ltr" style="margin-top:8px">
+  <div class="row" style="margin-top:10px"><button class="cta" data-act="sb-login">התחברות</button><button class="ghost" data-act="sb-signup">חשבון חדש</button></div>`}</div></div>`}
+
+/* ================= Groq (chat + AI plan review) ================= */
+const GQ_LS='maslul12:groq',GQ_MODEL='llama-3.3-70b-versatile';
+const gqKey=()=>{try{return localStorage.getItem(GQ_LS)||''}catch(e){return ''}};
+async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw {code:'no_key'};
+  let r;try{r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',signal:opt.signal,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({model:GQ_MODEL,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?900:1200,stream:!!opt.onText},opt.json?{response_format:{type:'json_object'}}:{}))})}
+  catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'network',text:''}}
+  if(r.status===401)throw {code:'bad_key'};if(r.status===429)throw {code:'rate_limited'};if(!r.ok)throw {code:'http',message:String(r.status)};
+  if(!opt.onText){const j=await r.json();return {text:(j.choices&&j.choices[0].message.content)||'',truncated:j.choices&&j.choices[0].finish_reason==='length'}}
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf='',text='',fin='';
+  try{for(;;){const {value,done}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+    while((i=buf.indexOf('\n'))>=0){const ln=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!ln.startsWith('data:'))continue;const p=ln.slice(5).trim();if(p==='[DONE]')continue;
+      try{const j=JSON.parse(p);const c=j.choices&&j.choices[0];if(c&&c.delta&&c.delta.content){text+=c.delta.content;opt.onText({text,delta:c.delta.content})}if(c&&c.finish_reason)fin=c.finish_reason}catch(e){}}}}
+  catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'network',text}}
+  return {text,truncated:fin==='length'}}
+function gqSample(input,opt){const msgs=typeof input==='string'?[{role:'user',content:input}]:input.map((m,i)=>i===0?{role:'system',content:m.content}:m);
+  return gqCall(msgs,{signal:opt&&opt.signal,onText:opt&&opt.onText})}
+function groqSection(){const k=gqKey();return `<div class="remind" id="gqsec"><span class="eyebrow">AI · מפתח Groq</span><div style="margin-top:10px">${k?
+  `<p style="color:var(--easy);font-weight:600">✓ המפתח שמור במכשיר הזה (<span dir="ltr">${esc(k.slice(0,4))}…${esc(k.slice(-4))}</span>)</p><p class="hint" style="margin-top:6px">הצ׳אט מאמן וההתאמה השבועית ב-AI פעילים. המפתח נשמר רק בטלפון: לא בענן ולא ב-GitHub.</p><button class="ghost" data-act="gq-clear" style="margin-top:10px">מחיקת המפתח</button>`
+  :`<p class="hint">מדביקים כאן מפתח מ-console.groq.com (API Keys). הוא נשמר רק בטלפון הזה, ומפעיל את הצ׳אט מאמן ואת ההתאמה השבועית ב-AI.</p>
+  <input class="inp" id="gqIn" type="password" autocomplete="off" placeholder="gsk_…" dir="ltr" style="margin-top:10px"><button class="cta" data-act="gq-save" style="margin-top:10px">שמור מפתח</button>`}</div></div>`}
+
+/* ================= AI weekly plan review ================= */
+const clampN=(v,a,b,d)=>{v=Number(v);return isFinite(v)?Math.min(b,Math.max(a,v)):d};
+function aiAdj(w,lv){const a=S.ai&&S.ai[w];if(!a||a.off)return null;const safe=lv>=2;
+  const wt={};for(const [k,f] of Object.entries(a.wt||{}))if(EX[k]){const c=clampN(f,0.9,safe?1:1.05,1);if(c!==1)wt[k]=c}
+  return {run:clampN(a.run,0.85,safe?1:1.05,1),q:Math.round(clampN(a.q,-2,0,0)),sets:Math.round(clampN(a.sets,-1,0,0)),wt,summary:a.summary||'',why:a.why||[]}}
+function aiLifts(){const out=[];const t=todayIso();for(const s of Object.values(STR))for(const [k] of s.ex){const h=liftHist(k,addDays(t,1),equipOf(k));const l=h[h.length-1];
+  out.push(`${k} (${EX[k].n}): ${l?`${l.w!=null?l.w+' ק״ג, ':''}חזרות ${l.reps.filter(x=>x>0).join('/')}${l.feel?', '+l.feel:''} (${l.d})`:'אין עדיין רישום'}`)}return [...new Set(out)].join('\n')}
+let AI_BUSY=false;
+async function aiReview(force){if(AI_BUSY||!gqKey())return;const t=todayIso(),I=info(t);if(I.st==='after')return;const w=I.st==='in'?I.week:1;
+  S.ai=S.ai||{};if(!force&&(S.ai[w]||S.aiTry===t))return;AI_BUSY=true;S.aiTry=t;if(force)toast('ה-AI בודק את השבוע…');
+  const sys=`אתה מאמן ריצה וכוח של נער בן 14 שמתאים את תוכנית השבוע באפליקציה "מסלול 12". התוכנית כבר מותאמת בחוקים קבועים; התפקיד שלך הוא כוונון עדין נוסף לפי הנתונים בלבד.
+החזר JSON בלבד במבנה: {"run":מספר,"q":מספר שלם,"sets":מספר שלם,"wt":{"מפתח_תרגיל":מספר},"summary":"משפט אחד בעברית","why":["סיבה קצרה בעברית"]}
+- run: מכפיל לק״מ של הריצות הקלות והארוכה, בין 0.85 ל-1.05 (1 = בלי שינוי).
+- q: שינוי במספר החזרות באימון האיכות, בין -2 ל-0.
+- sets: שינוי בסטים בכוח, -1 או 0.
+- wt: רק תרגילים שצריך לשנות להם משקל, מכפיל בין 0.9 ל-1.05. מפתחות מתוך הרשימה בלבד.
+כללים: כשאין מספיק נתונים או שהכל תקין → בלי שינויים (run 1, q 0, sets 0, wt {}). אף פעם לא מעלים עומס כשיש כאב, שינה גרועה או עייפות. מעדיפים שמרנות. אל תמציא נתונים.`;
+  const usr=`${coachContext()}\n\nתרגילי כוח (מפתח: אחרון):\n${aiLifts()}\n\nהחזר JSON לשבוע ${w}.`;
+  try{const {text}=await gqCall([{role:'system',content:sys},{role:'user',content:usr}],{json:true});
+    const j=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));
+    S.ai[w]={run:j.run,q:j.q,sets:j.sets,wt:j.wt&&typeof j.wt==='object'?j.wt:{},summary:String(j.summary||'').slice(0,240),why:(Array.isArray(j.why)?j.why:[]).map(x=>String(x).slice(0,160)).slice(0,4),at:t};
+    save();render();if(force)toast('השבוע עודכן לפי ה-AI')}
+  catch(e){save();if(force)toast(e&&e.code==='bad_key'?'מפתח Groq לא תקין':e&&e.code==='rate_limited'?'Groq עמוס, נסה שוב בעוד דקה':'בדיקת ה-AI נכשלה. נסה שוב')}
+  AI_BUSY=false}
+function aiChanges(X){const c=[];if(!X)return c;if(X.run!==1)c.push(`ריצות: ${X.run<1?'פחות':'יותר'} ${Math.round(Math.abs(1-X.run)*100)}% ק״מ`);
+  if(X.q)c.push(`אימון איכות: ${-X.q} חזרות פחות`);if(X.sets)c.push('כוח: סט אחד פחות');
+  for(const [k,f] of Object.entries(X.wt))c.push(`${EX[k].n}: ${f<1?'−':'+'}${Math.round(Math.abs(1-f)*100)}% משקל`);return c}
+function aiLine(w){if(!HOSTED||!gqKey())return '';const a=S.ai&&S.ai[w];const E=effWeek(w);const X=aiAdj(w,E.adaptLv);
+  if(!a)return `<section class="panel"><div class="row" style="justify-content:space-between;align-items:center"><span><span class="eyebrow">התאמת AI</span><br><span class="muted" style="font-size:13.5px">ה-AI עוד לא בדק את שבוע ${w}</span></span><button class="ghost sm" data-act="ai-run" ${AI_BUSY?'disabled':''}>${AI_BUSY?'בודק…':'בדוק עכשיו'}</button></div></section>`;
+  const ch=aiChanges(X);
+  return `<section class="panel"><span class="eyebrow">התאמת AI · שבוע ${w}${a.off?' · בוטלה':''}</span>
+    <p style="margin-top:8px">${esc(a.summary||'אין שינויים השבוע. ממשיכים לפי התוכנית.')}</p>
+    ${!a.off&&ch.length?`<ul class="steps" style="margin-top:6px">${ch.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${a.why&&a.why.length?`<p class="hint" style="margin-top:6px">${a.why.map(esc).join(' · ')}</p>`:''}
+    <div class="row" style="margin-top:10px">${ch.length||a.off?`<button class="ghost sm" data-act="ai-off" data-w="${w}">${a.off?'החזר את השינויים':'בטל שינויים'}</button>`:''}<button class="ghost sm" data-act="ai-run" ${AI_BUSY?'disabled':''}>${AI_BUSY?'בודק…':'בדוק מחדש'}</button></div></section>`}
 
 /* ================= web app: push notifications + status for the service worker ================= */
 const PUSH={sub:null,checked:false};
@@ -1558,7 +1661,7 @@ function viewAskClaude(){return `<div class="stack"><div><span class="eyebrow">C
   <div class="qchips" style="margin:12px 0">${QUICK.map(q=>`<button data-act="ask-q" data-q="${esc(q)}">${q}</button>`).join('')}</div>
   <button class="cta" data-act="ask-claude">${ic('chat')}שאל את Claude</button>
   <textarea class="inp" id="askout" hidden style="margin-top:12px;min-height:120px;font-size:12px"></textarea></section>
-  <section class="panel"><p class="hint">Claude Pro עובד בתוך claude.ai, ולא בתוך אתרים אחרים, ולכן השאלה נפתחת שם. Claude יכול לטעות, והוא לא מחליף מאמן, הורה או רופא.</p></section></div>`}
+  <section class="panel"><p class="hint">רוצה צ׳אט בתוך האפליקציה? מדביקים מפתח Groq בהגדרות (גלגל השיניים). Claude Pro עובד בתוך claude.ai, ולא בתוך אתרים אחרים, ולכן השאלה נפתחת שם. Claude יכול לטעות, והוא לא מחליף מאמן, הורה או רופא.</p></section></div>`}
 
 /* ================= render + routing ================= */
 function badge(){const I=info(todayIso());const el=$('#badge');
@@ -1648,6 +1751,14 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'yday-done':case 'today-done':{const before=dayDone(d);const E=ent(d);for(const b of dayBlocks(d))E.done[b.id]=true;delete E.skipped;save();render();if(act==='today-done')completeCheck(d,before);else toast('אתמול סומן כבוצע');break}
     case 'yday-skip':case 'today-skip':{const E=ent(d);E.skipped=true;save();render();toast(act==='yday-skip'?'נרשם. התוכנית תתאים את עצמה.':'בסדר. מחר ממשיכים.');break}
     case 'close-sheet':closeSheet();break;
+    case 'sb-login':sbLogin(false);break;
+    case 'sb-signup':sbLogin(true);break;
+    case 'sb-sync':sbPull().then(()=>toast(SYNC==='synced'?'מסונכרן':'אין חיבור כרגע'));break;
+    case 'sb-logout':SB=null;sbStore();SYNC='local';paintSync();openSettings();toast('התנתקת. הנתונים נשארו גם במכשיר');break;
+    case 'gq-save':{const v=(($('#gqIn')||{}).value||'').trim();if(!/^gsk_\w{20,}/.test(v)){toast('זה לא נראה כמו מפתח Groq (מתחיל ב-gsk_)');break}try{localStorage.setItem(GQ_LS,v)}catch(e){}SAMPLE=gqSample;openSettings();render();toast('המפתח נשמר במכשיר');aiReview(false);break}
+    case 'gq-clear':try{localStorage.removeItem(GQ_LS)}catch(e){}SAMPLE=null;openSettings();render();toast('המפתח נמחק');break;
+    case 'ai-run':aiReview(true);render();break;
+    case 'ai-off':{const w=+a.dataset.w;if(S.ai&&S.ai[w]){S.ai[w].off=!S.ai[w].off;save();render()}break}
     case 'reset':if(!V.resetArm){V.resetArm=true;openSettings()}else{const st=S.start;S=defaults();S.start=st;save();closeSheet();initSel();render();toast('הנתונים אופסו')}break;
   }
 });
@@ -1680,7 +1791,7 @@ document.addEventListener('change',e=>{const t=e.target;
   else if(t.dataset.imptgt!=null){IMPORTS[+t.dataset.imptgt].target=t.value}
 });
 document.addEventListener('toggle',e=>{const t=e.target;if(t.matches&&t.matches('details[data-k]')){V.open[t.dataset.k]=t.open;const lb=t.querySelector('summary .linkbtn');if(lb)lb.textContent=t.open?'סגור':'למה?'}},true);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&L.on&&L.run)wakeOn()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(L.on&&L.run)wakeOn();if(HOSTED&&SB&&SYNC!=='saving')sbPull()}});
 
 route();
 initCloud();
