@@ -1,4 +1,3 @@
-/* מסלול 12 — service worker: offline cache + push notifications */
 const CACHE = 'maslul12-v1';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
@@ -29,7 +28,7 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-/* ---------- status written by the app (IndexedDB) ---------- */
+// status written by the app
 function idbGet(key) {
   return new Promise((resolve) => {
     const r = indexedDB.open('maslul12', 1);
@@ -58,14 +57,14 @@ async function buildNotification(p) {
   if (p.type === 'evening') {
     const finished = day && (day.done >= day.total || day.skipped);
     if (day && day.rest) {
-      return { title: 'מסלול 12 · יום מנוחה', body: `ללכת לישון מוקדם.${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
+      return { title: 'נמרץ · יום מנוחה', body: `ללכת לישון מוקדם.${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
     }
     if (finished) {
-      return { title: 'מסלול 12 · היום הושלם ✓', body: `כל הכבוד!${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
+      return { title: 'נמרץ · היום הושלם ✓', body: `כל הכבוד!${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
     }
     const what = day ? day.title : p.title;
     return {
-      title: 'מסלול 12 · עוד לא סימנת',
+      title: 'נמרץ · עוד לא סימנת',
       body: `היום: ${what}. עשית? היכנס וסמן. לא הספקת? יש עוד זמן לגרסה קצרה.`,
       tag: 'evening',
       requireInteraction: true
@@ -73,9 +72,9 @@ async function buildNotification(p) {
   }
   // morning (and test)
   if (day) {
-    return { title: `מסלול 12 · ${day.title}`, body: day.body || 'בהצלחה היום!', tag: 'morning' };
+    return { title: `נמרץ · ${day.title}`, body: day.body || 'בהצלחה היום!', tag: 'morning' };
   }
-  return { title: `מסלול 12 · ${p.title || 'האימון של היום'}`, body: p.body || 'פתח את האפליקציה לפרטים.', tag: 'morning' };
+  return { title: `נמרץ · ${p.title || 'האימון של היום'}`, body: p.body || 'פתח את האפליקציה לפרטים.', tag: 'morning' };
 }
 
 async function show(p) {

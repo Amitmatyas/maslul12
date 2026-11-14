@@ -1,5 +1,3 @@
-// מסלול 12 — sends the morning / evening push. Run by .github/workflows/push.yml
-// The plan data is read from index.html itself, so there is one source of truth.
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -9,16 +7,16 @@ const ROOT = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
 
-// --- load the plan code from index.html ---
-const a = html.indexOf('/* ================= helpers');
-const b = html.indexOf('/* ================= storage');
-const i = html.indexOf('/*ICS-START*/');
-const j = html.indexOf('/*ICS-END*/');
+// load the plan code from index.html
+const a = html.indexOf('/* helpers */');
+const b = html.indexOf('/* storage */');
+const i = html.indexOf('/* calendar */');
+const j = html.indexOf('/* week */');
 if ([a, b, i, j].some((x) => x < 0)) throw new Error('Plan code markers not found in index.html');
 const ctx = vm.createContext({ TextEncoder, console, window: {}, location: { protocol: 'file:' } });
 const P = vm.runInContext(html.slice(a, b) + html.slice(i, j) + ';({baseDay,DAYS,diffDays})', ctx);
 
-// --- today in Israel ---
+// today in Israel
 const tz = cfg.timezone || 'Asia/Jerusalem';
 const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false }).formatToParts(new Date());
 const get = (t) => parts.find((p) => p.type === t).value;
@@ -48,7 +46,7 @@ const payload = {
   body: `שבוע ${week}/12 · ${base.d}`
 };
 
-// --- subscriptions + keys ---
+// subscriptions + keys
 let subs = [];
 try {
   const raw = JSON.parse(process.env.PUSH_SUBSCRIPTIONS || '[]');

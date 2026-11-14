@@ -1,8 +1,8 @@
 {
-  "name": "maslul12",
+  "name": "nimratz",
   "private": true,
   "type": "commonjs",
-  "description": "מסלול 12 — push notifications sender",
+  "description": "נמרץ push sender",
   "dependencies": {
     "web-push": "3.6.7"
   }
