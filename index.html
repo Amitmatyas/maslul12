@@ -484,6 +484,12 @@ details.adl[open]>summary{margin-bottom:6px}
 .pillbar .pdot{width:10px;height:10px;border-radius:50%;background:var(--tartan)}
 .sheet{position:fixed;inset:0;z-index:80;background:rgba(5,7,14,.75);display:grid;place-items:center;padding:16px}
 .xtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.d3box{position:relative;border-radius:14px;overflow:hidden;background:#12151f}.d3box canvas{display:block;width:100%!important;height:auto!important}
+.d3ph{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.55);padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.d3m{position:absolute;bottom:30px;right:12px;font-size:12.5px;color:#cfd5e4;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:8px}
+.d3hint{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11.5px;color:#8a93a8;margin:0;pointer-events:none}
+.d3leg{display:flex;gap:14px;font-size:12.5px;margin:8px 0}.d3leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:5px}
+.d3n{padding-inline-start:18px;margin:6px 0}.d3n li{margin:4px 0}
 .demo svg.dsv{width:100%;height:auto;background:var(--ink);border-radius:14px}
 .demo .fig line,.demo .fig path{stroke:var(--chalk);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;fill:none}
 .demo .fig circle.hd{fill:var(--chalk)}
@@ -1489,8 +1495,84 @@ function demoDraw(k,t){const D=DEMO[k],p=demoPose(D,t),f=document.getElementById
   if(D.bar&&p.W)g+=`<circle class="ld" cx="${p.W[0]}" cy="${p.W[1]}" r="7"/>`+(D.mir?`<circle class="ld" cx="${200-p.W[0]}" cy="${p.W[1]}" r="7"/>`:'');
   if(D.ld&&p[D.ld])g+=`<circle class="ld" cx="${p[D.ld][0]+(D.ld==='P'?6:0)}" cy="${p[D.ld][1]+(D.ld==='P'?12:0)}" r="8"/>`;
   f.innerHTML=g;const c=document.getElementById('dmC');const an=D.cable||D.line;if(c&&an&&p.W){c.setAttribute('x1',an[0]);c.setAttribute('y1',an[1]);c.setAttribute('x2',p.W[0]);c.setAttribute('y2',p.W[1])}return true}
-function demoStop(){if(DM){cancelAnimationFrame(DM.raf);DM=null}}
-function openDemo(k){demoStop();const el=$('#sheet');
+function demoStop(){demo3Stop();if(DM){cancelAnimationFrame(DM.raf);DM=null}}
+let T3=null,G3=null;
+async function three(){return T3||(T3=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'))}
+const lerp3=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function ik(T,S,W,a,b,pole){const s=new T.Vector3(...S),w=new T.Vector3(...W);const u=w.clone().sub(s);let d=u.length();d=Math.min(d,a+b-1e-4);u.normalize();
+  const x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));const p=new T.Vector3(...pole);p.sub(u.clone().multiplyScalar(p.dot(u))).normalize();
+  return s.clone().add(u.multiplyScalar(x)).add(p.multiplyScalar(h)).toArray()}
+const D3={
+  bench:{title:'לחיצת חזה בסמית',period:4.2,cam:{az:1.05,el:.55,r:3.2,tgt:[.2,.6,0]},
+    tl:[[0,.5,0,'נעילה למעלה, שכמות מכווצות'],[.5,2.3,1,'ירידה מבוקרת, 2 שניות'],[2.3,2.7,1,'נגיעה קלה בתחתית החזה'],[2.7,3.8,0,'דחיפה, בלי להקפיץ'],[3.8,4.2,0,'נעילה']],
+    pose(t){const y=1.0+(0.715-1.0)*t;return {P:[.36,.53,0],C:[.04,.675,0],Nk:[-.19,.6,0],H:[-.29,.61,0],S:[-.07,.6,.18],Hp:[.38,.52,.1],W:[.05,y,.39],eP:[.55,-1,.5],F:[.8,.06,.3],kP:[0,1,.25],bar:[.05,y]}},
+    scene(T,g,M){const box=(w,h,d,x,y,z,m)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o};
+      box(1.2,.07,.3,.12,.43,0,M.pad);for(const x of [-.35,.6])box(.06,.4,.24,x,.2,0,M.steel);
+      for(const z of [-.78,.78]){box(.06,2.1,.06,.05,1.05,z,M.steel);box(.5,.05,.06,.05,.02,z,M.steel)}box(.06,.06,1.62,.05,2.1,0,M.steel);
+      const bar=new T.Group();const rod=new T.Mesh(new T.CylinderGeometry(.014,.014,2.1,16),M.steel);rod.rotation.x=Math.PI/2;bar.add(rod);
+      for(const z of [-.62,.62]){const pl=new T.Mesh(new T.CylinderGeometry(.22,.22,.05,40),M.plate);pl.rotation.x=Math.PI/2;pl.position.z=z;bar.add(pl)}
+      g.add(bar);return {bar}},
+    upd(o,p){o.bar.position.set(p.bar[0],p.bar[1],0)},
+    hit:[.05,.7,0],
+    meas:p=>`מרפק מהגוף ${p.flare}° · אמה ${p.fore}° מהאנך`,
+    notes:['אחיזה: בערך פעם וחצי רוחב הכתפיים.','המוט נוגע בתחתית החזה, בקו הפטמות. לא בצוואר ולא בבטן.','מרפקים בזווית של 45–60° מהגוף, לא 90°.','בתחתית האמה אנכית, כף היד מעל המרפק.','שכמות מכווצות לאורך כל הסט, קשת קלה בגב, ישבן על הספסל, רגליים יציבות ברצפה.'],
+    mus:{chest:1,delt:.8,tri:.6}}
+};
+function demo3Stop(){if(G3){G3.stop=1;cancelAnimationFrame(G3.raf);try{G3.r.dispose()}catch(e){}G3=null}}
+async function open3D(k){const D=D3[k],el=$('#sheet');
+  el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+    <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m"></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
+    <div class="d3leg"><span><i style="background:#e0452b"></i>שריר עיקרי</span><span><i style="background:#f0a24a"></i>שריר משני</span></div>
+    <ul class="d3n">${D.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
+  el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:20px">טוען…</p>';
+  let T;try{T=await three()}catch(e){box.innerHTML='<p class="muted" style="padding:20px">צריך חיבור לאינטרנט כדי לטעון את ההדגמה.</p>';return}
+  if(!$('#d3c'))return;box.innerHTML='';demo3Stop();
+  const W=box.clientWidth||340,Hh=Math.round(W*.85);const r=new T.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,devicePixelRatio));r.setSize(W,Hh);box.appendChild(r.domElement);
+  const sc=new T.Scene();sc.background=new T.Color(0x12151f);const cam=new T.PerspectiveCamera(38,W/Hh,.05,30);
+  sc.add(new T.HemisphereLight(0xffffff,0x2a2f40,1.1));const dl=new T.DirectionalLight(0xffffff,1.6);dl.position.set(2,4,3);sc.add(dl);const dl2=new T.DirectionalLight(0x9fb4ff,.5);dl2.position.set(-3,2,-2);sc.add(dl2);
+  const fl=new T.Mesh(new T.CircleGeometry(2.2,48),new T.MeshStandardMaterial({color:0x1d2232}));fl.rotation.x=-Math.PI/2;sc.add(fl);
+  const mat=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.55,metalness:0},o||{}));
+  const M={skin:mat(0xd9a27c),shorts:mat(0x26292f),shoe:mat(0xeeeeee),red:mat(0xe0452b,{roughness:.4}),org:mat(0xf0a24a,{roughness:.45}),pad:mat(0x202226),steel:mat(0xb8bdc6,{metalness:.8,roughness:.3}),plate:mat(0x15171b,{roughness:.6}),hit:mat(0x3ecf8e,{emissive:0x1d7a4f})};
+  const g=new T.Group();sc.add(g);const ext=D.scene(T,g,M);
+  const cyl=new T.CylinderGeometry(1,1,1,20),sph=new T.SphereGeometry(1,24,16);
+  const seg=m=>{const o=new T.Mesh(cyl,m);g.add(o);return o},ball=m=>{const o=new T.Mesh(sph,m);g.add(o);return o};
+  const Y=new T.Vector3(0,1,0);const put=(o,a,b,rad)=>{const A=new T.Vector3(...a),B=new T.Vector3(...b),d=B.clone().sub(A);o.position.copy(A).add(B).multiplyScalar(.5);o.scale.set(rad,d.length(),rad);o.quaternion.setFromUnitVectors(Y,d.normalize())};
+  const at=(o,p,rad)=>{o.position.set(...p);o.scale.setScalar(rad)};
+  const mus=D.mus||{};const mm=v=>v>=1?M.red:v>0?M.org:M.skin;
+  const B={torso:seg(M.skin),chestBar:seg(M.skin),neck:seg(M.skin),head:ball(M.skin),pelvis:seg(M.shorts),hit:ball(M.hit),pec:[ball(mm(mus.chest)),ball(mm(mus.chest))],L:[]};
+  for(let i=0;i<2;i++)B.L.push({sh:ball(mm(mus.delt)),ua:seg(mm(mus.tri)),el:ball(M.skin),fa:seg(M.skin),hd:ball(M.skin),th:seg(M.shorts),kn:ball(M.skin),sn:seg(M.skin),ft:seg(M.shoe),hp:ball(M.shorts)});
+  const flip=(p,s)=>[p[0],p[1],p[2]*s];
+  const tl=D.tl,per=D.period;let az=D.cam.az,el2=D.cam.el,rad=D.cam.r;const tgt=new T.Vector3(...D.cam.tgt);
+  const setCam=()=>{cam.position.set(tgt.x+rad*Math.cos(el2)*Math.cos(az),tgt.y+rad*Math.sin(el2),tgt.z+rad*Math.cos(el2)*Math.sin(az));cam.lookAt(tgt)};
+  const cv=r.domElement;cv.style.touchAction='none';const pts=new Map();let pd=0;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY])});
+  cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const o=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);
+    if(pts.size===1){az+=(e.clientX-o[0])*.01;el2=Math.max(-.1,Math.min(1.45,el2+(e.clientY-o[1])*.01))}
+    else if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)rad=Math.max(.9,Math.min(5,rad*pd/d));pd=d}});
+  const up=e=>{pts.delete(e.pointerId);pd=0};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(.9,Math.min(5,rad*(1+e.deltaY*.001)))},{passive:false});
+  const ph=$('#d3ph'),me=$('#d3m');let lastPh='';
+  const t0=performance.now();G3={r};const self=G3;
+  const frame=now=>{if(self.stop)return;const tt=((now-t0)/1000)%per;const seg_=tl.find(s=>tt>=s[0]&&tt<s[1])||tl[0];
+    const i=tl.indexOf(seg_),prev=i?tl[i-1][2]:tl[tl.length-1][2];const f=(tt-seg_[0])/(seg_[1]-seg_[0]);const t=prev+(seg_[2]-prev)*ease(f);
+    if(seg_[3]!==lastPh){lastPh=seg_[3];if(ph)ph.textContent=lastPh}
+    const p=D.pose(t);D.upd(ext,p);
+    const spine=new T.Vector3(...p.Nk).sub(new T.Vector3(...p.P)).normalize(),lat=new T.Vector3(0,0,1),front=spine.clone().cross(lat).normalize();
+    put(B.torso,p.P,p.C,.135);put(B.chestBar,flip(p.S,1),flip(p.S,-1),.075);put(B.neck,p.C,p.H,.05);at(B.head,p.H,.105);put(B.pelvis,flip(p.Hp,1),flip(p.Hp,-1),.11);
+    at(B.hit,D.hit,t>.97?.03:.0001);
+    let flare=0,fore=0;
+    [1,-1].forEach((s,i)=>{const L=B.L[i],S=flip(p.S,s),Wr=flip(p.W,s),E=ik(T,S,Wr,.3,.27,flip(p.eP,s)),Hp=flip(p.Hp,s),F=flip(p.F,s),K=ik(T,Hp,F,.45,.44,flip(p.kP,s));
+      at(L.sh,S,.065);put(L.ua,S,E,.05);at(L.el,E,.042);put(L.fa,E,Wr,.04);at(L.hd,Wr,.045);at(L.hp,Hp,.09);put(L.th,Hp,K,.075);at(L.kn,K,.055);put(L.sn,K,F,.05);put(L.ft,F,[F[0]+.06,F[1]-.03,F[2]],.045);
+      const pc=new T.Vector3(...p.C).lerp(new T.Vector3(...S),.55).add(front.clone().multiplyScalar(.045));const pm=B.pec[i];pm.position.copy(pc);
+      pm.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(spine,front,lat));pm.scale.set(.1,.04,.1);
+      if(i===0){const ua=new T.Vector3(...E).sub(new T.Vector3(...S)).normalize();flare=Math.round(ua.angleTo(spine.clone().negate())*180/Math.PI);
+        const fa=new T.Vector3(...Wr).sub(new T.Vector3(...E)).normalize();fore=Math.round(fa.angleTo(Y)*180/Math.PI)}});
+    if(me&&D.meas)me.textContent=D.meas({flare,fore,t});
+    setCam();r.render(sc,cam);self.raf=requestAnimationFrame(frame)};
+  self.raf=requestAnimationFrame(frame)}
+
+function openDemo(k){demoStop();if(D3[k])return open3D(k);const el=$('#sheet');
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     ${demoSvg(k)}<p style="margin-top:12px">${esc(EX[k].cue)}</p>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
   el.hidden=false;const t0=performance.now();DM={k};const loop=now=>{if(!DM)return;const ph=((now-t0)/2600)%1;if(!demoDraw(k,ph<.5?ph*2:2-ph*2)){DM=null;return}DM.raf=requestAnimationFrame(loop)};DM.raf=requestAnimationFrame(loop)}
@@ -1662,11 +1744,12 @@ function cloudSection(){return `<div class="remind" id="sbsec"><span class="eyeb
   <input class="inp" id="sbPw" type="password" autocomplete="current-password" placeholder="סיסמה (לפחות 6 תווים)" dir="ltr" style="margin-top:8px">
   <div class="row" style="margin-top:10px"><button class="cta" data-act="sb-login">התחברות</button><button class="ghost" data-act="sb-signup">חשבון חדש</button></div>`}</div></div>`}
 
-const GQ_LS='maslul12:groq',GQ_MODEL='llama-3.3-70b-versatile';
+const GQ_LS='maslul12:groq',GQ_MODEL='openai/gpt-oss-120b',GQ_FALLBACK='llama-3.3-70b-versatile';
 const gqKey=()=>{try{return localStorage.getItem(GQ_LS)||''}catch(e){return ''}};
 async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw {code:'no_key'};
-  let r;try{r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',signal:opt.signal,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
-    body:JSON.stringify(Object.assign({model:GQ_MODEL,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?900:1200,stream:!!opt.onText},opt.json?{response_format:{type:'json_object'}}:{}))})}
+  const go=model=>fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',signal:opt.signal,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({model,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?2000:2500,stream:!!opt.onText},model.startsWith('openai/')?{reasoning_effort:'low',include_reasoning:false}:{},opt.json?{response_format:{type:'json_object'}}:{}))});
+  let r;try{r=await go(GQ_MODEL);if(r.status===400||r.status===404||r.status===503)r=await go(GQ_FALLBACK)}
   catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'network',text:''}}
   if(r.status===401)throw {code:'bad_key'};if(r.status===429)throw {code:'rate_limited'};if(!r.ok)throw {code:'http',message:String(r.status)};
   if(!opt.onText){const j=await r.json();return {text:(j.choices&&j.choices[0].message.content)||'',truncated:j.choices&&j.choices[0].finish_reason==='length'}}
