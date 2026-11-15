@@ -1501,7 +1501,7 @@ let T3=null,G3=null,BODY=null;
 const TV='https://cdn.jsdelivr.net/npm/three@0.160.0/';
 async function three(){if(T3)return T3;const T=await import('three');const {GLTFLoader}=await import(TV+'examples/jsm/loaders/GLTFLoader.js');const {DRACOLoader}=await import(TV+'examples/jsm/loaders/DRACOLoader.js');const SU=await import(TV+'examples/jsm/utils/SkeletonUtils.js');T3={T,GLTFLoader,DRACOLoader,SU};return T3}
 async function bodyGltf(){if(BODY)return BODY;const {GLTFLoader,DRACOLoader}=await three();const l=new GLTFLoader();const d=new DRACOLoader();d.setDecoderPath(TV+'examples/jsm/libs/draco/gltf/');l.setDRACOLoader(d);
-  BODY=await new Promise((res,rej)=>l.load('body.glb?v=4',res,undefined,rej));return BODY}
+  BODY=await new Promise((res,rej)=>l.load('body.glb?v=6',res,undefined,rej));return BODY}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const MUSC={chest:'עיקרי',fdelt:'משני',tri:'משני'};
 const D3={
@@ -1530,14 +1530,20 @@ async function open3D(k){const D=D3[k],el=$('#sheet');
   if(!$('#d3c'))return;const T=L3.T;box.innerHTML='';demo3Stop();
   const W=box.clientWidth||340,Hh=Math.round(W*.9);const r=new T.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,devicePixelRatio));r.setSize(W,Hh);r.outputColorSpace=T.SRGBColorSpace;r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;box.appendChild(r.domElement);
   const sc=new T.Scene();sc.background=new T.Color(0xf4f5f7);const cam=new T.PerspectiveCamera(35,W/Hh,.05,30);
-  sc.add(new T.HemisphereLight(0xffffff,0xb8bcc8,1.6));const dl=new T.DirectionalLight(0xffffff,2.2);dl.position.set(1.6,3.2,1.2);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-1.5,right:1.5,top:1.5,bottom:-1.5});dl.shadow.bias=-.0005;sc.add(dl);
+  sc.add(new T.HemisphereLight(0xffffff,0x9aa0ae,1.25));const dl=new T.DirectionalLight(0xffffff,2.2);dl.position.set(1.6,3.2,1.2);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-1.5,right:1.5,top:1.5,bottom:-1.5});dl.shadow.bias=-.0005;sc.add(dl);
   const fill=new T.DirectionalLight(0xffffff,.7);fill.position.set(-2,1.5,-1.5);sc.add(fill);
   const fl=new T.Mesh(new T.CircleGeometry(2.4,64),new T.ShadowMaterial({opacity:.18}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;sc.add(fl);
   const mat=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.6,metalness:0},o||{}));
-  const M={musc:mat(0xb4b6bd,{roughness:.5}),p1:mat(0xd9412b,{roughness:.45}),p2:mat(0xe98a5a,{roughness:.5}),bone:mat(0xe9e4d8,{roughness:.7}),shorts:mat(0x1d1f24,{roughness:.8,side:T.DoubleSide}),white:mat(0xf2f3f5,{roughness:.4}),pad:mat(0x202226,{roughness:.7}),steel:mat(0x9aa0aa,{metalness:.8,roughness:.3}),plate:mat(0x18191c,{roughness:.55})};
+  const M={skin:mat(0xffffff,{roughness:.52,vertexColors:true}),musc:mat(0xb4b6bd,{roughness:.5}),p1:mat(0xd9412b,{roughness:.45}),p2:mat(0xe98a5a,{roughness:.5}),bone:mat(0xe9e4d8,{roughness:.7}),shorts:mat(0x1d1f24,{roughness:.8,side:T.DoubleSide}),white:mat(0xf2f3f5,{roughness:.4}),pad:mat(0x202226,{roughness:.7}),steel:mat(0x9aa0aa,{metalness:.8,roughness:.3}),plate:mat(0x18191c,{roughness:.55})};
   const body=L3.SU.clone(gl.scene);const bones={};const skinned=[];
-  body.traverse(o=>{if(o.isBone){bones[o.name]=o;o.userData.q0=o.quaternion.clone()}if(o.isMesh){skinned.push(o);o.castShadow=true;o.frustumCulled=false;const g=o.material&&o.material.name||o.name;const v=D.mus[g];
-    o.material=g==='bones'?M.bone:g==='shorts'?M.shorts:v>=1?M.p1:v>0?M.p2:M.musc}});
+  const GID={abs:1,add:2,bi:3,calf:4,chest:5,erect:6,face:7,fdelt:8,fore:9,glute:10,ham:11,lats:12,neck:13,obl:14,quad:15,rdelt:16,sdelt:17,shin:18,traps:19,tri:20,upback:21};
+  const lvl=[];for(const [n,v] of Object.entries(D.mus))lvl[GID[n]]=v;let chestG=null;
+  body.traverse(o=>{if(o.isBone){bones[o.name]=o;o.userData.q0=o.quaternion.clone()}if(o.isMesh){skinned.push(o);o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
+    if(/shorts/.test(o.name)||/shorts/.test(o.material&&o.material.name||'')){o.material=M.shorts;return}
+    const ca=o.geometry.attributes.color;if(!ca){o.material=M.musc;return}const n=ca.count,col=new Float32Array(n*3),gids=new Uint8Array(n);
+    const base=[.70,.71,.74],c1=[.80,.17,.10],c2=[.88,.45,.30];
+    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i);gids[i]=g;const v=lvl[g]||0;const b=v>=1?c1:v>0?c2:base;const sh=.22+.78*Math.pow(ao,2.2);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
+    o.geometry.setAttribute('color',new T.BufferAttribute(col,3));o.geometry.userData.gids=gids;chestG=o;o.material=M.skin}});
   const SK=bones;
   body.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});
   body.rotation.x=-Math.PI/2;sc.add(body);body.updateMatrixWorld(true);
@@ -1545,7 +1551,7 @@ async function open3D(k){const D=D3[k],el=$('#sheet');
   const box3=new T.Box3().setFromObject(body);const BT=.47;body.position.y+=BT-box3.min.y+.005;body.position.z+=.12;body.updateMatrixWorld(true);
   const len=(a,b)=>wp(a).distanceTo(wp(b));const LUA=len('upperarmL','forearm1L'),LFA=len('forearm1L','handL'),LTH=len('thighL','shinL'),LSH=len('shinL','footL');
   const shL=wp('upperarmL'),shR=wp('upperarmR');const touchZ=shL.z+.12;let chestTop=null;
-  for(const o of skinned){if((o.material===M.p1)){const pa=o.geometry.attributes.position;const v=new T.Vector3();for(let i=0;i<pa.count;i+=3){v.fromBufferAttribute(pa,i).applyMatrix4(o.matrixWorld);if(Math.abs(v.x)<.12&&Math.abs(v.z-touchZ)<.035&&(!chestTop||v.y>chestTop.y))chestTop=v.clone()}}}
+  if(chestG){const o=chestG,gi=o.geometry.userData.gids;{const pa=o.geometry.attributes.position;const v=new T.Vector3();for(let i=0;i<pa.count;i++){if(gi[i]!==GID.chest)continue;v.fromBufferAttribute(pa,i).applyMatrix4(o.matrixWorld);if(Math.abs(v.x)<.12&&Math.abs(v.z-touchZ)<.035&&(!chestTop||v.y>chestTop.y))chestTop=v.clone()}}}
   if(!chestTop)chestTop=new T.Vector3(0,BT+.25,shL.z+.15);
   const barBot=chestTop.y+.016,GRIP=Math.max(.3,Math.abs(shL.x)*1.95);
   const topY=shL.y+Math.sqrt(Math.max(.01,Math.pow((LUA+LFA)*.97,2)-Math.pow(GRIP-Math.abs(shL.x),2)-Math.pow(touchZ-shL.z,2)))+.07;
