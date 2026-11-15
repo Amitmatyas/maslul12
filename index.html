@@ -483,6 +483,14 @@ details.adl[open]>summary{margin-bottom:6px}
 .pillbar button{height:34px;padding:0 12px;border-radius:999px;background:var(--ink);color:var(--chalk);font-size:13px}
 .pillbar .pdot{width:10px;height:10px;border-radius:50%;background:var(--tartan)}
 .sheet{position:fixed;inset:0;z-index:80;background:rgba(5,7,14,.75);display:grid;place-items:center;padding:16px}
+.xtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.demo svg.dsv{width:100%;height:auto;background:var(--ink);border-radius:14px}
+.demo .fig line,.demo .fig path{stroke:var(--chalk);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.demo .fig circle.hd{fill:var(--chalk)}
+.demo .eqp{stroke:var(--muted,#8a93a8);stroke-width:5;stroke-linecap:round;fill:none}
+.demo .ld{fill:var(--tartan)}.demo .cbl{stroke:var(--tartan);stroke-width:2;stroke-dasharray:4 4}
+.fbox{position:relative;border-radius:14px;overflow:hidden;background:#000}.fbox video,.fbox canvas{width:100%;display:block}.fbox canvas{position:absolute;inset:0;height:100%}
+.fres li{margin:6px 0}.fres .ok{color:var(--good,#3ecf8e)}.fres .bad{color:var(--bad)}
 .sheet .panel{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--ink2)}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:90}
 .toast{position:fixed;z-index:85;top:calc(76px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink3);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:0 10px 40px -10px #000;max-width:calc(100vw - 32px)}
@@ -613,6 +621,7 @@ const EQ={
   db:{t:'משקולות יד',inc:1,unit:'ק״ג לכל יד'},
   mc:{t:'מכונה',inc:2.5,unit:'ק״ג'},
   cb:{t:'כבל',inc:2.5,unit:'ק״ג'},
+  bb:{t:'מוט',inc:2.5,unit:'ק״ג כולל המוט'},
   kb:{t:'משקולת אחת',inc:2,unit:'ק״ג'},
   bw:{t:'משקל גוף',inc:0,unit:''},
   wt:{t:'עם משקל (חגורה / משקולת)',inc:2.5,unit:'ק״ג תוספת'}
@@ -635,13 +644,22 @@ const EX={
   legpress:{n:'לחיצת רגליים',eq:['mc'],cue:'גב צמוד למושב. לא נועלים את הברכיים למעלה.'},
   legcurl:{n:'כפיפת ברכיים',eq:['mc'],cue:'תנועה איטית ומבוקרת, בלי להרים את האגן.'},
   calf:{n:'הרמות תאומים',eq:['mc'],cue:'עולים עד הסוף, עצירה קצרה למעלה, יורדים לאט.'},
+  hlr:{n:'הרמות רגליים על מתח',eq:['bw'],cue:'תלייה מלאה, בלי תנופה. מרימים ברכיים או רגליים ישרות עד 90 מעלות לפחות, ויורדים לאט. כשקל, מוסיפים משקולת בין הכפות.'},
+  dcrunch:{n:'כפיפות בטן בספסל שלילי עם משקל',eq:['wt'],cue:'צלחת צמודה לחזה. מגלגלים את הגב מלמעלה למטה, לא מושכים עם הצוואר. יורדים לאט עד שהגב כמעט נוגע.'},
+  crow:{n:'חתירה בפולי תחתון, אחיזה צרה',eq:['cb'],cue:'גב זקוף, חזה פתוח. מושכים את הידית לבטן ומקרבים שכמות. חוזרים לאט בלי להתקפל קדימה.'},
+  tbar:{n:'חתירת T-Bar, אחיזה רחבה',eq:['mc'],cue:'ציר בירכיים, גב ישר בזווית של בערך 45 מעלות. מרפקים לצדדים, מושכים לחזה התחתון. בלי להזדקף כדי להרים.'},
+  revfly:{n:'הרחקה אופקית בפולי (כתף אחורית)',eq:['cb'],inc:1.25,cue:'כבלים בגובה הכתפיים, ידיים מוצלבות. פותחים לצדדים עם מרפק רך עד קו הגוף. משקל קל, בלי למשוך עם הגב.'},
+  bss:{n:'Bulgarian split squat',eq:['db'],cue:'רגל אחורית על ספסל. יורדים ישר למטה עד שהירך הקדמית מקבילה לרצפה. ברך בכיוון האצבעות, הלחץ על העקב הקדמי.'},
+  hackcalf:{n:'תאומים בהאק סקוואט',eq:['mc'],cue:'קדמת כף הרגל על קצה הפלטפורמה, ברכיים כמעט ישרות. יורדים עד מתיחה מלאה, עצירה, ועולים עד הסוף.'},
+  bbrdl:{n:'Romanian deadlift עם מוט',eq:['bb'],cue:'המוט צמוד לרגליים לאורך כל התנועה. ציר בירכיים, ברכיים רכות, גב ישר. יורדים עד מתיחה מאחורי הירך, בערך עד אמצע השוק.'},
+  legext:{n:'פשיטת ברכיים',eq:['mc'],cue:'גב צמוד למושב. פושטים עד הסוף, עצירה קצרה למעלה ויורדים לאט.'},
   plank:{n:'פלאנק',eq:['bw'],cue:'גוף ישר, בטן ועכוז מכווצים. ממשיכים לנשום.',time:true}
 };
 const incOf=k=>{const v=EX[k].inc;return v!=null?v:EQ[EX[k].eq[0]].inc};
 const STR={
-  push:{title:'Push',sub:'חזה · כתפיים · יד אחורית',ex:[['bench',3,'8–12'],['incline',2,'10'],['ohp',2,'10'],['lateral',2,'12–15'],['pushdown',2,'12'],['pushup',2,'10–15']]},
-  pull:{title:'Pull',sub:'גב · יד קדמית',ex:[['pullup',3,'6–10'],['row',3,'10'],['lat',2,'12'],['face',2,'15'],['curl',2,'12'],['hammer',2,'12']]},
-  legs:{title:'Legs',sub:'אימון רגליים מבוקר',ex:[['goblet',3,'10'],['rdl',2,'10'],['legpress',2,'12'],['legcurl',2,'12'],['calf',2,'15'],['plank',2,'45']]}
+  push:{title:'Push',sub:'חזה · כתפיים · יד אחורית · בטן',ex:[['bench',3,'8–12'],['incline',2,'10'],['ohp',2,'10'],['lateral',2,'12–15'],['pushdown',2,'12'],['hlr',3,'10–15']]},
+  pull:{title:'Pull',sub:'גב · כתף אחורית · יד קדמית',ex:[['pullup',3,'6–10'],['crow',3,'8–12'],['tbar',3,'8–12'],['revfly',2,'12–15'],['curl',3,'10–12']]},
+  legs:{title:'Legs',sub:'רגליים · בטן',ex:[['bss',3,'8–10'],['hackcalf',3,'12–15'],['bbrdl',3,'8–10'],['legext',2,'12–15'],['legcurl',2,'10–12'],['dcrunch',3,'10–15']]}
 };
 const rangeOf=r=>{const m=String(r).split('–').map(Number);return [m[0],m[1]??m[0]]};
 const SWIM=[['חימום · שחייה קלה','5–10 דק׳',450],['תרגילי טכניקה','כ-10 דק׳',600],['שחייה רציפה בקצב נוח','10–15 דק׳',750],['מקטעים קצרים מהירים ומבוקרים — רק אם רעננים','אופציונלי',300],['שחייה קלה לסיום','כ-5 דק׳',300]];
@@ -674,10 +692,10 @@ function phaseOf(n){
 }
 
 function baseDay(w,dow){const W=WEEKS[w-1],q=W.q;
-  const s={0:{t:'Push + ריצה קלה 6–7 ק״מ',d:'כוח Push (חזה בסמית, כתפיים, יד אחורית) + ריצה קלה 6–7 ק״מ. אם אפשר, להפריד ביניהם בכמה שעות.'},
+  const s={0:{t:'Push + ריצה קלה 6–7 ק״מ',d:'כוח Push (חזה בסמית, כתפיים, יד אחורית, בטן) + ריצה קלה 6–7 ק״מ. אם אפשר, להפריד ביניהם בכמה שעות.'},
     1:{t:`אימון איכות · ${q.reps>1?q.reps+'×'+minLabel(q.work):minLabel(q.work)+' מתקדמת'}`,d:`${W.txt} כולל חימום ושחרור, סה״כ כ-8–10 ק״מ.`},
     2:{t:'מנוחה מלאה',d:'בלי אימון. שינה, אוכל ושתייה.'},
-    3:{t:'Pull + ריצה קלה 6–8 ק״מ',d:'כוח Pull (מתח עם משקל, גב, יד קדמית) + ריצה קלה 6–8 ק״מ.'},
+    3:{t:'Pull + ריצה קלה 6–8 ק״מ',d:'כוח Pull (מתח עם משקל, חתירות, כתף אחורית, יד קדמית) + ריצה קלה 6–8 ק״מ.'},
     4:{t:'שחייה 35–45 דק׳',d:'חימום, טכניקה, שחייה רציפה, שחרור. מקטעים מהירים רק אם רעננים.'},
     5:{t:'Legs מתון',d:'אימון רגליים מתון — מחר ריצה ארוכה. בלי כשל.'},
     6:{t:`ריצה ארוכה ${range(W.long[0],W.long[1])} ק״מ`,d:`קצב נוח, בלי מרדף אחרי זמנים.${W.cond?' רק אם ההתאוששות טובה.':''}`}}[dow];
@@ -894,6 +912,7 @@ function liftRow(d,b,x,I,lv){
     <p class="rec ${R.up>0?'up':R.up<0?'down':''}">${R.usesW&&R.w!=null?`<b>${fmtKg(R.w)} ${E.unit}</b> · `:''}${R.why}</p>
     <div class="lrow">${R.usesW?`<label class="wbox">ק״ג<input class="inp" type="number" inputmode="decimal" step="0.25" min="0" data-lw="${x.k}" data-d="${d}" value="${wv}" placeholder="?"></label>`:''}
       <div class="reps">${inputs}</div></div>
+    ${DEMO[x.k]?`<div class="xtools"><button class="ghost sm" data-act="demo" data-k="${x.k}">▶ הדגמה</button>${FORM[x.k]?`<button class="ghost sm" data-act="form" data-k="${x.k}">📷 בדיקת טכניקה</button>`:''}</div>`:''}
     <div class="feel">איך הרגיש? ${[['easy','קל'],['ok','טוב'],['hard','קשה']].map(([k,t])=>`<button class="${L.feel===k?'on':''}" data-act="feel" data-d="${d}" data-k="${x.k}" data-v="${k}">${t}</button>`).join('')}</div>
   </li>`}
 function bIron(d,b){const I=info(d);const E=effWeek(I.week);const phase=phaseOf(I.week);const e=peek(d);
@@ -1401,7 +1420,174 @@ function openSettings(){const el=$('#sheet');const end=addDays(S.start,83);
     <div class="setrow"><span>שמירה</span><span class="muted" style="font-size:13px">${SB?'מסונכרן לחשבון שלך':'נשמר רק במכשיר הזה'}</span></div>
     <div class="setrow"><span>איפוס כל הנתונים</span><button class="ghost" data-act="reset" style="${V.resetArm?'border-color:var(--bad);color:var(--bad)':''}">${V.resetArm?'בטוח? לחץ שוב':'איפוס'}</button></div>
   </div>`;el.hidden=false}
-function closeSheet(){$('#sheet').hidden=true;V.resetArm=false}
+function closeSheet(){$('#sheet').hidden=true;V.resetArm=false;demoStop();formStop()}
+const STAND={P:[100,100],N:[100,52],H:[100,36],K:[100,125],A:[100,150]};
+const DEMO={
+  bench:{eq:'<line class="eqp" x1="45" y1="113" x2="135" y2="113"/><line class="eqp" x1="60" y1="113" x2="60" y2="150"/><line class="eqp" x1="122" y1="113" x2="122" y2="150"/>',bar:1,
+    a:{N:[72,104],H:[57,102],P:[120,104],K:[148,100],A:[150,148],E:[92,117],W:[80,97]},
+    b:{N:[72,104],H:[57,102],P:[120,104],K:[148,100],A:[150,148],E:[77,78],W:[77,54]}},
+  incline:{eq:'<line class="eqp" x1="62" y1="70" x2="118" y2="124"/><line class="eqp" x1="100" y1="110" x2="100" y2="150"/>',bar:1,
+    a:{N:[80,80],H:[70,67],P:[113,113],K:[143,110],A:[146,150],E:[100,98],W:[88,80]},
+    b:{N:[80,80],H:[70,67],P:[113,113],K:[143,110],A:[146,150],E:[76,60],W:[70,38]}},
+  ohp:{eq:'<line class="eqp" x1="80" y1="122" x2="125" y2="122"/><line class="eqp" x1="82" y1="122" x2="82" y2="65"/>',bar:1,
+    a:{N:[100,66],H:[101,50],P:[100,116],K:[134,116],A:[134,150],E:[114,82],W:[107,58]},
+    b:{N:[100,66],H:[101,50],P:[100,116],K:[134,116],A:[134,150],E:[103,40],W:[101,16]}},
+  lateral:{mir:1,cable:[100,150],
+    a:{...STAND,K:[93,125],A:[91,150],E:[108,78],W:[110,100]},
+    b:{...STAND,K:[93,125],A:[91,150],E:[127,58],W:[150,56]}},
+  pushdown:{cable:[122,8],
+    a:{...STAND,E:[104,80],W:[121,64]},
+    b:{...STAND,E:[104,80],W:[106,106]}},
+  hlr:{eq:'<line class="eqp" x1="60" y1="18" x2="140" y2="18"/>',
+    a:{W:[100,20],E:[100,38],N:[100,56],H:[100,44],P:[100,104],K:[100,128],A:[100,152]},
+    b:{W:[100,20],E:[100,38],N:[100,56],H:[100,44],P:[100,104],K:[122,104],A:[147,104]}},
+  pullup:{eq:'<line class="eqp" x1="60" y1="18" x2="140" y2="18"/>',ld:'P',
+    a:{W:[100,20],E:[100,38],N:[100,58],H:[100,46],P:[100,106],K:[104,130],A:[100,152]},
+    b:{W:[100,20],E:[114,36],N:[100,46],H:[100,28],P:[100,92],K:[104,116],A:[100,138]}},
+  crow:{eq:'<line class="eqp" x1="70" y1="124" x2="110" y2="124"/><line class="eqp" x1="158" y1="105" x2="158" y2="140"/>',cable:[165,98],
+    a:{P:[90,120],N:[92,72],H:[90,56],K:[127,108],A:[154,124],E:[118,88],W:[143,96]},
+    b:{P:[90,120],N:[88,72],H:[85,56],K:[127,108],A:[154,124],E:[72,96],W:[100,102]}},
+  tbar:{eq:'',bar:1,line:[20,150],
+    a:{P:[122,92],N:[72,66],H:[57,61],K:[128,121],A:[122,150],E:[71,96],W:[72,126]},
+    b:{P:[122,92],N:[72,66],H:[57,61],K:[128,121],A:[122,150],E:[96,58],W:[82,92]}},
+  revfly:{cable:[185,58],
+    a:{...STAND,E:[127,57],W:[151,58]},
+    b:{...STAND,E:[80,56],W:[60,58]}},
+  curl:{bar:1,
+    a:{...STAND,E:[103,80],W:[106,108]},
+    b:{...STAND,E:[103,80],W:[93,58]}},
+  bss:{eq:'<line class="eqp" x1="30" y1="112" x2="68" y2="112"/><line class="eqp" x1="48" y1="112" x2="48" y2="150"/>',bar:1,
+    a:{P:[100,84],N:[102,36],H:[103,20],K:[124,114],A:[124,150],K2:[82,120],A2:[56,111],E:[102,60],W:[102,84]},
+    b:{P:[98,108],N:[102,60],H:[103,44],K:[132,108],A:[126,150],K2:[80,146],A2:[56,111],E:[102,84],W:[102,108]}},
+  hackcalf:{eq:'<line class="eqp" x1="85" y1="152" x2="130" y2="152"/><line class="eqp" x1="88" y1="45" x2="70" y2="140"/>',
+    a:{P:[100,96],N:[98,48],H:[98,32],K:[103,122],A:[100,146],T:[116,150],E:[92,44],W:[100,40]},
+    b:{P:[100,86],N:[98,38],H:[98,22],K:[103,112],A:[102,134],T:[116,150],E:[92,34],W:[100,30]}},
+  bbrdl:{bar:1,
+    a:{...STAND,E:[100,74],W:[101,98]},
+    b:{P:[116,92],N:[66,72],H:[52,68],K:[106,122],A:[100,150],E:[70,100],W:[74,127]}},
+  legext:{eq:'<line class="eqp" x1="70" y1="106" x2="128" y2="106"/><line class="eqp" x1="74" y1="106" x2="70" y2="40"/>',
+    a:{P:[90,100],N:[84,50],H:[82,34],K:[126,100],A:[127,140],E:[92,76],W:[108,98]},
+    b:{P:[90,100],N:[84,50],H:[82,34],K:[126,100],A:[166,94],E:[92,76],W:[108,98]}},
+  legcurl:{eq:'<line class="eqp" x1="70" y1="106" x2="128" y2="106"/><line class="eqp" x1="74" y1="106" x2="70" y2="40"/>',
+    a:{P:[90,100],N:[84,50],H:[82,34],K:[126,100],A:[166,100],E:[92,76],W:[108,98]},
+    b:{P:[90,100],N:[84,50],H:[82,34],K:[126,100],A:[112,136],E:[92,76],W:[108,98]}},
+  dcrunch:{eq:'<line class="eqp" x1="30" y1="140" x2="160" y2="104"/><line class="eqp" x1="150" y1="107" x2="150" y2="150"/>',ld:'W',
+    a:{P:[118,118],N:[66,132],H:[50,136],K:[140,96],A:[158,120],E:[84,118],W:[82,128]},
+    b:{P:[118,118],N:[84,94],H:[78,78],K:[140,96],A:[158,120],E:[96,96],W:[98,104]}},
+  plank:{a:{N:[60,112],H:[46,108],P:[110,118],K:[135,124],A:[160,130],T:[162,140],E:[62,138],W:[80,140]},b:null}
+};
+DEMO.row=DEMO.crow;DEMO.lat=DEMO.pullup;DEMO.face=DEMO.revfly;DEMO.hammer=DEMO.curl;DEMO.rdl=DEMO.bbrdl;DEMO.calf=DEMO.hackcalf;
+let DM=null;
+function demoSvg(k){const D=DEMO[k];return `<svg class="dsv" viewBox="0 0 200 160" role="img" aria-label="הדגמה של ${esc(EX[k].n)}">${D.eq||''}<line class="cbl" id="dmC" x1="0" y1="0" x2="0" y2="0" ${D.cable||D.line?'':'hidden'}/><g class="fig" id="dmF"></g></svg>`}
+function demoPose(D,t){const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;const o={};for(const k in D.a){const a=D.a[k],b=(D.b||D.a)[k]||a;o[k]=[a[0]+(b[0]-a[0])*e,a[1]+(b[1]-a[1])*e]}return o}
+function demoDraw(k,t){const D=DEMO[k],p=demoPose(D,t),f=document.getElementById('dmF');if(!f)return false;
+  const L=(a,b)=>a&&b?`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`:'';
+  const mx=q=>q&&[200-q[0],q[1]];
+  let g=L(p.N,p.P)+L(p.P,p.K)+L(p.K,p.A)+L(p.A,p.T)+L(p.P,p.K2)+L(p.K2,p.A2)+L(p.N,p.E)+L(p.E,p.W);
+  if(D.mir)g+=L(p.N,mx(p.E))+L(mx(p.E),mx(p.W))+L(p.P,mx(p.K))+L(mx(p.K),mx(p.A));
+  g+=`<circle class="hd" cx="${p.H[0]}" cy="${p.H[1]}" r="10"/>`;
+  if(D.bar&&p.W)g+=`<circle class="ld" cx="${p.W[0]}" cy="${p.W[1]}" r="7"/>`+(D.mir?`<circle class="ld" cx="${200-p.W[0]}" cy="${p.W[1]}" r="7"/>`:'');
+  if(D.ld&&p[D.ld])g+=`<circle class="ld" cx="${p[D.ld][0]+(D.ld==='P'?6:0)}" cy="${p[D.ld][1]+(D.ld==='P'?12:0)}" r="8"/>`;
+  f.innerHTML=g;const c=document.getElementById('dmC');const an=D.cable||D.line;if(c&&an&&p.W){c.setAttribute('x1',an[0]);c.setAttribute('y1',an[1]);c.setAttribute('x2',p.W[0]);c.setAttribute('y2',p.W[1])}return true}
+function demoStop(){if(DM){cancelAnimationFrame(DM.raf);DM=null}}
+function openDemo(k){demoStop();const el=$('#sheet');
+  el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+    ${demoSvg(k)}<p style="margin-top:12px">${esc(EX[k].cue)}</p>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
+  el.hidden=false;const t0=performance.now();DM={k};const loop=now=>{if(!DM)return;const ph=((now-t0)/2600)%1;if(!demoDraw(k,ph<.5?ph*2:2-ph*2)){DM=null;return}DM.raf=requestAnimationFrame(loop)};DM.raf=requestAnimationFrame(loop)}
+
+const LM={ls:11,rs:12,le:13,re:14,lw:15,rw:16,lh:23,rh:24,lk:25,rk:26,la:27,ra:28,lf:31,rf:32,nose:0};
+const J={elbow:['s','e','w'],shoulder:['h','s','e'],shoulderW:['h','s','w'],hip:['s','h','k'],knee:['h','k','a'],ankle:['k','a','f'],body:['s','h','a']};
+const FORM={
+  bench:{j:'elbow',flex:95,ext:155,tip:'מניחים את הטלפון בצד הספסל, בגובה הספסל.',lo:'המוט לא יורד מספיק. צריך להגיע לחזה.',hi:'לא נועלים את הידיים למעלה.'},
+  incline:{j:'elbow',flex:95,ext:155,tip:'מצלמים מהצד.',lo:'לא יורדים מספיק. המשקולות צריכות להגיע לגובה החזה.',hi:'לא פושטים עד הסוף למעלה.'},
+  ohp:{j:'elbow',flex:95,ext:160,lean:15,tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'המשקולות לא יורדות עד הכתפיים.',hi:'לא נועלים מעל הראש.'},
+  pushdown:{j:'elbow',flex:85,ext:160,lean:12,tip:'מצלמים מהצד.',lo:'המרפקים לא מתכופפים מספיק למעלה.',hi:'לא פושטים עד הסוף למטה.'},
+  lateral:{j:'shoulder',inv:1,flex:25,ext:80,max:105,lean:12,tip:'מצלמים מלפנים, כל פלג הגוף העליון בפריים.',lo:'הידיים לא מגיעות לגובה הכתפיים.',hi:'הידיים לא יורדות עד למטה בין חזרות.'},
+  revfly:{j:'shoulderW',inv:1,flex:30,ext:80,lean:12,tip:'מצלמים מלפנים.',lo:'פתיחה חלקית. פותחים עד קו הגוף.',hi:'לא חוזרים עד הסוף קדימה.'},
+  pullup:{j:'elbow',flex:75,ext:150,chin:1,tip:'מצלמים מהצד או מלפנים, כולל המוט.',lo:'הסנטר לא עובר את המוט.',hi:'לא יורדים לתלייה מלאה.'},
+  hlr:{j:'hip',flex:100,ext:160,tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'הרגליים לא מגיעות ל-90 מעלות.',hi:'לא יורדים עד הסוף בין החזרות.'},
+  crow:{j:'elbow',flex:80,ext:145,lean:20,tip:'מצלמים מהצד.',lo:'לא מושכים עד הבטן.',hi:'לא פושטים את הידיים עד הסוף.'},
+  tbar:{j:'elbow',flex:85,ext:145,lean:15,tip:'מצלמים מהצד.',lo:'המשיכה קצרה. מושכים עד שהמוט נוגע בחזה.',hi:'לא פושטים את הידיים עד הסוף למטה.'},
+  curl:{j:'elbow',flex:60,ext:145,lean:10,tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף למעלה.',hi:'לא פושטים עד הסוף למטה.'},
+  bss:{j:'knee',flex:100,ext:155,lean:30,tip:'מצלמים מהצד, הרגל הקדמית קרובה לטלפון.',lo:'לא יורדים מספיק. הירך הקדמית צריכה להגיע למקבילה לרצפה.',hi:'לא מזדקפים עד הסוף.'},
+  bbrdl:{j:'hip',flex:115,ext:160,knee:130,tip:'מצלמים מהצד.',lo:'הציר קצר. דוחפים את האגן אחורה עד מתיחה.',hi:'לא מזדקפים עד הסוף.'},
+  legext:{j:'knee',flex:100,ext:160,tip:'מצלמים מהצד.',lo:'מתחילים מטווח קצר. יורדים עד 90 מעלות.',hi:'לא פושטים את הברך עד הסוף.'},
+  legcurl:{j:'knee',flex:90,ext:150,tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף.',hi:'לא פושטים עד הסוף בין החזרות.'},
+  dcrunch:{j:'hip',flex:95,ext:140,tip:'מצלמים מהצד.',lo:'הכפיפה קצרה. עולים עד שהגב התחתון מתרומם.',hi:'לא יורדים עד הסוף.'},
+  hackcalf:{j:'ankle',inv:1,flex:95,ext:110,tip:'מצלמים מהצד, קרוב לכפות הרגליים.',lo:'עולים לא מספיק גבוה על קצות האצבעות.',hi:'לא יורדים עד מתיחה מלאה.'},
+  plank:{static:1,tip:'מצלמים מהצד, כל הגוף בפריים.'}
+};
+let FM=null,POSE=null;
+function formStop(){if(FM){FM.stop=1;try{FM.v&&FM.v.pause()}catch(e){}if(FM.url)URL.revokeObjectURL(FM.url);FM=null}}
+function openForm(k){demoStop();formStop();const F=FORM[k],el=$('#sheet');
+  el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="בדיקת טכניקה"><div class="panel-h"><h2>בדיקת טכניקה · ${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+    <p class="muted">${esc(F.tip)} מצלמים 3–6 חזרות, הטלפון יציב. הניתוח נעשה כולו בטלפון, הסרטון לא נשלח לשום מקום.</p>
+    <input type="file" id="formIn" accept="video/*" capture="environment" hidden data-k="${k}">
+    <button class="cta" style="width:100%;margin:12px 0" data-act="form-pick">📷 צלם או בחר סרטון</button>
+    <div id="fOut"></div></div>`;el.hidden=false;
+  $('#formIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)formRun(k,f)})}
+async function poseInit(){if(POSE)return POSE;
+  const V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  const m=await import(V+'/vision_bundle.mjs');const fs=await m.FilesetResolver.forVisionTasks(V+'/wasm');
+  const opt=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',delegate:d},runningMode:'VIDEO',numPoses:1});
+  try{POSE=await m.PoseLandmarker.createFromOptions(fs,opt('GPU'))}catch(e){POSE=await m.PoseLandmarker.createFromOptions(fs,opt('CPU'))}return POSE}
+function ang(a,b,c){const v1=[a.x-b.x,a.y-b.y],v2=[c.x-b.x,c.y-b.y];const d=Math.hypot(...v1)*Math.hypot(...v2);if(!d)return null;return Math.acos(Math.max(-1,Math.min(1,(v1[0]*v2[0]+v1[1]*v2[1])/d)))*180/Math.PI}
+function side(l){const vis=s=>['s','e','w','h','k','a'].reduce((t,j)=>t+((l[LM[s+j]]||{}).visibility||0),0);const s=vis('l')>=vis('r')?'l':'r';
+  const g=j=>l[LM[(j==='nose'?'':s)+j]];return {s:g('s'),e:g('e'),w:g('w'),h:g('h'),k:g('k'),a:g('a'),f:g('f'),nose:l[0]}}
+const BONES=[[11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
+async function formRun(k,file){const F=FORM[k],out=$('#fOut');formStop();
+  out.innerHTML=`<p class="muted" id="fSt">טוען את מנוע הניתוח…</p><div class="fbox"><video playsinline muted></video><canvas></canvas></div>`;
+  const v=out.querySelector('video'),cv=out.querySelector('canvas'),st=$('#fSt');const url=URL.createObjectURL(file);FM={v,url};const me=FM;
+  let lm;try{lm=await poseInit()}catch(e){st.textContent='לא הצלחתי לטעון את מנוע הניתוח. צריך חיבור לאינטרנט בפעם הראשונה.';return}
+  if(me.stop)return;v.src=url;try{await v.play()}catch(e){}
+  await new Promise(r=>v.readyState>=2?r():v.addEventListener('loadeddata',r,{once:true}));
+  cv.width=v.videoWidth;cv.height=v.videoHeight;const cx=cv.getContext('2d');st.textContent='מנתח…';
+  const sam=[];let last=-1;
+  await new Promise(res=>{const step=()=>{if(me.stop)return res();if(v.ended||v.paused&&v.currentTime>0&&v.currentTime>=v.duration-0.05)return res();
+      if(v.currentTime!==last){last=v.currentTime;let r=null;try{r=lm.detectForVideo(v,performance.now())}catch(e){}
+        cx.clearRect(0,0,cv.width,cv.height);const l=r&&r.landmarks&&r.landmarks[0];
+        if(l){cx.strokeStyle='#ff7a1a';cx.lineWidth=Math.max(3,cv.width/150);for(const [a,b] of BONES){cx.beginPath();cx.moveTo(l[a].x*cv.width,l[a].y*cv.height);cx.lineTo(l[b].x*cv.width,l[b].y*cv.height);cx.stroke()}
+          const p=side(l);const t=v.currentTime;
+          if(F.static)sam.push({t,a:ang(p.s,p.h,p.a)});
+          else{const jj=J[F.j];sam.push({t,a:ang(p[jj[0]],p[jj[1]],p[jj[2]]),lean:Math.atan2(Math.abs(p.s.x-p.h.x),Math.abs(p.s.y-p.h.y))*180/Math.PI,knee:ang(p.h,p.k,p.a),chin:p.nose&&p.w?p.w.y-p.nose.y:null,vis:Math.min(...jj.map(q=>(p[q]&&p[q].visibility)||0))})}}}
+      if(v.ended)return res();requestAnimationFrame(step)};requestAnimationFrame(step);v.addEventListener('ended',()=>res(),{once:true})});
+  if(me.stop)return;v.pause();v.controls=true;st.textContent='';
+  const R=formAnalyze(k,sam);out.insertAdjacentHTML('beforeend',`<div class="fres" style="margin-top:12px">${R.html}</div><div id="fAi"></div>`);
+  if(gqKey()&&R.facts)formAi(k,R.facts)}
+function formAnalyze(k,sam){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</li>`,bad=s=>`<li class="bad">✗ ${s}</li>`;
+  const good=sam.filter(s=>s.a!=null&&(s.vis==null||s.vis>.4));
+  if(good.length<15)return {html:`<p>לא זיהיתי מספיק את הגוף בסרטון. ${esc(F.tip)} תאורה טובה, כל הגוף בפריים.</p>`};
+  if(F.static){const a=good.map(s=>s.a);const dev=a.filter(x=>x<160).length/a.length;const dur=good[good.length-1].t-good[0].t;
+    const L=[`<li>החזקה: ${Math.round(dur)} שניות</li>`,dev<.15?ok('הגוף ישר כמו קרש לאורך רוב הזמן'):bad(`הגוף לא ישר ב-${Math.round(dev*100)}% מהזמן. בטן ועכוז מכווצים, האגן לא צונח ולא מתרומם.`)];
+    return {html:`<ul>${L.join('')}</ul>`,facts:`פלאנק ${Math.round(dur)} שניות, ${Math.round(dev*100)}% מהזמן הגוף לא ישר`}}
+  const a=[];for(let i=0;i<good.length;i++){const w=good.slice(Math.max(0,i-2),i+3);a.push({...good[i],a:w.reduce((t,s)=>t+s.a,0)/w.length})}
+  const vals=a.map(s=>s.a),mn=Math.min(...vals),mx=Math.max(...vals);
+  if(mx-mn<15)return {html:`<p>לא זיהיתי תנועה ברורה. ${esc(F.tip)}</p>`};
+  const mid=(mn+mx)/2,band=(mx-mn)*.15;const inv=!!F.inv;
+  const isWork=x=>inv?x>mid+band:x<mid-band,isRest=x=>inv?x<mid-band:x>mid+band;
+  const reps=[];let state=null,cur=null;
+  for(const s of a){if(isRest(s.a)){if(state==='work'&&cur){cur.end=s.t;reps.push(cur);cur=null}state='rest';if(!cur)cur={start:s.t,peak:s.a,rest:s.a,lean:[s.lean],knee:[s.knee],chin:[]};cur.rest=inv?Math.min(cur.rest,s.a):Math.max(cur.rest,s.a)}
+    else if(isWork(s.a)&&state){state='work';if(!cur)cur={start:s.t,peak:s.a,rest:s.a,lean:[],knee:[],chin:[]};cur.peak=inv?Math.max(cur.peak,s.a):Math.min(cur.peak,s.a)}
+    if(cur){cur.lean.push(s.lean);cur.knee.push(s.knee);if(s.chin!=null)cur.chin.push(s.chin)}}
+  if(!reps.length)return {html:`<p>לא הצלחתי לספור חזרות. נסה שוב מזווית צד, עם 3 חזרות לפחות.</p>`};
+  const deep=r=>inv?r.peak>=F.ext:r.peak<=F.flex,full=r=>inv?r.rest<=F.flex:r.rest>=F.ext;
+  const nDeep=reps.filter(deep).length,nFull=reps.filter(full).length,n=reps.length;
+  const L=[`<li><b>${n} חזרות</b> זוהו</li>`];
+  L.push(nDeep===n?ok('טווח תנועה מלא בצד הקשה של התנועה'):bad(`${F.lo} (${n-nDeep} מתוך ${n})`));
+  L.push(nFull===n?ok('חזרה מלאה בין החזרות'):bad(`${F.hi} (${n-nFull} מתוך ${n})`));
+  if(F.max){const hi=reps.filter(r=>r.peak>F.max).length;if(hi)L.push(bad(`מרימים גבוה מדי, מעל הכתפיים (${hi} חזרות). עוצרים בגובה הכתף.`))}
+  if(F.lean){const sw=reps.filter(r=>{const l=r.lean.filter(x=>x!=null);return l.length&&Math.max(...l)-Math.min(...l)>F.lean}).length;L.push(sw?bad(`יש תנופה או נדנוד בגוף ב-${sw} חזרות. להוריד משקל ולשמור על הגוף יציב.`):ok('הגוף יציב, בלי תנופה'))}
+  if(F.knee){const sq=reps.filter(r=>Math.min(...r.knee.filter(x=>x!=null))<F.knee).length;if(sq)L.push(bad(`הברכיים מתכופפות יותר מדי (${sq} חזרות). זה הופך לסקוואט. ברכיים רכות וקבועות, התנועה מהאגן.`))}
+  if(F.chin){const c=reps.filter(r=>r.chin.length&&Math.max(...r.chin)>0).length;L.push(c===n?ok('הסנטר עובר את המוט'):bad(`הסנטר לא עבר את המוט ב-${n-c} חזרות.`))}
+  const durs=reps.map(r=>r.end-r.start).filter(x=>x>0);const avg=durs.reduce((t,x)=>t+x,0)/durs.length;
+  L.push(avg<1.2?bad(`החזרות מהירות מדי (${avg.toFixed(1)} שנ׳ בממוצע). יורדים לאט, בערך 2 שניות.`):ok(`קצב מבוקר (${avg.toFixed(1)} שנ׳ לחזרה)`));
+  if(durs.length>=3&&durs[durs.length-1]>durs[0]*1.6)L.push(`<li>החזרות האחרונות איטיות בהרבה. סימן שהסט היה קרוב לכשל.</li>`);
+  const score=Math.round(100*(nDeep+nFull)/(2*n));
+  return {html:`<p><b style="font-size:22px">${score}</b>/100 טווח תנועה</p><ul>${L.join('')}</ul>`,facts:`${EX[k].n}: ${n} חזרות. ${L.map(x=>x.replace(/<[^>]+>/g,'')).join(' ')}`}}
+async function formAi(k,facts){const el=$('#fAi');if(!el)return;el.innerHTML='<p class="muted">המאמן מסכם…</p>';
+  try{const t=await gqCall([{role:'system',content:'אתה מאמן כוח לנער בן 14. ענה בעברית, 2–3 משפטים קצרים: מה טוב ומה הדבר האחד הכי חשוב לתקן, עם רמז פשוט לביצוע. בלי מספרים מומצאים.'},{role:'user',content:`תרגיל: ${EX[k].n}. הנחיה: ${EX[k].cue}. תוצאות הניתוח: ${facts}`}]);
+    el.innerHTML=`<div class="coachb" style="margin-top:12px"><span class="av">מ</span><p>${esc(String((t&&t.text)||'').trim())}</p></div>`}catch(e){el.innerHTML=''}}
+
 
 let AC=null;
 function ac(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){AC=null}return AC}
@@ -1593,6 +1779,9 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
   const act=a.dataset.act,d=a.dataset.d;
   switch(act){
     case 'sel':V.sel=a.dataset.date;go('today');break;
+    case 'demo':openDemo(a.dataset.k);break;
+    case 'form':openForm(a.dataset.k);break;
+    case 'form-pick':$('#formIn').click();break;
     case 'day-prev':{const n=addDays(V.sel,-1);if(diffDays(S.start,n)>=0)V.sel=n;render();break}
     case 'day-next':{const n=addDays(V.sel,1);if(diffDays(S.start,n)<=83)V.sel=n;render();break}
     case 'day-today':initSel();render();break;
