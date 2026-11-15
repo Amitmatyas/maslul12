@@ -1501,7 +1501,7 @@ let T3=null,G3=null,BODY=null;
 const TV='https://cdn.jsdelivr.net/npm/three@0.160.0/';
 async function three(){if(T3)return T3;const T=await import('three');const {GLTFLoader}=await import(TV+'examples/jsm/loaders/GLTFLoader.js');const {DRACOLoader}=await import(TV+'examples/jsm/loaders/DRACOLoader.js');const SU=await import(TV+'examples/jsm/utils/SkeletonUtils.js');T3={T,GLTFLoader,DRACOLoader,SU};return T3}
 async function bodyGltf(){if(BODY)return BODY;const {GLTFLoader,DRACOLoader}=await three();const l=new GLTFLoader();const d=new DRACOLoader();d.setDecoderPath(TV+'examples/jsm/libs/draco/gltf/');l.setDRACOLoader(d);
-  BODY=await new Promise((res,rej)=>l.load('body.glb?v=6',res,undefined,rej));return BODY}
+  BODY=await new Promise((res,rej)=>l.load('body.glb?v=7',res,undefined,rej));return BODY}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const MUSC={chest:'עיקרי',fdelt:'משני',tri:'משני'};
 const D3={
