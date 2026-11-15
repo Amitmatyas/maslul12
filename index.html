@@ -13,6 +13,7 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px)}</style>
 <title>נמרץ</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Karantina:wght@400;700&family=Rubik:wght@400;500;600;700&display=swap">
@@ -1496,79 +1497,101 @@ function demoDraw(k,t){const D=DEMO[k],p=demoPose(D,t),f=document.getElementById
   if(D.ld&&p[D.ld])g+=`<circle class="ld" cx="${p[D.ld][0]+(D.ld==='P'?6:0)}" cy="${p[D.ld][1]+(D.ld==='P'?12:0)}" r="8"/>`;
   f.innerHTML=g;const c=document.getElementById('dmC');const an=D.cable||D.line;if(c&&an&&p.W){c.setAttribute('x1',an[0]);c.setAttribute('y1',an[1]);c.setAttribute('x2',p.W[0]);c.setAttribute('y2',p.W[1])}return true}
 function demoStop(){demo3Stop();if(DM){cancelAnimationFrame(DM.raf);DM=null}}
-let T3=null,G3=null;
-async function three(){return T3||(T3=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'))}
-const lerp3=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+let T3=null,G3=null,BODY=null;
+const TV='https://cdn.jsdelivr.net/npm/three@0.160.0/';
+async function three(){if(T3)return T3;const T=await import('three');const {GLTFLoader}=await import(TV+'examples/jsm/loaders/GLTFLoader.js');const {DRACOLoader}=await import(TV+'examples/jsm/loaders/DRACOLoader.js');const SU=await import(TV+'examples/jsm/utils/SkeletonUtils.js');T3={T,GLTFLoader,DRACOLoader,SU};return T3}
+async function bodyGltf(){if(BODY)return BODY;const {GLTFLoader,DRACOLoader}=await three();const l=new GLTFLoader();const d=new DRACOLoader();d.setDecoderPath(TV+'examples/jsm/libs/draco/gltf/');l.setDRACOLoader(d);
+  BODY=await new Promise((res,rej)=>l.load('body.glb?v=4',res,undefined,rej));return BODY}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
-function ik(T,S,W,a,b,pole){const s=new T.Vector3(...S),w=new T.Vector3(...W);const u=w.clone().sub(s);let d=u.length();d=Math.min(d,a+b-1e-4);u.normalize();
-  const x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));const p=new T.Vector3(...pole);p.sub(u.clone().multiplyScalar(p.dot(u))).normalize();
-  return s.clone().add(u.multiplyScalar(x)).add(p.multiplyScalar(h)).toArray()}
+const MUSC={chest:'עיקרי',fdelt:'משני',tri:'משני'};
 const D3={
-  bench:{title:'לחיצת חזה בסמית',period:4.2,cam:{az:1.05,el:.55,r:3.2,tgt:[.2,.6,0]},
-    tl:[[0,.5,0,'נעילה למעלה, שכמות מכווצות'],[.5,2.3,1,'ירידה מבוקרת, 2 שניות'],[2.3,2.7,1,'נגיעה קלה בתחתית החזה'],[2.7,3.8,0,'דחיפה, בלי להקפיץ'],[3.8,4.2,0,'נעילה']],
-    pose(t){const y=1.0+(0.715-1.0)*t;return {P:[.36,.53,0],C:[.04,.675,0],Nk:[-.19,.6,0],H:[-.29,.61,0],S:[-.07,.6,.18],Hp:[.38,.52,.1],W:[.05,y,.39],eP:[.55,-1,.5],F:[.8,.06,.3],kP:[0,1,.25],bar:[.05,y]}},
-    scene(T,g,M){const box=(w,h,d,x,y,z,m)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o};
-      box(1.2,.07,.3,.12,.43,0,M.pad);for(const x of [-.35,.6])box(.06,.4,.24,x,.2,0,M.steel);
-      for(const z of [-.78,.78]){box(.06,2.1,.06,.05,1.05,z,M.steel);box(.5,.05,.06,.05,.02,z,M.steel)}box(.06,.06,1.62,.05,2.1,0,M.steel);
-      const bar=new T.Group();const rod=new T.Mesh(new T.CylinderGeometry(.014,.014,2.1,16),M.steel);rod.rotation.x=Math.PI/2;bar.add(rod);
-      for(const z of [-.62,.62]){const pl=new T.Mesh(new T.CylinderGeometry(.22,.22,.05,40),M.plate);pl.rotation.x=Math.PI/2;pl.position.z=z;bar.add(pl)}
-      g.add(bar);return {bar}},
-    upd(o,p){o.bar.position.set(p.bar[0],p.bar[1],0)},
-    hit:[.05,.7,0],
-    meas:p=>`מרפק מהגוף ${p.flare}° · אמה ${p.fore}° מהאנך`,
-    notes:['אחיזה: בערך פעם וחצי רוחב הכתפיים.','המוט נוגע בתחתית החזה, בקו הפטמות. לא בצוואר ולא בבטן.','מרפקים בזווית של 45–60° מהגוף, לא 90°.','בתחתית האמה אנכית, כף היד מעל המרפק.','שכמות מכווצות לאורך כל הסט, קשת קלה בגב, ישבן על הספסל, רגליים יציבות ברצפה.'],
-    mus:{chest:1,delt:.8,tri:.6}}
+  bench:{period:4.4,cam:{az:.85,el:.5,r:3.3,tgt:[0,.6,.25]},
+    tl:[[0,.5,0,'נעילה למעלה, שכמות מכווצות'],[.5,2.5,1,'ירידה מבוקרת, 2 שניות'],[2.5,2.9,1,'נגיעה קלה בתחתית החזה'],[2.9,4,0,'דחיפה, בלי להקפיץ'],[4,4.4,0,'נעילה']],
+    mus:{chest:1,fdelt:.5,tri:.5},
+    notes:['אחיזה: בערך פעם וחצי רוחב הכתפיים.','המוט נוגע בתחתית החזה, בקו הפטמות. לא בצוואר ולא בבטן.','מרפקים בזווית של 45–60° מהגוף, לא 90°.','בתחתית האמה כמעט אנכית, כף היד מעל המרפק בערך.','שכמות מכווצות לאורך כל הסט, קשת קלה בגב, ישבן על הספסל, רגליים יציבות ברצפה.']}
 };
 function demo3Stop(){if(G3){G3.stop=1;cancelAnimationFrame(G3.raf);try{G3.r.dispose()}catch(e){}G3=null}}
+function aimBone(T,b,dir,up){const p=b.parent;p.updateWorldMatrix(true,false);const Qp=new T.Quaternion();p.getWorldQuaternion(Qp);
+  const Qw0=Qp.clone().multiply(b.userData.q0);const y0=new T.Vector3(0,1,0).applyQuaternion(Qw0);
+  let Qw=new T.Quaternion().setFromUnitVectors(y0,dir.clone().normalize()).multiply(Qw0);
+  if(up){const z=new T.Vector3(0,0,1).applyQuaternion(Qw);const d=dir.clone().normalize();const u=up.clone().sub(d.clone().multiplyScalar(up.dot(d))).normalize();const zz=z.sub(d.clone().multiplyScalar(z.dot(d))).normalize();
+    let a=Math.acos(Math.max(-1,Math.min(1,zz.dot(u))));if(new T.Vector3().crossVectors(zz,u).dot(d)<0)a=-a;Qw=new T.Quaternion().setFromAxisAngle(d,a).multiply(Qw)}
+  b.quaternion.copy(Qp.invert().multiply(Qw));b.updateWorldMatrix(false,true)}
+function ik2(T,S,W,a,b,pole){const u=W.clone().sub(S);let d=Math.min(u.length(),a+b-1e-4);u.normalize();const x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));
+  const p=pole.clone().sub(u.clone().multiplyScalar(pole.dot(u))).normalize();return S.clone().add(u.multiplyScalar(x)).add(p.multiplyScalar(h))}
 async function open3D(k){const D=D3[k],el=$('#sheet');
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m"></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
-    <div class="d3leg"><span><i style="background:#e0452b"></i>שריר עיקרי</span><span><i style="background:#f0a24a"></i>שריר משני</span></div>
-    <ul class="d3n">${D.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
-  el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:20px">טוען…</p>';
-  let T;try{T=await three()}catch(e){box.innerHTML='<p class="muted" style="padding:20px">צריך חיבור לאינטרנט כדי לטעון את ההדגמה.</p>';return}
-  if(!$('#d3c'))return;box.innerHTML='';demo3Stop();
-  const W=box.clientWidth||340,Hh=Math.round(W*.85);const r=new T.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,devicePixelRatio));r.setSize(W,Hh);box.appendChild(r.domElement);
-  const sc=new T.Scene();sc.background=new T.Color(0x12151f);const cam=new T.PerspectiveCamera(38,W/Hh,.05,30);
-  sc.add(new T.HemisphereLight(0xffffff,0x2a2f40,1.1));const dl=new T.DirectionalLight(0xffffff,1.6);dl.position.set(2,4,3);sc.add(dl);const dl2=new T.DirectionalLight(0x9fb4ff,.5);dl2.position.set(-3,2,-2);sc.add(dl2);
-  const fl=new T.Mesh(new T.CircleGeometry(2.2,48),new T.MeshStandardMaterial({color:0x1d2232}));fl.rotation.x=-Math.PI/2;sc.add(fl);
-  const mat=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.55,metalness:0},o||{}));
-  const M={skin:mat(0xd9a27c),shorts:mat(0x26292f),shoe:mat(0xeeeeee),red:mat(0xe0452b,{roughness:.4}),org:mat(0xf0a24a,{roughness:.45}),pad:mat(0x202226),steel:mat(0xb8bdc6,{metalness:.8,roughness:.3}),plate:mat(0x15171b,{roughness:.6}),hit:mat(0x3ecf8e,{emissive:0x1d7a4f})};
-  const g=new T.Group();sc.add(g);const ext=D.scene(T,g,M);
-  const cyl=new T.CylinderGeometry(1,1,1,20),sph=new T.SphereGeometry(1,24,16);
-  const seg=m=>{const o=new T.Mesh(cyl,m);g.add(o);return o},ball=m=>{const o=new T.Mesh(sph,m);g.add(o);return o};
-  const Y=new T.Vector3(0,1,0);const put=(o,a,b,rad)=>{const A=new T.Vector3(...a),B=new T.Vector3(...b),d=B.clone().sub(A);o.position.copy(A).add(B).multiplyScalar(.5);o.scale.set(rad,d.length(),rad);o.quaternion.setFromUnitVectors(Y,d.normalize())};
-  const at=(o,p,rad)=>{o.position.set(...p);o.scale.setScalar(rad)};
-  const mus=D.mus||{};const mm=v=>v>=1?M.red:v>0?M.org:M.skin;
-  const B={torso:seg(M.skin),chestBar:seg(M.skin),neck:seg(M.skin),head:ball(M.skin),pelvis:seg(M.shorts),hit:ball(M.hit),pec:[ball(mm(mus.chest)),ball(mm(mus.chest))],L:[]};
-  for(let i=0;i<2;i++)B.L.push({sh:ball(mm(mus.delt)),ua:seg(mm(mus.tri)),el:ball(M.skin),fa:seg(M.skin),hd:ball(M.skin),th:seg(M.shorts),kn:ball(M.skin),sn:seg(M.skin),ft:seg(M.shoe),hp:ball(M.shorts)});
-  const flip=(p,s)=>[p[0],p[1],p[2]*s];
-  const tl=D.tl,per=D.period;let az=D.cam.az,el2=D.cam.el,rad=D.cam.r;const tgt=new T.Vector3(...D.cam.tgt);
-  const setCam=()=>{cam.position.set(tgt.x+rad*Math.cos(el2)*Math.cos(az),tgt.y+rad*Math.sin(el2),tgt.z+rad*Math.cos(el2)*Math.sin(az));cam.lookAt(tgt)};
+    <div class="d3leg"><span><i style="background:#d9412b"></i>שריר עיקרי</span><span><i style="background:#e98a5a"></i>שריר משני</span></div>
+    <ul class="d3n">${D.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
+    <p class="muted" style="font-size:11px;margin-top:10px">מודל אנטומי: Z-Anatomy (CC BY-SA 4.0)</p></div>`;
+  el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:40px 20px;text-align:center">טוען את המודל…</p>';
+  let L3,gl;try{L3=await three();gl=await bodyGltf()}catch(e){box.innerHTML='<p class="muted" style="padding:20px">צריך חיבור לאינטרנט כדי לטעון את ההדגמה.</p>';return}
+  if(!$('#d3c'))return;const T=L3.T;box.innerHTML='';demo3Stop();
+  const W=box.clientWidth||340,Hh=Math.round(W*.9);const r=new T.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,devicePixelRatio));r.setSize(W,Hh);r.outputColorSpace=T.SRGBColorSpace;r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;box.appendChild(r.domElement);
+  const sc=new T.Scene();sc.background=new T.Color(0xf4f5f7);const cam=new T.PerspectiveCamera(35,W/Hh,.05,30);
+  sc.add(new T.HemisphereLight(0xffffff,0xb8bcc8,1.6));const dl=new T.DirectionalLight(0xffffff,2.2);dl.position.set(1.6,3.2,1.2);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-1.5,right:1.5,top:1.5,bottom:-1.5});dl.shadow.bias=-.0005;sc.add(dl);
+  const fill=new T.DirectionalLight(0xffffff,.7);fill.position.set(-2,1.5,-1.5);sc.add(fill);
+  const fl=new T.Mesh(new T.CircleGeometry(2.4,64),new T.ShadowMaterial({opacity:.18}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;sc.add(fl);
+  const mat=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.6,metalness:0},o||{}));
+  const M={musc:mat(0xb4b6bd,{roughness:.5}),p1:mat(0xd9412b,{roughness:.45}),p2:mat(0xe98a5a,{roughness:.5}),bone:mat(0xe9e4d8,{roughness:.7}),shorts:mat(0x1d1f24,{roughness:.8,side:T.DoubleSide}),white:mat(0xf2f3f5,{roughness:.4}),pad:mat(0x202226,{roughness:.7}),steel:mat(0x9aa0aa,{metalness:.8,roughness:.3}),plate:mat(0x18191c,{roughness:.55})};
+  const body=L3.SU.clone(gl.scene);const bones={};const skinned=[];
+  body.traverse(o=>{if(o.isBone){bones[o.name]=o;o.userData.q0=o.quaternion.clone()}if(o.isMesh){skinned.push(o);o.castShadow=true;o.frustumCulled=false;const g=o.material&&o.material.name||o.name;const v=D.mus[g];
+    o.material=g==='bones'?M.bone:g==='shorts'?M.shorts:v>=1?M.p1:v>0?M.p2:M.musc}});
+  const SK=bones;
+  body.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});
+  body.rotation.x=-Math.PI/2;sc.add(body);body.updateMatrixWorld(true);
+  const wp=n=>SK[n].getWorldPosition(new T.Vector3());
+  const box3=new T.Box3().setFromObject(body);const BT=.47;body.position.y+=BT-box3.min.y+.005;body.position.z+=.12;body.updateMatrixWorld(true);
+  const len=(a,b)=>wp(a).distanceTo(wp(b));const LUA=len('upperarmL','forearm1L'),LFA=len('forearm1L','handL'),LTH=len('thighL','shinL'),LSH=len('shinL','footL');
+  const shL=wp('upperarmL'),shR=wp('upperarmR');const touchZ=shL.z+.12;let chestTop=null;
+  for(const o of skinned){if((o.material===M.p1)){const pa=o.geometry.attributes.position;const v=new T.Vector3();for(let i=0;i<pa.count;i+=3){v.fromBufferAttribute(pa,i).applyMatrix4(o.matrixWorld);if(Math.abs(v.x)<.12&&Math.abs(v.z-touchZ)<.035&&(!chestTop||v.y>chestTop.y))chestTop=v.clone()}}}
+  if(!chestTop)chestTop=new T.Vector3(0,BT+.25,shL.z+.15);
+  const barBot=chestTop.y+.016,GRIP=Math.max(.3,Math.abs(shL.x)*1.95);
+  const topY=shL.y+Math.sqrt(Math.max(.01,Math.pow((LUA+LFA)*.97,2)-Math.pow(GRIP-Math.abs(shL.x),2)-Math.pow(touchZ-shL.z,2)))+.07;
+  const g=new T.Group();sc.add(g);const bx=(w,h,d,x,y,z,m)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o};
+  const hipZ=wp('thighL').z,headZ=wp('head').z;
+  bx(.3,.07,(hipZ+.25)-(headZ-.12),0,BT-.035,((hipZ+.25)+(headZ-.12))/2,M.pad);for(const z of [headZ,hipZ+.15])bx(.06,BT-.07,.06,0,(BT-.07)/2,z,M.white);bx(.06,.05,hipZ+.25-headZ,0,.025,(hipZ+.25+headZ)/2,M.white);
+  for(const x of [-.72,.72]){bx(.07,2.05,.07,x,1.025,touchZ-.12,M.white);bx(.07,2.05,.07,x,1.025,touchZ+.12,M.white);bx(.07,.06,.4,x,.03,touchZ,M.white);bx(.07,.07,.4,x,2.05,touchZ,M.white)}
+  bx(1.5,.07,.07,0,2.05,touchZ-.12,M.white);
+  const bar=new T.Group();const rod=new T.Mesh(new T.CylinderGeometry(.014,.014,2.0,20),M.steel);rod.rotation.z=Math.PI/2;bar.add(rod);
+  for(const x of [-.6,.6]){const pl=new T.Mesh(new T.CylinderGeometry(.225,.225,.045,48),M.plate);pl.rotation.z=Math.PI/2;pl.position.x=x;pl.castShadow=true;bar.add(pl);const c=new T.Mesh(new T.CylinderGeometry(.03,.03,.1,16),M.steel);c.rotation.z=Math.PI/2;c.position.x=x*.97;bar.add(c)}
+  for(const x of [-.72,.72]){const sl=new T.Mesh(new T.BoxGeometry(.1,.05,.09),M.white);sl.position.x=x;bar.add(sl)}
+  g.add(bar);
+  const UP=new T.Vector3(0,1,0),FEET=new T.Vector3(0,0,1);
+  const pose=t=>{const by=topY+(barBot-topY)*t;bar.position.set(0,by,touchZ);
+    for(const [S,s] of [['L',1],['R',-1]]){
+      const sh=wp('upperarm'+S),Wt=new T.Vector3(s*GRIP,by-.04,touchZ-.03);
+      const E=ik2(T,sh,Wt,LUA,LFA,new T.Vector3(Wt.x-sh.x,-.35,Wt.z-sh.z));
+      aimBone(T,SK['upperarm'+S],E.clone().sub(sh));
+      const fd=Wt.clone().sub(E);const mid=new T.Vector3(s*.5,0,.5).normalize();
+      aimBone(T,SK['forearm1'+S],fd,mid);aimBone(T,SK['forearm2'+S],fd,FEET);
+      aimBone(T,SK['hand'+S],fd.clone().normalize().add(new T.Vector3(0,0,-.35)),FEET);
+      const curl=[[1,1.25,1.05,.8],[2,1.25,1.05,.8],[3,1.25,1.05,.8],[4,1.2,1.05,.8]];
+      for(const [f,a,b,c] of curl){for(const [sg,ang] of [['P',a],['M',b],['D',c]]){const bn=SK[`f${f}${sg}${S}`];if(bn){bn.quaternion.copy(bn.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),ang));bn.updateWorldMatrix(false,true)}}}
+      const tb=SK['thumb0'+S];if(tb){tb.quaternion.copy(tb.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),.5));tb.updateWorldMatrix(false,true)}
+      for(const sg of ['f0P','f0D']){const bn=SK[sg+S];if(bn){bn.quaternion.copy(bn.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),.9));bn.updateWorldMatrix(false,true)}}
+      const hp=wp('thigh'+S),At=new T.Vector3(s*.23,.1,hp.z+.47);const K=ik2(T,hp,At,LTH,LSH,new T.Vector3(s*.3,1,0));
+      aimBone(T,SK['thigh'+S],K.clone().sub(hp),UP);aimBone(T,SK['shin'+S],At.clone().sub(K),FEET);
+      aimBone(T,SK['foot'+S],new T.Vector3(s*.15,-.35,1),UP);aimBone(T,SK['toes'+S],new T.Vector3(s*.1,-.05,1),UP)}
+    const e=SK.forearm1L.getWorldPosition(new T.Vector3()),sh=wp('upperarmL'),w=SK.handL.getWorldPosition(new T.Vector3());
+    const ua=e.clone().sub(sh).normalize();
+    const fore=Math.round(w.clone().sub(e).normalize().angleTo(UP)*180/Math.PI);return {flare:Math.round(Math.atan2(Math.abs(ua.x),ua.z)*180/Math.PI),fore}};
+  let az=D.cam.az,el2=D.cam.el,rad=D.cam.r;const tgt=new T.Vector3(D.cam.tgt[0],D.cam.tgt[1],touchZ+.05);
+  const setCam=()=>{cam.position.set(tgt.x+rad*Math.cos(el2)*Math.sin(az),tgt.y+rad*Math.sin(el2),tgt.z+rad*Math.cos(el2)*Math.cos(az));cam.lookAt(tgt)};
   const cv=r.domElement;cv.style.touchAction='none';const pts=new Map();let pd=0;
   cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY])});
   cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const o=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);
-    if(pts.size===1){az+=(e.clientX-o[0])*.01;el2=Math.max(-.1,Math.min(1.45,el2+(e.clientY-o[1])*.01))}
-    else if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)rad=Math.max(.9,Math.min(5,rad*pd/d));pd=d}});
+    if(pts.size===1){az-=(e.clientX-o[0])*.01;el2=Math.max(-.05,Math.min(1.5,el2+(e.clientY-o[1])*.01))}
+    else if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)rad=Math.max(.8,Math.min(5,rad*pd/d));pd=d}});
   const up=e=>{pts.delete(e.pointerId);pd=0};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-  cv.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(.9,Math.min(5,rad*(1+e.deltaY*.001)))},{passive:false});
-  const ph=$('#d3ph'),me=$('#d3m');let lastPh='';
-  const t0=performance.now();G3={r};const self=G3;
-  const frame=now=>{if(self.stop)return;const tt=((now-t0)/1000)%per;const seg_=tl.find(s=>tt>=s[0]&&tt<s[1])||tl[0];
-    const i=tl.indexOf(seg_),prev=i?tl[i-1][2]:tl[tl.length-1][2];const f=(tt-seg_[0])/(seg_[1]-seg_[0]);const t=prev+(seg_[2]-prev)*ease(f);
-    if(seg_[3]!==lastPh){lastPh=seg_[3];if(ph)ph.textContent=lastPh}
-    const p=D.pose(t);D.upd(ext,p);
-    const spine=new T.Vector3(...p.Nk).sub(new T.Vector3(...p.P)).normalize(),lat=new T.Vector3(0,0,1),front=spine.clone().cross(lat).normalize();
-    put(B.torso,p.P,p.C,.135);put(B.chestBar,flip(p.S,1),flip(p.S,-1),.075);put(B.neck,p.C,p.H,.05);at(B.head,p.H,.105);put(B.pelvis,flip(p.Hp,1),flip(p.Hp,-1),.11);
-    at(B.hit,D.hit,t>.97?.03:.0001);
-    let flare=0,fore=0;
-    [1,-1].forEach((s,i)=>{const L=B.L[i],S=flip(p.S,s),Wr=flip(p.W,s),E=ik(T,S,Wr,.3,.27,flip(p.eP,s)),Hp=flip(p.Hp,s),F=flip(p.F,s),K=ik(T,Hp,F,.45,.44,flip(p.kP,s));
-      at(L.sh,S,.065);put(L.ua,S,E,.05);at(L.el,E,.042);put(L.fa,E,Wr,.04);at(L.hd,Wr,.045);at(L.hp,Hp,.09);put(L.th,Hp,K,.075);at(L.kn,K,.055);put(L.sn,K,F,.05);put(L.ft,F,[F[0]+.06,F[1]-.03,F[2]],.045);
-      const pc=new T.Vector3(...p.C).lerp(new T.Vector3(...S),.55).add(front.clone().multiplyScalar(.045));const pm=B.pec[i];pm.position.copy(pc);
-      pm.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(spine,front,lat));pm.scale.set(.1,.04,.1);
-      if(i===0){const ua=new T.Vector3(...E).sub(new T.Vector3(...S)).normalize();flare=Math.round(ua.angleTo(spine.clone().negate())*180/Math.PI);
-        const fa=new T.Vector3(...Wr).sub(new T.Vector3(...E)).normalize();fore=Math.round(fa.angleTo(Y)*180/Math.PI)}});
-    if(me&&D.meas)me.textContent=D.meas({flare,fore,t});
+  cv.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(.8,Math.min(5,rad*(1+e.deltaY*.001)))},{passive:false});
+  const ph=$('#d3ph'),me=$('#d3m');let lastPh='';const tl=D.tl,per=D.period;
+  const t0=performance.now();G3={r,SK,T,sc,view:(a,e,rr,tx,ty,tz)=>{az=a;el2=e;rad=rr;if(tx!=null)tgt.set(tx,ty,tz)}};const self=G3;
+  const frame=now=>{if(self.stop)return;const tt=self.fixT!=null?self.fixT:((now-t0)/1000)%per;const sg=tl.find(s=>tt>=s[0]&&tt<s[1])||tl[0];
+    const i=tl.indexOf(sg),prev=i?tl[i-1][2]:tl[tl.length-1][2];const t=prev+(sg[2]-prev)*ease((tt-sg[0])/(sg[1]-sg[0]));
+    if(sg[3]!==lastPh){lastPh=sg[3];if(ph)ph.textContent=lastPh}
+    const m=pose(t);if(me)me.textContent=`מרפק מהגוף ${m.flare}° · אמה ${m.fore}° מהאנך`;
     setCam();r.render(sc,cam);self.raf=requestAnimationFrame(frame)};
   self.raf=requestAnimationFrame(frame)}
 
