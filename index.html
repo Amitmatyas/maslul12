@@ -1606,33 +1606,237 @@ function openDemo(k){demoStop();if(D3[k])return open3D(k);const el=$('#sheet');
     ${demoSvg(k)}<p style="margin-top:12px">${esc(EX[k].cue)}</p>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
   el.hidden=false;const t0=performance.now();DM={k};const loop=now=>{if(!DM)return;const ph=((now-t0)/2600)%1;if(!demoDraw(k,ph<.5?ph*2:2-ph*2)){DM=null;return}DM.raf=requestAnimationFrame(loop)};DM.raf=requestAnimationFrame(loop)}
 
-const LM={ls:11,rs:12,le:13,re:14,lw:15,rw:16,lh:23,rh:24,lk:25,rk:26,la:27,ra:28,lf:31,rf:32,nose:0};
-const J={elbow:['s','e','w'],shoulder:['h','s','e'],shoulderW:['h','s','w'],hip:['s','h','k'],knee:['h','k','a'],ankle:['k','a','f'],body:['s','h','a']};
+// ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
+const LM={nose:0,ls:11,rs:12,le:13,re:14,lw:15,rw:16,lh:23,rh:24,lk:25,rk:26,la:27,ra:28,lf:31,rf:32};
+const FJ={elbow:['s','e','w'],shoulder:['h','s','e'],shoulderW:['h','s','w'],hip:['s','h','k'],knee:['h','k','a'],ankle:['k','a','f'],body:['s','h','a']};
+// j: joint angle measured · min/max: the angle each end of the rep must reach (min end ≤ min, max end ≥ max)
+// lo/hi: message when the min / max end is not reached · work: which end is the effort end ('min'|'max')
+// pos: required body position · fix: points that must stay still · mov: point that must travel
 const FORM={
-  bench:{j:'elbow',flex:95,ext:155,tip:'מניחים את הטלפון בצד הספסל, בגובה הספסל.',lo:'המוט לא יורד מספיק. צריך להגיע לחזה.',hi:'לא נועלים את הידיים למעלה.'},
-  incline:{j:'elbow',flex:95,ext:155,tip:'מצלמים מהצד.',lo:'לא יורדים מספיק. המשקולות צריכות להגיע לגובה החזה.',hi:'לא פושטים עד הסוף למעלה.'},
-  ohp:{j:'elbow',flex:95,ext:160,lean:15,tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'המשקולות לא יורדות עד הכתפיים.',hi:'לא נועלים מעל הראש.'},
-  pushdown:{j:'elbow',flex:85,ext:160,lean:12,tip:'מצלמים מהצד.',lo:'המרפקים לא מתכופפים מספיק למעלה.',hi:'לא פושטים עד הסוף למטה.'},
-  lateral:{j:'shoulder',inv:1,flex:25,ext:80,max:105,lean:12,tip:'מצלמים מלפנים, כל פלג הגוף העליון בפריים.',lo:'הידיים לא מגיעות לגובה הכתפיים.',hi:'הידיים לא יורדות עד למטה בין חזרות.'},
-  revfly:{j:'shoulderW',inv:1,flex:30,ext:80,lean:12,tip:'מצלמים מלפנים.',lo:'פתיחה חלקית. פותחים עד קו הגוף.',hi:'לא חוזרים עד הסוף קדימה.'},
-  pullup:{j:'elbow',flex:75,ext:150,chin:1,tip:'מצלמים מהצד או מלפנים, כולל המוט.',lo:'הסנטר לא עובר את המוט.',hi:'לא יורדים לתלייה מלאה.'},
-  hlr:{j:'hip',flex:100,ext:160,lean:25,tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'הרגליים לא מגיעות ל-90 מעלות.',hi:'לא יורדים עד הסוף בין החזרות.'},
-  crow:{j:'elbow',flex:80,ext:145,lean:20,tip:'מצלמים מהצד.',lo:'לא מושכים עד הבטן.',hi:'לא פושטים את הידיים עד הסוף.'},
-  tbar:{j:'elbow',flex:85,ext:145,lean:15,tip:'מצלמים מהצד.',lo:'המשיכה קצרה. מושכים עד שהמוט נוגע בחזה.',hi:'לא פושטים את הידיים עד הסוף למטה.'},
-  curl:{j:'elbow',flex:60,ext:145,lean:10,tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף למעלה.',hi:'לא פושטים עד הסוף למטה.'},
-  bss:{j:'knee',flex:100,ext:155,lean:30,tip:'מצלמים מהצד, הרגל הקדמית קרובה לטלפון.',lo:'לא יורדים מספיק. הירך הקדמית צריכה להגיע למקבילה לרצפה.',hi:'לא מזדקפים עד הסוף.'},
-  bbrdl:{j:'hip',flex:115,ext:160,knee:130,tip:'מצלמים מהצד.',lo:'הציר קצר. דוחפים את האגן אחורה עד מתיחה.',hi:'לא מזדקפים עד הסוף.'},
-  legext:{j:'knee',flex:100,ext:160,tip:'מצלמים מהצד.',lo:'מתחילים מטווח קצר. יורדים עד 90 מעלות.',hi:'לא פושטים את הברך עד הסוף.'},
-  legcurl:{j:'knee',flex:90,ext:150,tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף.',hi:'לא פושטים עד הסוף בין החזרות.'},
-  dcrunch:{j:'hip',flex:95,ext:140,tip:'מצלמים מהצד.',lo:'הכפיפה קצרה. עולים עד שהגב התחתון מתרומם.',hi:'לא יורדים עד הסוף.'},
-  hackcalf:{j:'ankle',inv:1,flex:95,ext:110,tip:'מצלמים מהצד, קרוב לכפות הרגליים.',lo:'עולים לא מספיק גבוה על קצות האצבעות.',hi:'לא יורדים עד מתיחה מלאה.'},
-  plank:{static:1,tip:'מצלמים מהצד, כל הגוף בפריים.'}
+  bench:{j:'elbow',m:'up',rj:'elbowR',rfb:125,armSee:1,view:'side',min:75,max:155,work:'min',pos:'lie',fix:'s',mov:'w',tip:'מניחים את הטלפון בצד הספסל, בגובה הספסל, קצת לכיוון הראש (לא בדיוק מהצד), כך שרואים את המרפק והמוט.',lo:'המוט לא יורד מספיק. צריך להגיע לחזה.',hi:'לא נועלים את הידיים למעלה.'},
+  incline:{j:'elbow',m:'up',rj:'elbowR',rfb:125,armSee:1,view:'side',min:75,max:155,work:'min',pos:'incl',fix:'h',mov:'w',tip:'מצלמים מהצד.',lo:'לא יורדים מספיק. המשקולות צריכות להגיע לגובה החזה.',hi:'לא פושטים עד הסוף למעלה.'},
+  ohp:{j:'elbow',m:'up',wj:'elbowR',wfb:125,view:'side',min:80,max:145,work:'max',lean:15,pos:'up',fix:'h',mov:'w',tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'המשקולות לא יורדות עד הכתפיים.',hi:'לא נועלים מעל הראש.'},
+  pushdown:{j:'elbow',view:'side',min:95,max:160,work:'max',lean:12,pos:'up',fix:'he',mov:'w',tip:'מצלמים מהצד.',lo:'המרפקים לא מתכופפים מספיק למעלה.',hi:'לא פושטים עד הסוף למטה.'},
+  lateral:{j:'shoulder',view:'front',min:32,max:75,work:'max',top:125,lean:12,pos:'up',fix:'h',mov:'w',tip:'מצלמים מלפנים, כל פלג הגוף העליון בפריים.',lo:'הידיים לא יורדות עד למטה בין חזרות.',hi:'הידיים לא מגיעות לגובה הכתפיים.'},
+  revfly:{j:'spread',view:'front',min:30,max:60,work:'max',lean:12,pos:'up',fix:'h',mov:'w',tip:'מצלמים מלפנים.',lo:'לא חוזרים עד הסוף קדימה.',hi:'פתיחה חלקית. פותחים עד קו הגוף.'},
+  pullup:{j:'elbow',m:'up',rj:'elbow',view:'side',min:50,max:150,work:'min',pos:'hang',fix:'w',mov:'s',tip:'מצלמים מהצד או מלפנים, כולל המוט.',lo:'הסנטר לא עובר את המוט.',hi:'לא יורדים לתלייה מלאה.'},
+  hlr:{j:'hip',view:'side',min:108,max:160,work:'min',twoLegs:1,lean:25,pos:'hang',fix:'ws',mov:'a',tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'הרגליים לא מגיעות ל-90 מעלות.',hi:'לא יורדים עד הסוף בין החזרות.'},
+  crow:{j:'elbow',view:'side',min:95,max:145,work:'min',lean:26,pos:'sit',fix:'h',mov:'w',tip:'מצלמים מהצד.',lo:'לא מושכים עד הבטן.',hi:'לא פושטים את הידיים עד הסוף.'},
+  tbar:{j:'elbow',view:'side',min:85,max:145,work:'min',lean:15,pos:'bent',fix:'a',mov:'w',tip:'מצלמים מהצד.',lo:'המשיכה קצרה. מושכים עד שהמוט נוגע בחזה.',hi:'לא פושטים את הידיים עד הסוף למטה.'},
+  curl:{j:'elbow',view:'side',min:60,max:145,work:'min',lean:10,pos:'up',fix:'se',mov:'w',tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף למעלה.',hi:'לא פושטים עד הסוף למטה.'},
+  bss:{j:'knee',view:'side',pick:'lowfoot',min:105,max:155,work:'min',lean:30,pos:'stand',fix:'a',mov:'h',tip:'מצלמים מהצד, הרגל הקדמית קרובה לטלפון.',lo:'לא יורדים מספיק. הירך הקדמית צריכה להגיע למקבילה לרצפה.',hi:'לא מזדקפים עד הסוף.'},
+  bbrdl:{j:'hip',view:'side',min:115,max:160,work:'min',knee:130,pos:'stand',fix:'a',mov:'s',tip:'מצלמים מהצד.',lo:'הציר קצר. דוחפים את האגן אחורה עד מתיחה.',hi:'לא מזדקפים עד הסוף.'},
+  legext:{j:'knee',view:'side',min:110,max:160,work:'max',pos:'sit',fix:'s',mov:'a',tip:'מצלמים מהצד.',lo:'מתחילים מטווח קצר. יורדים עד 90 מעלות.',hi:'לא פושטים את הברך עד הסוף.'},
+  legcurl:{j:'knee',view:'side',min:100,max:150,work:'min',fix:'s',mov:'a',tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף.',hi:'לא פושטים עד הסוף בין החזרות.'},
+  dcrunch:{j:'hip',view:'side',min:105,max:140,work:'min',fix:'a',mov:'s',tip:'מצלמים מהצד.',lo:'הכפיפה קצרה. עולים עד שהגב התחתון מתרומם.',hi:'לא יורדים עד הסוף.'},
+  hackcalf:{j:'ankle',view:'side',min:95,max:110,work:'max',amp:25,pos:'stand',tip:'מצלמים מהצד, קרוב לכפות הרגליים.',lo:'לא יורדים עד מתיחה מלאה.',hi:'עולים לא מספיק גבוה על קצות האצבעות.'},
+  plank:{static:1,view:'side',pos:'flat',tip:'מצלמים מהצד, כל הגוף בפריים.'}
 };
-let FM=null,POSE=null;
+const FPOSMSG={lie:'לא זיהיתי שכיבה על ספסל. הגוף צריך להיות שוכב, והידיים מעל הכתפיים.',incl:'לא זיהיתי ישיבה על ספסל משופע.',up:'לא זיהיתי עמידה זקופה.',
+  hang:'לא זיהיתי תלייה על מתח. הידיים צריכות להחזיק מעל הראש, והגוף תלוי מתחתיהן.',sit:'לא זיהיתי ישיבה במכשיר.',bent:'לא זיהיתי הטיה קדימה עם גב ישר.',
+  stand:'לא זיהיתי עמידה. רגליים על הרצפה, כל הגוף בפריים.',flat:'לא זיהיתי פלאנק. הגוף צריך להיות אופקי, קרוב לרצפה.'};
+const FPN={s:['הכתפיים','זזות','נשארות'],e:['המרפקים','זזים','נשארים'],w:['הידיים','זזות','נשארות'],h:['האגן','זז','נשאר'],a:['כפות הרגליים','זזות','נשארות'],k:['הברכיים','זזות','נשארות']};
+const fAng=(a,b,c)=>{if(!a||!b||!c)return null;const v1x=a.x-b.x,v1y=a.y-b.y,v2x=c.x-b.x,v2y=c.y-b.y;const d=Math.hypot(v1x,v1y)*Math.hypot(v2x,v2y);if(d<1e-6)return null;return Math.acos(Math.max(-1,Math.min(1,(v1x*v2x+v1y*v2y)/d)))*180/Math.PI};
+const fMed=a=>{const b=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);return b.length?b[b.length>>1]:null};
+const fPct=(a,p)=>{const b=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);return b.length?b[Math.min(b.length-1,Math.max(0,Math.round((b.length-1)*p)))]:null};
+// frames: [{t, lm:[{x,y,visibility}]*33 normalised | null}], W/H: video size in px
+function formEngine(k,frames,W,H){
+  const F=FORM[k],VT=.35;
+  // 1. pixel landmarks for both sides
+  const raw=frames.filter(f=>f&&f.lm).map(f=>{const g=(n)=>{const p=f.lm[LM[n]];return p&&(p.visibility==null||p.visibility>=VT)?{x:p.x*W,y:p.y*H,v:p.visibility==null?1:p.visibility}:null};
+    const o={t:f.t,l:{},r:{},nose:g('nose')};for(const j of ['s','e','w','h','k','a','f'])o.l[j]=g('l'+j),o.r[j]=g('r'+j);return o});
+  if(raw.length<10)return {bad:'body'};
+  const T0s=fMed(raw.map(f=>{const a=f.l.s&&f.l.h?Math.hypot(f.l.s.x-f.l.h.x,f.l.s.y-f.l.h.y):null,b=f.r.s&&f.r.h?Math.hypot(f.r.s.x-f.r.h.x,f.r.s.y-f.r.h.y):null;return a||b}))||100;
+  // undo left/right swaps: compare each frame with the median of its neighbours (unswapped majority)
+  {const JJ=['s','e','w','h','k','a','f'];const dd=(p,q)=>p&&q?Math.hypot(p.x-q.x,p.y-q.y):null;
+    const ref=(i,sd,j)=>{const xs=[],ys=[];for(let q=Math.max(0,i-4);q<=Math.min(raw.length-1,i+4);q++){if(q===i)continue;const p=raw[q][sd][j];if(p){xs.push(p.x);ys.push(p.y)}}return xs.length>=3?{x:fMed(xs),y:fMed(ys)}:null};
+    const flip=[];for(let i=0;i<raw.length;i++){const f=raw[i];let ci=0,cs=0,n=0;for(const j of JJ){const L=ref(i,'l',j),R=ref(i,'r',j);const a=dd(f.l[j],L),b=dd(f.r[j],R),c=dd(f.l[j],R),d=dd(f.r[j],L);if(a!=null&&b!=null&&c!=null&&d!=null){ci+=a+b;cs+=c+d;n++}}
+      flip.push(n>=3&&cs<.45*ci&&ci/n>.25*T0s)}
+    raw.forEach((f,i)=>{if(flip[i]){const t=f.l;f.l=f.r;f.r=t}})}
+  // drop short glitches: a point that jumps away in one frame, sits there 1-5 frames, and jumps back
+  {const dd=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
+    for(const sd of ['l','r'])for(const j of ['s','e','w','h','k','a','f']){
+      for(let i=1;i<raw.length-1;i++){const a=raw[i-1][sd][j],b=raw[i][sd][j];if(!a||!b)continue;const jmp=dd(a,b);if(jmp<.2*T0s)continue;
+        const z=i>=2?raw[i-2][sd][j]:null;if(z&&dd(z,a)>.3*jmp)continue;
+        for(let kk=1;kk<=5&&i+kk<raw.length;kk++){const c=raw[i+kk][sd][j];if(!c)continue;if(dd(c,a)>=.5*jmp)continue;
+          let ok=true;for(let q=i;q<i+kk;q++){const p=raw[q][sd][j];if(!p)continue;if(dd(p,b)>.35*jmp||dd(p,a)<.6*jmp){ok=false;break}}
+          if(ok){for(let q=i;q<i+kk;q++)raw[q][sd][j]=null;i+=kk}break}}}}
+  const torOf=f=>{const L=f.l.s&&f.l.h?Math.hypot(f.l.s.x-f.l.h.x,f.l.s.y-f.l.h.y):null,R=f.r.s&&f.r.h?Math.hypot(f.r.s.x-f.r.h.x,f.r.s.y-f.r.h.y):null;return L&&R?Math.max(L,R):(L||R)};
+  const tor=fMed(raw.map(torOf));if(!tor)return {bad:'body'};
+  const tq=raw.map(torOf);raw.forEach((f,i)=>{const w=tq.slice(Math.max(0,i-6),i+7).filter(x=>x);const m=w.length>=3?fMed(w):tor;f.tor=Math.max(.75*tor,Math.min(1.33*tor,m))});
+  // typical projected limb lengths (to drop frames where a point jumped)
+  const LEN={};for(const sd of ['l','r'])for(const [p,q] of [['s','e'],['e','w'],['h','k'],['k','a'],['a','f'],['s','h'],['h','s']]){const v=raw.map(f=>f[sd][p]&&f[sd][q]?Math.hypot(f[sd][p].x-f[sd][q].x,f[sd][p].y-f[sd][q].y):null);LEN[sd+p+q]=fPct(v,.75);LEN[sd+q+p]=LEN[sd+p+q]}
+  // metric of one side in one frame
+  const met=(name,f,sd)=>{const P=f[sd];
+    if(name==='elbowR'){const a=P.s,b=P.e,c=P.w;if(!a||!b||!c)return null;const r1=Math.hypot(a.x-b.x,a.y-b.y)/(LEN[sd+'se']||1),r2=Math.hypot(c.x-b.x,c.y-b.y)/(LEN[sd+'ew']||1);if(r1<.75||r2<.75||r1>1.5||r2>1.5)return null;return fAng(a,b,c)}
+    if(FJ[name]){const J=FJ[name];const a=P[J[0]],b=P[J[1]],c=P[J[2]];if(!a||!b||!c)return null;
+      const L1=LEN[sd+J[0]+J[1]],L2=LEN[sd+J[1]+J[2]];if(L1&&L2){const r1=Math.hypot(a.x-b.x,a.y-b.y)/L1,r2=Math.hypot(c.x-b.x,c.y-b.y)/L2;if(r1<.55||r1>1.6||r2<.55||r2>1.6)return null}
+      return fAng(a,b,c)}
+    if(name==='reach'){if(!P.s||!P.w)return null;const d=Math.hypot(P.s.x-P.w.x,P.s.y-P.w.y)/f.tor;const c=(.36+.2916-d*d)/(2*.6*.54);return Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI}
+    const armOk=()=>{if(!P.e||!P.w||!P.s)return true;const L2=LEN[sd+'ew'],L1=LEN[sd+'se'];const r2=L2?Math.hypot(P.e.x-P.w.x,P.e.y-P.w.y)/L2:1,r1=L1?Math.hypot(P.s.x-P.e.x,P.s.y-P.e.y)/L1:1;return r2>.45&&r2<1.7&&r1<1.7};
+    if((name==='up'||name==='reach'||name==='reachL')&&!armOk())return null;
+    if(name==='up'){if(!P.s||!P.w)return null;return Math.max(-60,Math.min(200,180*(P.s.y-P.w.y)/f.tor/1.14))}
+    if(name==='reachL'){if(!P.s||!P.w)return null;return Math.min(200,180*Math.hypot(P.s.x-P.w.x,P.s.y-P.w.y)/f.tor/1.14)}
+    if(name==='spread'){const o=f[sd==='l'?'r':'l'];if(!P.s||!P.w||!o.s)return null;const out=Math.sign(P.s.x-o.s.x)||1;const dx=(P.w.x-P.s.x)*out/(1.15*f.tor);return Math.asin(Math.max(-1,Math.min(1,dx)))*180/Math.PI}
+    return null};
+  const both=(name,f)=>{const A=met(name,f,'l'),B=met(name,f,'r');return A!=null&&B!=null?(A+B)/2:(A!=null?A:B)};
+  const M=F.static?'body':(F.m||F.j),WJ=F.wj||M,RJ=F.rj||M;
+  // 2. which side to read
+  let side='both';
+  if(F.view!=='front'){const need=(F.static?FJ.body:FJ[F.j]).concat(['s','h','w']);
+    if(F.pick==='lowfoot'){const lowf=sd=>fMed(raw.map(f=>f[sd].a&&f[sd].h?(f[sd].a.y-f[sd].h.y)/tor:null));const a=lowf('l'),b=lowf('r');side=a==null?'r':b==null?'l':(a>=b?'l':'r')}
+    else if(F.pick==='range'){const rg=sd=>{const v=raw.map(f=>met(M,f,sd)).filter(x=>x!=null);return v.length>=Math.max(15,raw.length*.2)?fPct(v,.95)-fPct(v,.05):-1};side=rg('l')>=rg('r')?'l':'r'}
+    else{const vs=sd=>raw.reduce((t,f)=>t+need.reduce((u,j)=>u+(f[sd][j]?f[sd][j].v:0),0),0);side=vs('l')>=vs('r')?'l':'r'}}
+  const val=(name,f)=>side==='both'?both(name,f):met(name,f,side);
+  const pt=(f,j)=>{if(side!=='both')return f[side][j]||null;const a=f.l[j],b=f.r[j];if(a&&b)return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};return a||b||null};
+  const S=raw.map(f=>{const P={};for(const j of ['s','e','w','h','k','a'])P[j]=pt(f,j);P.nose=f.nose;
+    const tilt=P.s&&P.h?Math.atan2(P.s.x-P.h.x,P.h.y-P.s.y)*180/Math.PI:null;
+    return {t:f.t,a:val(M,f),wv:WJ===M?null:val(WJ,f),rv:RJ===M?null:val(RJ,f),P,tilt,knee:side==='both'?null:met('knee',f,side)}});
+  const valid=S.filter(s=>s.a!=null);
+  if(valid.length<10||valid[valid.length-1].t-valid[0].t<1.5)return {bad:'body'};
+  // 3. position check
+  if(F.pos){const pv=S.map(s=>fPos(F.pos,s.P,tor)).filter(x=>x!=null);if(globalThis.FDBG)globalThis.FDBG={side,posN:pv.length,posOk:pv.filter(x=>x).length,frames:raw.length};const fr=pv.filter(x=>x).length/Math.max(1,pv.length);if(pv.length<8||fr<.6)return {bad:'pos',msg:FPOSMSG[F.pos]}}
+  if(F.static){const a=valid.map(s=>s.a);const dev=a.filter(x=>x<160).length/a.length;const dur=valid[valid.length-1].t-valid[0].t;return {static:1,dur,dev}}
+  // 4. clean the signal: drop single-frame spikes, resample to 20 Hz, smooth
+  const A0=valid.map(s=>s.a),T0=valid.map(s=>s.t);
+  for(let i=0;i<A0.length;i++){const w=valid.slice(Math.max(0,i-3),i+4).map(s=>s.a);const m=fMed(w);const mad=fMed(w.map(x=>Math.abs(x-m)))||0;if(Math.abs(valid[i].a-m)>Math.max(25,4*1.48*mad))A0[i]=null}
+  const DT=.05,t0=T0[0],t1=T0[T0.length-1],G=[];let j=0;
+  const pts=T0.map((t,i)=>[t,A0[i]]).filter(p=>p[1]!=null);
+  if(pts.length<10)return {bad:'body'};
+  for(let t=t0;t<=t1+1e-9;t+=DT){while(j<pts.length-2&&pts[j+1][0]<t)j++;const a=pts[j],b=pts[Math.min(j+1,pts.length-1)];let v=null;
+    if(t<=a[0])v=a[0]-t<.3?a[1]:null;
+    else if(t<=b[0]){v=b[0]-a[0]<=.7?a[1]+(b[1]-a[1])*(t-a[0])/Math.max(1e-6,b[0]-a[0]):(t-a[0]<.3?a[1]:(b[0]-t<.3?b[1]:null))}
+    else v=t-b[0]<.3?b[1]:null;
+    G.push({t,v})}
+  const Gm=G.map((g,i)=>{if(g.v==null)return g;const w=[];for(let q=i-2;q<=i+2;q++){const h=G[q];if(h&&h.v!=null)w.push(h.v)}return {t:g.t,v:fMed(w)}});
+  const Sm=Gm.map((g,i)=>{if(g.v==null)return {t:g.t,v:null};let s=0,n=0;for(let q=i-1;q<=i+1;q++){const h=Gm[q];if(h&&h.v!=null){s+=h.v;n++}}return {t:g.t,v:s/n}});
+  const vals=Sm.map(g=>g.v).filter(v=>v!=null);
+  const range=fPct(vals,.97)-fPct(vals,.03);
+  const minAmp=F.amp||20;
+  if(range<minAmp)return {bad:'still'};
+  // 5. whole-body movement / still anchors
+  const rng1=get=>{const ps=raw.map(get).filter(p=>p);if(ps.length<10)return null;const xs=ps.map(p=>p.x),ys=ps.map(p=>p.y);return Math.hypot(fPct(xs,.9)-fPct(xs,.1),fPct(ys,.9)-fPct(ys,.1))/tor};
+  const rng=q=>{if(side!=='both')return rng1(f=>f[side][q]);const a=rng1(f=>f.l[q]),b=rng1(f=>f.r[q]);return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
+  const warn=[];
+  if(F.mov){const m=rng(F.mov);if(m!=null&&m<.2)return {bad:'nomove',q:F.mov};
+    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3))return {bad:'whole',q,mv:F.mov};if(f>.35)warn.push(q)}}
+  // 6. turning points (zig-zag with a hysteresis of delta)
+  const delta=Math.max(minAmp*.6,Math.min(25,.22*range));
+  const ex=[];let trend=0,mx=null,mn=null;
+  for(let i=0;i<Sm.length;i++){const v=Sm[i].v;if(v==null)continue;
+    if(!mx){mx={i,v};mn={i,v};continue}
+    if(v>mx.v)mx={i,v};if(v<mn.v)mn={i,v};
+    if(trend<=0&&v-mn.v>=delta){ex.push({i:mn.i,v:mn.v,ty:'min'});trend=1;mx={i,v}}
+    else if(trend>=0&&mx.v-v>=delta){ex.push({i:mx.i,v:mx.v,ty:'max'});trend=-1;mn={i,v}}}
+  if(trend===1)ex.push({i:mx.i,v:mx.v,ty:'max',end:1});else if(trend===-1)ex.push({i:mn.i,v:mn.v,ty:'min',end:1});
+  // merge small wiggles: drop the smallest swing pair while it is much smaller than a normal swing
+  for(let guard=0;guard<200&&ex.length>3;guard++){const sw=[];for(let q=0;q+1<ex.length;q++)sw.push(Math.abs(ex[q+1].v-ex[q].v));
+    const big=fPct(sw,.75),thr=Math.max(minAmp*.75,.35*big);let jm=-1,vm=1e9;for(let q=1;q+2<ex.length;q++)if(sw[q]<vm&&Sm[ex[q+1].i].t-Sm[ex[q].i].t<.5){vm=sw[q];jm=q}
+    if(jm<0||vm>=thr)break;
+    // remove ex[jm], ex[jm+1]; keep the more extreme neighbour values
+    const a=ex[jm-1],b=ex[jm+2];if(a.ty==='max'&&ex[jm].ty==='max'&&ex[jm].v>a.v)a.v=ex[jm].v,a.i=ex[jm].i;
+    ex.splice(jm,2);
+    // after removal neighbours of the same type would be adjacent only if types repeat; fix by merging
+    for(let q=0;q+1<ex.length;q++)if(ex[q].ty===ex[q+1].ty){const keep=ex[q].ty==='max'?(ex[q].v>=ex[q+1].v?q:q+1):(ex[q].v<=ex[q+1].v?q:q+1);const drop=keep===q?q+1:q;if(ex[drop].end)ex[keep].end=1;ex.splice(drop,1);q--}}
+  // a glitch: two turning points of the same kind < 0.6 s apart, with no real return to the other end in between
+  const spd=(a,b)=>Math.abs(b.v-a.v)/Math.max(.05,Sm[b.i].t-Sm[a.i].t);
+  for(let guard=0;guard<200;guard++){const lvl=ty=>fMed(ex.filter(e=>e.ty===ty).map(e=>e.v));const Lmax=lvl('max'),Lmin=lvl('min');let done=true;
+    const sp=[];for(let q=0;q+1<ex.length;q++)sp.push(spd(ex[q],ex[q+1]));const medS=fMed(sp)||1;
+    for(let q=0;q+2<ex.length;q++){const A=ex[q],Bm=ex[q+1],Cc=ex[q+2];if(A.ty!==Cc.ty)continue;
+      const dt=Sm[Cc.i].t-Sm[A.i].t;if(dt>=.6)continue;const far=A.ty==='min'?Lmax:Lmin,near=(A.v+Cc.v)/2;
+      const back=Math.abs(Bm.v-near)/Math.max(1e-6,Math.abs(far-near));const jump=Math.max(spd(A,Bm),spd(Bm,Cc))>2.5*medS;if(back>=.6&&!jump)continue;
+      const keepA=A.ty==='min'?A.v<=Cc.v:A.v>=Cc.v;if(!keepA&&!Cc.end){ex.splice(q,2)}else{if(Cc.end)A.end=1;ex.splice(q+1,2)}done=false;break}
+    if(done)break}
+  const fi=Sm.findIndex(g=>g.v!=null);let li=Sm.length-1;while(li>0&&Sm[li].v==null)li--;
+  const first={i:fi,v:Sm[fi].v,edge:1},last={i:li,v:Sm[li].v,edge:1};
+  const isRep=(e,n,ty)=>e.ty===ty&&!e.end&&(n>0||Math.abs(e.v-first.v)>=delta);
+  const cMin=ex.filter((e,n)=>isRep(e,n,'min')).length,cMax=ex.filter((e,n)=>isRep(e,n,'max')).length;
+  let WK=F.work;if(Math.abs(cMin-cMax)>=2)WK=cMin>cMax?'min':'max';
+  const O=WK==='min'?'max':'min';
+  const reps=[];
+  ex.forEach((e,n)=>{if(!isRep(e,n,WK))return;
+    const pv=n>0?ex[n-1]:first,nx=ex[n+1]&&ex[n+1].ty===O?ex[n+1]:last;
+    reps.push({e,pv,nx})});
+  if(globalThis.FDBG)globalThis.FDBG={Sm,ex,delta,range,first,last};
+  if(!reps.length)return {bad:'reps'};
+  // both legs must rise together (a standing knee raise keeps one foot down)
+  if(F.twoLegs){const up=sd=>{const ys=raw.map(f=>f[sd].a?f[sd].a.y:null);const base=fPct(ys,.85);return {ys,base}};const L=up('l'),Rr=up('r');let one=0,both=0;
+    for(const {e} of reps){const te=Sm[e.i].t;const idx=raw.map((f,i)=>Math.abs(f.t-te)<=.3?i:-1).filter(i=>i>=0);
+      const lift=o=>{const v=idx.map(i=>o.ys[i]).filter(x=>x!=null);return v.length&&o.base!=null?(o.base-fMed(v))/tor:null};const a=lift(L),b=lift(Rr);
+      if(a==null||b==null)continue;if(Math.min(a,b)<.3&&Math.max(a,b)>.7)one++;else if(Math.min(a,b)>=.3)both++}
+    if(one>both&&one>=1)return {bad:'oneleg'}}
+  // value of a check-metric at a turning point: best value within ±0.3 s
+  const at=(ti,kind,dirn)=>{const tt=Sm[ti].t;const v=S.filter(s=>Math.abs(s.t-tt)<=.3).map(s=>kind===M?s.a:(kind===WJ?s.wv:s.rv)).filter(x=>x!=null);
+    if(v.length<3)return null;return dirn==='min'?fPct(v,.25):fPct(v,.75)};
+  const R=reps.map(({e,pv,nx})=>{
+    const other=!nx.edge?nx:(!pv.edge?pv:(Math.abs(nx.v-e.v)>=Math.abs(pv.v-e.v)?nx:pv));
+    let wv=WJ===M?e.v:at(e.i,WJ,WK),rv=RJ===M?other.v:at(other.i,RJ,O);
+    const okM=(v,end,lim)=>end==='min'?v<=lim:v>=lim,lim=end=>end==='min'?F.min:F.max;
+    const chk=(v,end,fb,raw)=>{if(fb!=null)return okM(raw,end,fb)&&(v==null||okM(v,end,lim(end)));return okM(v!=null?v:raw,end,lim(end))};
+    const workOk=chk(wv,WK,F.wfb,e.v),restOk=chk(rv,O,F.rfb,other.v);if(wv==null)wv=e.v;if(rv==null)rv=other.v;
+    const ta=Sm[pv.i].t,tb=Sm[nx.i].t;
+    let act=0;for(let q=pv.i;q<=nx.i;q++){const v=Sm[q].v;if(v==null)continue;const ref=q<=e.i?pv.v:nx.v;if(Math.abs(v-ref)>.2*Math.abs(e.v-ref))act+=DT}
+    const inR=S.filter(s=>s.t>=ta&&s.t<=tb);
+    const tl=inR.map(s=>s.tilt).filter(x=>x!=null),kn=inR.map(s=>s.knee).filter(x=>x!=null);
+    const te=Sm[e.i].t,near=S.filter(s=>Math.abs(s.t-te)<=.35);
+    const chin=near.some(s=>s.P.nose&&s.P.w&&s.P.nose.y<s.P.w.y);
+    let seen=true;if(F.armSee){const rr=near.map(s=>s.P.e&&s.P.w&&LEN[side+'ew']?Math.hypot(s.P.e.x-s.P.w.x,s.P.e.y-s.P.w.y)/LEN[side+'ew']:null).filter(x=>x!=null);seen=rr.length>=2&&fMed(rr)>=.62}
+    return {t:te,work:wv,rest:rv,workRaw:e.v,restRaw:other.v,workOk,restOk,act,seen,swing:tl.length>2?fPct(tl,.95)-fPct(tl,.05):0,knee:kn.length>2?fPct(kn,.1):null,chin}});
+  return {side,W:WK,reps:R,warn,range,delta,tor}}
+function fPos(pos,P,tor){const {s,h,w,k,a,nose}=P;if(!s||!h)return null;
+  const tilt=Math.atan2(Math.abs(s.x-h.x),Math.abs(s.y-h.y))*180/Math.PI;
+  switch(pos){
+    case 'lie':return tilt>55&&(!w||w.y<s.y+.15*tor);
+    case 'incl':return tilt>12&&tilt<78&&s.y<h.y;
+    case 'up':if(!a)return tilt<35&&s.y<h.y;return tilt<35&&s.y<h.y&&a.y>h.y;
+    case 'hang':if(!w)return null;return w.y<s.y+.1*tor&&s.y<h.y&&tilt<45&&(!a||a.y>h.y);
+    case 'sit':return tilt<55&&s.y<h.y&&(!k||Math.abs(k.y-h.y)<.7*tor);
+    case 'bent':return tilt>20&&tilt<88&&(!a||a.y>h.y);
+    case 'stand':if(!a)return null;return a.y>h.y+.5*tor&&(!k||(k.y>h.y-.1*tor&&k.y<a.y+.1*tor));
+    case 'flat':return tilt>62&&(!a||Math.abs(a.y-h.y)<.6*tor);
+    default:return true}}
+// verdict for people: {html, facts}
+function formReport(k,r){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</li>`,bad=s=>`<li class="bad">✗ ${s}</li>`;
+  const tip=` <span class="muted">${F.tip}</span>`;
+  if(r.bad==='body')return {html:`<p>לא זיהיתי מספיק את הגוף בסרטון.${tip} תאורה טובה, כל הגוף בפריים, 3 חזרות לפחות.</p>`};
+  if(r.bad==='pos')return {html:`<ul>${bad(r.msg)}</ul><p class="muted">לכן לא ניתחתי את החזרות. ${F.tip}</p>`};
+  if(r.bad==='still')return {html:`<ul>${bad('לא זיהיתי תנועה של התרגיל בסרטון.')}</ul><p class="muted">${F.tip}</p>`};
+  if(r.bad==='nomove')return {html:`<ul>${bad(`${FPN[r.q][0]} כמעט לא ${FPN[r.q][1]}. לא זיהיתי ביצוע של התרגיל.`)}</ul>`};
+  if(r.bad==='whole')return {html:`<ul>${bad(`${FPN[r.q][0]} ${FPN[r.q][1]} כמעט כמו ${FPN[r.mv][0]}. זה נראה כמו תנועה של כל הגוף ולא כמו התרגיל. בתרגיל הזה ${FPN[r.q][0]} ${FPN[r.q][2]} כמעט במקום.`)}</ul><p class="muted">לכן לא ניתחתי את החזרות.</p>`};
+  if(r.bad==='oneleg')return {html:`<ul>${bad('רגל אחת נשארת למטה. זה נראה כמו הרמת ברך בעמידה, לא תלייה. בתרגיל הזה תלויים על המתח ומרימים את שתי הרגליים יחד.')}</ul>`};
+  if(r.bad==='reps')return {html:`<p>לא הצלחתי לספור חזרות. נסה שוב מזווית צד, עם 3 חזרות לפחות.</p>`};
+  if(r.static){const L=[`<li>החזקה: ${Math.round(r.dur)} שניות</li>`,r.dev<.15?ok('הגוף ישר כמו קרש לאורך רוב הזמן'):bad(`הגוף לא ישר ב-${Math.round(r.dev*100)}% מהזמן. בטן ועכוז מכווצים, האגן לא צונח ולא מתרומם.`)];
+    return {html:`<ul>${L.join('')}</ul>`,facts:`פלאנק ${Math.round(r.dur)} שניות, ${Math.round(r.dev*100)}% מהזמן הגוף לא ישר`}}
+  const R=r.reps,n=R.length,msgMin=F.lo,msgMax=F.hi;
+  const unseen=F.armSee?R.filter(x=>!x.seen).length:0,blind=unseen>n/2;
+  const nW=blind?0:R.filter(x=>!x.workOk&&x.seen!==false).length,nR=blind?0:R.filter(x=>!x.restOk).length;
+  const L=[blind?`<li><b>בערך ${n} חזרות</b></li>`:`<li><b>${n} חזרות</b> זוהו</li>`];
+  const wMsg=r.W==='min'?msgMin:msgMax,rMsg=r.W==='min'?msgMax:msgMin;
+  if(blind)L.push(`<li class="bad">? לא ראיתי טוב את הזרוע בתחתית התנועה, אז לא בדקתי את העומק. צלמו בזווית קצת מלפנים (לא בדיוק מהצד).</li>`);
+  else L.push(nW?bad(`${wMsg} (${nW} מתוך ${n})`):ok('טווח תנועה מלא בצד הקשה של התנועה'));
+  if(!blind)L.push(nR?bad(`${rMsg} (${nR} מתוך ${n})`):ok('חזרה מלאה בין החזרות'));
+  if(F.top){const hi=R.filter(x=>x.work>F.top).length;if(hi)L.push(bad(`מרימים גבוה מדי, מעל הכתפיים (${hi} חזרות). עוצרים בגובה הכתף.`))}
+  if(F.lean&&F.view!=='front'){const sw=R.filter(x=>x.swing>F.lean).length;if(sw)L.push(bad(`יש תנופה או נדנוד בגוף ב-${sw} חזרות. להוריד משקל ולשמור על הגוף יציב.`));else if(!r.warn.length)L.push(ok('הגוף יציב, בלי תנופה'))}
+  for(const q of r.warn)L.push(bad(`${FPN[q][0]} ${FPN[q][1]} הרבה, כלומר יש תנופה או נדנוד. בתרגיל הזה ${FPN[q][0]} ${FPN[q][2]} כמעט במקום.`));
+  if(F.knee){const sq=R.filter(x=>x.knee!=null&&x.knee<F.knee).length;if(sq)L.push(bad(`הברכיים מתכופפות יותר מדי (${sq} חזרות). זה הופך לסקוואט. ברכיים רכות וקבועות, התנועה מהאגן.`))}
+  if(F.chin){const c=R.filter(x=>x.chin).length;L.push(c===n?ok('הסנטר עובר את המוט'):bad(`הסנטר לא עבר את המוט ב-${n-c} חזרות.`))}
+  const avg=R.reduce((t,x)=>t+x.act,0)/n;
+  L.push(avg<1?bad(`החזרות מהירות מדי (${avg.toFixed(1)} שנ׳ בממוצע). יורדים לאט, בערך 2 שניות.`):ok(`קצב מבוקר (${avg.toFixed(1)} שנ׳ לחזרה)`));
+  if(n>=4){const early=fMed(R.slice(0,n-2).map(x=>x.act)),late=(R[n-1].act+R[n-2].act)/2;if(late>early*1.5&&late-early>.7)L.push(`<li>החזרות האחרונות איטיות בהרבה. סימן שהסט היה קרוב לכשל.</li>`)}
+  const score=blind?null:Math.round(100*(2*n-nW-nR)/(2*n));
+  return {html:(score==null?'':`<p><b style="font-size:22px">${score}</b>/100 טווח תנועה</p>`)+`<ul>${L.join('')}</ul>`,facts:L.map(x=>x.replace(/<[^>]+>/g,'')).join(' ')}}
+let FM=null,POSE=null,FTS=0,FLAST=null;
+if(/fdbg/.test(location.search))window.FLASTGET=()=>FLAST;
 function formStop(){if(FM){FM.stop=1;try{FM.v&&FM.v.pause()}catch(e){}if(FM.url)URL.revokeObjectURL(FM.url);FM=null}}
 function openForm(k){demoStop();formStop();const F=FORM[k],el=$('#sheet');
   el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="בדיקת טכניקה"><div class="panel-h"><h2>בדיקת טכניקה · ${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
-    <p class="muted">${esc(F.tip)} מצלמים 3–6 חזרות, הטלפון יציב. הניתוח נעשה כולו בטלפון, הסרטון לא נשלח לשום מקום.</p>
+    <p class="muted">${esc(F.tip)} מצלמים 3–8 חזרות, הטלפון יציב (על משהו, לא ביד), כל הגוף בפריים. הניתוח נעשה כולו בטלפון, הסרטון לא נשלח לשום מקום.</p>
     <input type="file" id="formIn" accept="video/*" capture="environment" hidden data-k="${k}">
     <button class="cta" style="width:100%;margin:12px 0" data-act="form-pick">📷 צלם או בחר סרטון</button>
     <div id="fOut"></div></div>`;el.hidden=false;
@@ -1640,99 +1844,37 @@ function openForm(k){demoStop();formStop();const F=FORM[k],el=$('#sheet');
 async function poseInit(){if(POSE)return POSE;
   const V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
   const m=await import(V+'/vision_bundle.mjs');const fs=await m.FilesetResolver.forVisionTasks(V+'/wasm');
-  const opt=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',delegate:d},runningMode:'VIDEO',numPoses:1});
+  const opt=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',delegate:d},runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
   try{POSE=await m.PoseLandmarker.createFromOptions(fs,opt('GPU'))}catch(e){POSE=await m.PoseLandmarker.createFromOptions(fs,opt('CPU'))}return POSE}
-function ang(a,b,c){const v1=[a.x-b.x,a.y-b.y],v2=[c.x-b.x,c.y-b.y];const d=Math.hypot(...v1)*Math.hypot(...v2);if(!d)return null;return Math.acos(Math.max(-1,Math.min(1,(v1[0]*v2[0]+v1[1]*v2[1])/d)))*180/Math.PI}
-function side(l){const vis=s=>['s','e','w','h','k','a'].reduce((t,j)=>t+((l[LM[s+j]]||{}).visibility||0),0);const s=vis('l')>=vis('r')?'l':'r';
-  const g=j=>l[LM[(j==='nose'?'':s)+j]];return {s:g('s'),e:g('e'),w:g('w'),h:g('h'),k:g('k'),a:g('a'),f:g('f'),nose:l[0]}}
 const BONES=[[11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
-async function formRun(k,file){const F=FORM[k],out=$('#fOut');formStop();
-  out.innerHTML=`<p class="muted" id="fSt">טוען את מנוע הניתוח…</p><div class="fbox"><video playsinline muted></video><canvas></canvas></div>`;
+const fReady=(v,ms)=>new Promise(res=>{const t0=performance.now();const chk=()=>{if(v.readyState>=2)return res(true);if(performance.now()-t0>ms)return res(false);setTimeout(chk,25)};chk()});
+const fSeek=(v,t)=>new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener('seeked',fin);res()};v.addEventListener('seeked',fin);v.currentTime=t;setTimeout(fin,2500)}).then(()=>fReady(v,2500));
+async function formRun(k,file){const out=$('#fOut');formStop();
+  out.innerHTML=`<p class="muted" id="fSt">טוען את מנוע הניתוח… (בפעם הראשונה זה לוקח קצת זמן)</p><div class="fbox"><video playsinline muted preload="auto"></video><canvas></canvas></div>`;
   const v=out.querySelector('video'),cv=out.querySelector('canvas'),st=$('#fSt');const url=URL.createObjectURL(file);FM={v,url};const me=FM;
   let lm;try{lm=await poseInit()}catch(e){st.textContent='לא הצלחתי לטעון את מנוע הניתוח. צריך חיבור לאינטרנט בפעם הראשונה.';return}
-  if(me.stop)return;v.src=url;try{await v.play()}catch(e){}
-  await new Promise(r=>v.readyState>=2?r():v.addEventListener('loadeddata',r,{once:true}));
-  cv.width=v.videoWidth;cv.height=v.videoHeight;const cx=cv.getContext('2d');st.textContent='מנתח…';
-  const sam=[];let last=-1;
-  await new Promise(res=>{const step=()=>{if(me.stop)return res();if(v.ended||v.paused&&v.currentTime>0&&v.currentTime>=v.duration-0.05)return res();
-      if(v.currentTime!==last){last=v.currentTime;let r=null;try{r=lm.detectForVideo(v,performance.now())}catch(e){}
-        cx.clearRect(0,0,cv.width,cv.height);const l=r&&r.landmarks&&r.landmarks[0];
-        if(l){cx.strokeStyle='#ff7a1a';cx.lineWidth=Math.max(3,cv.width/150);for(const [a,b] of BONES){cx.beginPath();cx.moveTo(l[a].x*cv.width,l[a].y*cv.height);cx.lineTo(l[b].x*cv.width,l[b].y*cv.height);cx.stroke()}
-          const p0=side(l),t=v.currentTime,p={};for(const q in p0)if(p0[q])p[q]={x:p0[q].x*cv.width,y:p0[q].y*cv.height,visibility:p0[q].visibility};
-          const P={};for(const q of ['s','e','w','h','k','a','nose'])if(p[q])P[q]={x:p[q].x,y:p[q].y};
-          if(F.static)sam.push({t,a:ang(p.s,p.h,p.a),P,vis:Math.min(...['s','h','a'].map(q=>(p[q]&&p[q].visibility)||0))});
-          else{const jj=J[F.j];sam.push({t,P,a:ang(p[jj[0]],p[jj[1]],p[jj[2]]),lean:Math.atan2(Math.abs(p.s.x-p.h.x),Math.abs(p.s.y-p.h.y))*180/Math.PI,knee:ang(p.h,p.k,p.a),chin:p.nose&&p.w?p.w.y-p.nose.y:null,vis:Math.min(...jj.map(q=>(p[q]&&p[q].visibility)||0))})}}}
-      if(v.ended)return res();requestAnimationFrame(step)};requestAnimationFrame(step);v.addEventListener('ended',()=>res(),{once:true})});
-  if(me.stop)return;v.pause();v.controls=true;st.textContent='';
-  const R=formAnalyze(k,sam);out.insertAdjacentHTML('beforeend',`<div class="fres" style="margin-top:12px">${R.html}</div><div id="fAi"></div>`);
+  if(me.stop)return;v.src=url;
+  const okMeta=await new Promise(r=>{if(v.readyState>=1)return r(true);v.addEventListener('loadedmetadata',()=>r(true),{once:true});v.addEventListener('error',()=>r(false),{once:true});setTimeout(()=>r(v.readyState>=1),8000)});
+  if(!okMeta||me.stop){if(!me.stop)st.textContent='לא הצלחתי לפתוח את הסרטון. נסה סרטון אחר.';return}
+  try{await v.play();v.pause()}catch(e){}
+  await new Promise(r=>{if(v.readyState>=3)return r();v.addEventListener('canplay',r,{once:true});setTimeout(r,8000)});
+  if(!(await fReady(v,4000))){st.textContent='לא הצלחתי לקרוא את הסרטון. נסה שוב או סרטון אחר.';return}
+  const dur=Math.min(isFinite(v.duration)?v.duration:0,90);if(dur<1.5){st.textContent='הסרטון קצר מדי. צריך לפחות 3 חזרות.';return}
+  cv.width=v.videoWidth;cv.height=v.videoHeight;const cx=cv.getContext('2d');
+  const FTS0=FTS+1000;
+  const fps=dur>45?10:dur>25?15:20,frames=[];let lastTs=FTS,notReady=0;
+  for(let t=0;t<dur;t+=1/fps){if(me.stop)return;await fSeek(v,t);if(me.stop)return;
+    let r=null;const ts=Math.max(lastTs+1,FTS0+Math.round(t*1000)+1);lastTs=ts;FTS=ts;if(v.readyState>=2){try{r=lm.detectForVideo(v,ts)}catch(e){}}else notReady++;
+    const l=r&&r.landmarks&&r.landmarks[0];cx.clearRect(0,0,cv.width,cv.height);
+    if(l){cx.strokeStyle='#ff7a1a';cx.lineWidth=Math.max(3,cv.width/150);for(const [a,b] of BONES){cx.beginPath();cx.moveTo(l[a].x*cv.width,l[a].y*cv.height);cx.lineTo(l[b].x*cv.width,l[b].y*cv.height);cx.stroke()}}
+    frames.push({t,lm:l?l.map(p=>({x:p.x,y:p.y,visibility:p.visibility})):null});
+    st.textContent=`מנתח… ${Math.min(99,Math.round(100*t/dur))}%`}
+  if(me.stop)return;v.controls=true;st.textContent='';cx.clearRect(0,0,cv.width,cv.height);
+  if(notReady>frames.length*.3){st.textContent='הטלפון לא הצליח לקרוא חלק גדול מהסרטון. נסה שוב.';return}
+  let res;try{res=formEngine(k,frames,v.videoWidth,v.videoHeight)}catch(e){res={bad:'body'}}
+  FLAST={k,frames,W:v.videoWidth,H:v.videoHeight};
+  const R=formReport(k,res);out.insertAdjacentHTML('beforeend',`<div class="fres" style="margin-top:12px">${R.html}</div><div id="fAi"></div>`);
   if(gqKey()&&R.facts)formAi(k,R.facts)}
-// what the body must look like, which points must stay still (fix) and which must travel (mov)
-const FCHK={bench:{pos:'lie',fix:'s',mov:'w'},incline:{pos:'incl',fix:'h',mov:'w'},ohp:{pos:'up',fix:'h',mov:'w'},pushdown:{pos:'up',fix:'he',mov:'w'},
-  lateral:{pos:'up',fix:'h',mov:'w'},revfly:{pos:'up',fix:'h',mov:'w'},pullup:{pos:'hang',fix:'w',mov:'s'},hlr:{pos:'hang',fix:'ws',mov:'a',legs:1},
-  crow:{pos:'sit',fix:'h',mov:'w'},tbar:{pos:'bent',fix:'a',mov:'w'},curl:{pos:'up',fix:'se',mov:'w'},bss:{pos:'stand',fix:'a',mov:'h'},
-  bbrdl:{pos:'stand',fix:'a',mov:'s'},legext:{pos:'sit',fix:'s',mov:'a'},legcurl:{fix:'s',mov:'a'},dcrunch:{fix:'a',mov:'s'},hackcalf:{pos:'stand'},plank:{pos:'flat'}};
-const POSMSG={lie:'לא זיהיתי שכיבה על ספסל. הגוף צריך להיות שוכב, והידיים מעל הכתפיים.',incl:'לא זיהיתי ישיבה על ספסל משופע.',up:'לא זיהיתי עמידה זקופה.',
-  hang:'לא זיהיתי תלייה על מתח. הידיים צריכות להחזיק מעל הראש, והגוף תלוי מתחתיהן.',sit:'לא זיהיתי ישיבה במכשיר.',bent:'לא זיהיתי הטיה קדימה עם גב ישר.',
-  stand:'לא זיהיתי עמידה. רגליים על הרצפה, כל הגוף בפריים.',flat:'לא זיהיתי פלאנק. הגוף צריך להיות אופקי, קרוב לרצפה.'};
-const PN={s:['הכתפיים','זזות','נשארות'],e:['המרפקים','זזים','נשארים'],w:['הידיים','זזות','נשארות'],h:['האגן','זז','נשאר'],a:['כפות הרגליים','זזות','נשארות'],k:['הברכיים','זזות','נשארות']};
-function formPos(pos,P,tor){const {s,h,w,k,a,nose}=P;if(!s||!h)return false;
-  const tilt=Math.atan2(Math.abs(s.x-h.x),Math.abs(s.y-h.y))*180/Math.PI;// 0 = torso vertical, 90 = horizontal
-  switch(pos){
-    case 'lie':return tilt>60&&(!w||w.y<s.y);
-    case 'incl':return tilt>15&&tilt<75&&s.y<h.y;
-    case 'up':return tilt<35&&s.y<h.y&&(!a||a.y>h.y);
-    case 'hang':return !!w&&w.y<Math.min(s.y,nose?nose.y:s.y)-.15*tor&&s.y<h.y&&tilt<40;
-    case 'sit':return tilt<50&&s.y<h.y&&(!k||Math.abs(k.y-h.y)<.6*tor);
-    case 'bent':return tilt>20&&tilt<85&&(!a||a.y>h.y);
-    case 'stand':return !!a&&a.y>h.y+.6*tor&&(!k||k.y>h.y&&k.y<a.y);
-    case 'flat':return tilt>65&&(!a||Math.abs(a.y-h.y)<.5*tor);
-    default:return true}}
-function formValid(k,good){const C=FCHK[k];if(!C)return null;const bad=s=>`<li class="bad">✗ ${s}</li>`;
-  const med=a=>{const b=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);return b.length?b[b.length>>1]:0};
-  const tor=med(good.map(g=>g.P.s&&g.P.h?Math.hypot(g.P.s.x-g.P.h.x,g.P.s.y-g.P.h.y):null));
-  if(!tor)return `<ul>${bad('לא זיהיתי את פלג הגוף העליון. כל הגוף צריך להיות בפריים.')}</ul>`;
-  if(C.pos){const okF=good.filter(g=>formPos(C.pos,g.P,tor)).length/good.length;
-    if(okF<.6)return `<ul>${bad(POSMSG[C.pos])}</ul><p class="muted">לכן לא ניתחתי את החזרות. ${esc(FORM[k].tip)}</p>`}
-  const rng=q=>{const xs=good.map(g=>g.P[q]&&g.P[q].x).filter(x=>x!=null).sort((a,b)=>a-b),ys=good.map(g=>g.P[q]&&g.P[q].y).filter(x=>x!=null).sort((a,b)=>a-b);
-    if(xs.length<10)return null;const pc=(a,f)=>a[Math.floor((a.length-1)*f)];return Math.hypot(pc(xs,.9)-pc(xs,.1),pc(ys,.9)-pc(ys,.1))/tor};
-  if(C.mov){const m=rng(C.mov);if(m!=null&&m<.25)return `<ul>${bad(`${PN[C.mov][0]} כמעט לא ${PN[C.mov][1]}. לא זיהיתי ביצוע של התרגיל.`)}</ul>`;
-    for(const q of (C.fix||'')){const f=rng(q);if(f==null||m==null)continue;
-      if(f>.4&&f>.5*m)return `<ul>${bad(`${PN[q][0]} ${PN[q][1]} כמעט כמו ${PN[C.mov][0]}. זה נראה כמו תנועה של כל הגוף ולא כמו התרגיל. בתרגיל הזה ${PN[q][0]} ${PN[q][2]} כמעט במקום.`)}</ul><p class="muted">לכן לא ניתחתי את החזרות.</p>`;
-      if(f>.3)FWARN.push(`${PN[q][0]} ${PN[q][1]} הרבה, כלומר יש תנופה או נדנוד. בתרגיל הזה ${PN[q][0]} ${PN[q][2]} כמעט במקום.`)}}
-  return null}
-let FWARN=[];
-function formAnalyze(k,sam){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</li>`,bad=s=>`<li class="bad">✗ ${s}</li>`;
-  const good=sam.filter(s=>s.a!=null&&(s.vis==null||s.vis>.5));
-  if(good.length<15)return {html:`<p>לא זיהיתי מספיק את הגוף בסרטון. ${esc(F.tip)} תאורה טובה, כל הגוף בפריים.</p>`};
-  FWARN=[];const inval=formValid(k,good);if(inval)return {html:inval};
-  if(F.static){const a=good.map(s=>s.a);const dev=a.filter(x=>x<160).length/a.length;const dur=good[good.length-1].t-good[0].t;
-    const L=[`<li>החזקה: ${Math.round(dur)} שניות</li>`,dev<.15?ok('הגוף ישר כמו קרש לאורך רוב הזמן'):bad(`הגוף לא ישר ב-${Math.round(dev*100)}% מהזמן. בטן ועכוז מכווצים, האגן לא צונח ולא מתרומם.`)];
-    return {html:`<ul>${L.join('')}</ul>`,facts:`פלאנק ${Math.round(dur)} שניות, ${Math.round(dev*100)}% מהזמן הגוף לא ישר`}}
-  const a=[];for(let i=0;i<good.length;i++){const w=good.slice(Math.max(0,i-2),i+3);a.push({...good[i],a:w.reduce((t,s)=>t+s.a,0)/w.length})}
-  const vals=a.map(s=>s.a),mn=Math.min(...vals),mx=Math.max(...vals);
-  if(mx-mn<15)return {html:`<p>לא זיהיתי תנועה ברורה. ${esc(F.tip)}</p>`};
-  const mid=(mn+mx)/2,band=(mx-mn)*.15;const inv=!!F.inv;
-  const isWork=x=>inv?x>mid+band:x<mid-band,isRest=x=>inv?x<mid-band:x>mid+band;
-  const reps=[];let state=null,cur=null;
-  for(const s of a){if(isRest(s.a)){if(state==='work'&&cur){cur.end=s.t;reps.push(cur);cur=null}state='rest';if(!cur)cur={start:s.t,peak:s.a,rest:s.a,lean:[s.lean],knee:[s.knee],chin:[]};cur.rest=inv?Math.min(cur.rest,s.a):Math.max(cur.rest,s.a)}
-    else if(isWork(s.a)&&state){state='work';if(!cur)cur={start:s.t,peak:s.a,rest:s.a,lean:[],knee:[],chin:[]};cur.peak=inv?Math.max(cur.peak,s.a):Math.min(cur.peak,s.a)}
-    if(cur){cur.lean.push(s.lean);cur.knee.push(s.knee);if(s.chin!=null)cur.chin.push(s.chin)}}
-  if(!reps.length)return {html:`<p>לא הצלחתי לספור חזרות. נסה שוב מזווית צד, עם 3 חזרות לפחות.</p>`};
-  const deep=r=>inv?r.peak>=F.ext:r.peak<=F.flex,full=r=>inv?r.rest<=F.flex:r.rest>=F.ext;
-  const nDeep=reps.filter(deep).length,nFull=reps.filter(full).length,n=reps.length;
-  const L=[`<li><b>${n} חזרות</b> זוהו</li>`];
-  L.push(nDeep===n?ok('טווח תנועה מלא בצד הקשה של התנועה'):bad(`${F.lo} (${n-nDeep} מתוך ${n})`));
-  L.push(nFull===n?ok('חזרה מלאה בין החזרות'):bad(`${F.hi} (${n-nFull} מתוך ${n})`));
-  if(F.max){const hi=reps.filter(r=>r.peak>F.max).length;if(hi)L.push(bad(`מרימים גבוה מדי, מעל הכתפיים (${hi} חזרות). עוצרים בגובה הכתף.`))}
-  if(F.lean){const sw=reps.filter(r=>{const l=r.lean.filter(x=>x!=null);return l.length&&Math.max(...l)-Math.min(...l)>F.lean}).length;if(sw)L.push(bad(`יש תנופה או נדנוד בגוף ב-${sw} חזרות. להוריד משקל ולשמור על הגוף יציב.`));else if(!FWARN.length)L.push(ok('הגוף יציב, בלי תנופה'))}
-  if(F.knee){const sq=reps.filter(r=>Math.min(...r.knee.filter(x=>x!=null))<F.knee).length;if(sq)L.push(bad(`הברכיים מתכופפות יותר מדי (${sq} חזרות). זה הופך לסקוואט. ברכיים רכות וקבועות, התנועה מהאגן.`))}
-  for(const w of FWARN)L.push(bad(w));
-  if(F.chin){const c=reps.filter(r=>r.chin.length&&Math.max(...r.chin)>0).length;L.push(c===n?ok('הסנטר עובר את המוט'):bad(`הסנטר לא עבר את המוט ב-${n-c} חזרות.`))}
-  const durs=reps.map(r=>r.end-r.start).filter(x=>x>0);const avg=durs.reduce((t,x)=>t+x,0)/durs.length;
-  L.push(avg<1.2?bad(`החזרות מהירות מדי (${avg.toFixed(1)} שנ׳ בממוצע). יורדים לאט, בערך 2 שניות.`):ok(`קצב מבוקר (${avg.toFixed(1)} שנ׳ לחזרה)`));
-  if(durs.length>=3&&durs[durs.length-1]>durs[0]*1.6)L.push(`<li>החזרות האחרונות איטיות בהרבה. סימן שהסט היה קרוב לכשל.</li>`);
-  const score=Math.round(100*(nDeep+nFull)/(2*n));
-  return {html:`<p><b style="font-size:22px">${score}</b>/100 טווח תנועה</p><ul>${L.join('')}</ul>`,facts:`${EX[k].n}: ${n} חזרות. ${L.map(x=>x.replace(/<[^>]+>/g,'')).join(' ')}`}}
 async function formAi(k,facts){const el=$('#fAi');if(!el)return;el.innerHTML='<p class="muted">המאמן מסכם…</p>';
   try{const t=await gqCall([{role:'system',content:'אתה מאמן כוח לנער בן 14. ענה בעברית, 2–3 משפטים קצרים: מה טוב ומה הדבר האחד הכי חשוב לתקן, עם רמז פשוט לביצוע. בלי מספרים מומצאים.'},{role:'user',content:`תרגיל: ${EX[k].n}. הנחיה: ${EX[k].cue}. תוצאות הניתוח: ${facts}`}]);
     el.innerHTML=`<div class="coachb" style="margin-top:12px"><span class="av">מ</span><p>${esc(String((t&&t.text)||'').trim())}</p></div>`}catch(e){el.innerHTML=''}}
