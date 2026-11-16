@@ -1501,7 +1501,7 @@ let T3=null,G3=null,BODY=null;
 const TV='https://cdn.jsdelivr.net/npm/three@0.160.0/';
 async function three(){if(T3)return T3;const T=await import('three');const {GLTFLoader}=await import(TV+'examples/jsm/loaders/GLTFLoader.js');const {DRACOLoader}=await import(TV+'examples/jsm/loaders/DRACOLoader.js');const SU=await import(TV+'examples/jsm/utils/SkeletonUtils.js');T3={T,GLTFLoader,DRACOLoader,SU};return T3}
 async function bodyGltf(){if(BODY)return BODY;const {GLTFLoader,DRACOLoader}=await three();const l=new GLTFLoader();const d=new DRACOLoader();d.setDecoderPath(TV+'examples/jsm/libs/draco/gltf/');l.setDRACOLoader(d);
-  BODY=await new Promise((res,rej)=>l.load('body.glb?v=7',res,undefined,rej));return BODY}
+  BODY=await new Promise((res,rej)=>l.load('body.glb?v=10',res,undefined,rej));return BODY}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const MUSC={chest:'עיקרי',fdelt:'משני',tri:'משני'};
 const D3={
@@ -1522,7 +1522,7 @@ function ik2(T,S,W,a,b,pole){const u=W.clone().sub(S);let d=Math.min(u.length(),
 async function open3D(k){const D=D3[k],el=$('#sheet');
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m"></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
-    <div class="d3leg"><span><i style="background:#d9412b"></i>שריר עיקרי</span><span><i style="background:#e98a5a"></i>שריר משני</span></div>
+    <div class="d3leg"><span><i style="background:#e8170f"></i>שריר עיקרי</span><span><i style="background:#db4d26"></i>שריר משני</span><span><i style="background:#9e402b"></i>שאר השרירים</span></div>
     <ul class="d3n">${D.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
     <p class="muted" style="font-size:11px;margin-top:10px">מודל אנטומי: Z-Anatomy (CC BY-SA 4.0)</p></div>`;
   el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:40px 20px;text-align:center">טוען את המודל…</p>';
@@ -1541,8 +1541,8 @@ async function open3D(k){const D=D3[k],el=$('#sheet');
   body.traverse(o=>{if(o.isBone){bones[o.name]=o;o.userData.q0=o.quaternion.clone()}if(o.isMesh){skinned.push(o);o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
     if(/shorts/.test(o.name)||/shorts/.test(o.material&&o.material.name||'')){o.material=M.shorts;return}
     const ca=o.geometry.attributes.color;if(!ca){o.material=M.musc;return}const n=ca.count,col=new Float32Array(n*3),gids=new Uint8Array(n);
-    const base=[.70,.71,.74],c1=[.80,.17,.10],c2=[.88,.45,.30];
-    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i);gids[i]=g;const v=lvl[g]||0;const b=v>=1?c1:v>0?c2:base;const sh=.22+.78*Math.pow(ao,2.2);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
+    const CL=[[.62,.25,.17],[.93,.87,.84],[.88,.83,.74],[.84,.78,.74]],c1=[.92,.09,.06],c2=[.86,.30,.15];
+    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i),cl=Math.round(ca.getZ(i)*8);gids[i]=g;const v=cl===0?(lvl[g]||0):0;const b=v>=1?c1:v>0?c2:(CL[cl]||CL[0]);const sh=.18+.82*Math.pow(ao,1.8);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
     o.geometry.setAttribute('color',new T.BufferAttribute(col,3));o.geometry.userData.gids=gids;chestG=o;o.material=M.skin}});
   const SK=bones;
   body.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});
@@ -1616,7 +1616,7 @@ const FORM={
   lateral:{j:'shoulder',inv:1,flex:25,ext:80,max:105,lean:12,tip:'מצלמים מלפנים, כל פלג הגוף העליון בפריים.',lo:'הידיים לא מגיעות לגובה הכתפיים.',hi:'הידיים לא יורדות עד למטה בין חזרות.'},
   revfly:{j:'shoulderW',inv:1,flex:30,ext:80,lean:12,tip:'מצלמים מלפנים.',lo:'פתיחה חלקית. פותחים עד קו הגוף.',hi:'לא חוזרים עד הסוף קדימה.'},
   pullup:{j:'elbow',flex:75,ext:150,chin:1,tip:'מצלמים מהצד או מלפנים, כולל המוט.',lo:'הסנטר לא עובר את המוט.',hi:'לא יורדים לתלייה מלאה.'},
-  hlr:{j:'hip',flex:100,ext:160,tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'הרגליים לא מגיעות ל-90 מעלות.',hi:'לא יורדים עד הסוף בין החזרות.'},
+  hlr:{j:'hip',flex:100,ext:160,lean:25,tip:'מצלמים מהצד, כל הגוף בפריים.',lo:'הרגליים לא מגיעות ל-90 מעלות.',hi:'לא יורדים עד הסוף בין החזרות.'},
   crow:{j:'elbow',flex:80,ext:145,lean:20,tip:'מצלמים מהצד.',lo:'לא מושכים עד הבטן.',hi:'לא פושטים את הידיים עד הסוף.'},
   tbar:{j:'elbow',flex:85,ext:145,lean:15,tip:'מצלמים מהצד.',lo:'המשיכה קצרה. מושכים עד שהמוט נוגע בחזה.',hi:'לא פושטים את הידיים עד הסוף למטה.'},
   curl:{j:'elbow',flex:60,ext:145,lean:10,tip:'מצלמים מהצד.',lo:'לא מכופפים עד הסוף למעלה.',hi:'לא פושטים עד הסוף למטה.'},
@@ -1658,16 +1658,53 @@ async function formRun(k,file){const F=FORM[k],out=$('#fOut');formStop();
       if(v.currentTime!==last){last=v.currentTime;let r=null;try{r=lm.detectForVideo(v,performance.now())}catch(e){}
         cx.clearRect(0,0,cv.width,cv.height);const l=r&&r.landmarks&&r.landmarks[0];
         if(l){cx.strokeStyle='#ff7a1a';cx.lineWidth=Math.max(3,cv.width/150);for(const [a,b] of BONES){cx.beginPath();cx.moveTo(l[a].x*cv.width,l[a].y*cv.height);cx.lineTo(l[b].x*cv.width,l[b].y*cv.height);cx.stroke()}
-          const p=side(l);const t=v.currentTime;
-          if(F.static)sam.push({t,a:ang(p.s,p.h,p.a)});
-          else{const jj=J[F.j];sam.push({t,a:ang(p[jj[0]],p[jj[1]],p[jj[2]]),lean:Math.atan2(Math.abs(p.s.x-p.h.x),Math.abs(p.s.y-p.h.y))*180/Math.PI,knee:ang(p.h,p.k,p.a),chin:p.nose&&p.w?p.w.y-p.nose.y:null,vis:Math.min(...jj.map(q=>(p[q]&&p[q].visibility)||0))})}}}
+          const p0=side(l),t=v.currentTime,p={};for(const q in p0)if(p0[q])p[q]={x:p0[q].x*cv.width,y:p0[q].y*cv.height,visibility:p0[q].visibility};
+          const P={};for(const q of ['s','e','w','h','k','a','nose'])if(p[q])P[q]={x:p[q].x,y:p[q].y};
+          if(F.static)sam.push({t,a:ang(p.s,p.h,p.a),P,vis:Math.min(...['s','h','a'].map(q=>(p[q]&&p[q].visibility)||0))});
+          else{const jj=J[F.j];sam.push({t,P,a:ang(p[jj[0]],p[jj[1]],p[jj[2]]),lean:Math.atan2(Math.abs(p.s.x-p.h.x),Math.abs(p.s.y-p.h.y))*180/Math.PI,knee:ang(p.h,p.k,p.a),chin:p.nose&&p.w?p.w.y-p.nose.y:null,vis:Math.min(...jj.map(q=>(p[q]&&p[q].visibility)||0))})}}}
       if(v.ended)return res();requestAnimationFrame(step)};requestAnimationFrame(step);v.addEventListener('ended',()=>res(),{once:true})});
   if(me.stop)return;v.pause();v.controls=true;st.textContent='';
   const R=formAnalyze(k,sam);out.insertAdjacentHTML('beforeend',`<div class="fres" style="margin-top:12px">${R.html}</div><div id="fAi"></div>`);
   if(gqKey()&&R.facts)formAi(k,R.facts)}
+// what the body must look like, which points must stay still (fix) and which must travel (mov)
+const FCHK={bench:{pos:'lie',fix:'s',mov:'w'},incline:{pos:'incl',fix:'h',mov:'w'},ohp:{pos:'up',fix:'h',mov:'w'},pushdown:{pos:'up',fix:'he',mov:'w'},
+  lateral:{pos:'up',fix:'h',mov:'w'},revfly:{pos:'up',fix:'h',mov:'w'},pullup:{pos:'hang',fix:'w',mov:'s'},hlr:{pos:'hang',fix:'ws',mov:'a',legs:1},
+  crow:{pos:'sit',fix:'h',mov:'w'},tbar:{pos:'bent',fix:'a',mov:'w'},curl:{pos:'up',fix:'se',mov:'w'},bss:{pos:'stand',fix:'a',mov:'h'},
+  bbrdl:{pos:'stand',fix:'a',mov:'s'},legext:{pos:'sit',fix:'s',mov:'a'},legcurl:{fix:'s',mov:'a'},dcrunch:{fix:'a',mov:'s'},hackcalf:{pos:'stand'},plank:{pos:'flat'}};
+const POSMSG={lie:'לא זיהיתי שכיבה על ספסל. הגוף צריך להיות שוכב, והידיים מעל הכתפיים.',incl:'לא זיהיתי ישיבה על ספסל משופע.',up:'לא זיהיתי עמידה זקופה.',
+  hang:'לא זיהיתי תלייה על מתח. הידיים צריכות להחזיק מעל הראש, והגוף תלוי מתחתיהן.',sit:'לא זיהיתי ישיבה במכשיר.',bent:'לא זיהיתי הטיה קדימה עם גב ישר.',
+  stand:'לא זיהיתי עמידה. רגליים על הרצפה, כל הגוף בפריים.',flat:'לא זיהיתי פלאנק. הגוף צריך להיות אופקי, קרוב לרצפה.'};
+const PN={s:['הכתפיים','זזות','נשארות'],e:['המרפקים','זזים','נשארים'],w:['הידיים','זזות','נשארות'],h:['האגן','זז','נשאר'],a:['כפות הרגליים','זזות','נשארות'],k:['הברכיים','זזות','נשארות']};
+function formPos(pos,P,tor){const {s,h,w,k,a,nose}=P;if(!s||!h)return false;
+  const tilt=Math.atan2(Math.abs(s.x-h.x),Math.abs(s.y-h.y))*180/Math.PI;// 0 = torso vertical, 90 = horizontal
+  switch(pos){
+    case 'lie':return tilt>60&&(!w||w.y<s.y);
+    case 'incl':return tilt>15&&tilt<75&&s.y<h.y;
+    case 'up':return tilt<35&&s.y<h.y&&(!a||a.y>h.y);
+    case 'hang':return !!w&&w.y<Math.min(s.y,nose?nose.y:s.y)-.15*tor&&s.y<h.y&&tilt<40;
+    case 'sit':return tilt<50&&s.y<h.y&&(!k||Math.abs(k.y-h.y)<.6*tor);
+    case 'bent':return tilt>20&&tilt<85&&(!a||a.y>h.y);
+    case 'stand':return !!a&&a.y>h.y+.6*tor&&(!k||k.y>h.y&&k.y<a.y);
+    case 'flat':return tilt>65&&(!a||Math.abs(a.y-h.y)<.5*tor);
+    default:return true}}
+function formValid(k,good){const C=FCHK[k];if(!C)return null;const bad=s=>`<li class="bad">✗ ${s}</li>`;
+  const med=a=>{const b=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);return b.length?b[b.length>>1]:0};
+  const tor=med(good.map(g=>g.P.s&&g.P.h?Math.hypot(g.P.s.x-g.P.h.x,g.P.s.y-g.P.h.y):null));
+  if(!tor)return `<ul>${bad('לא זיהיתי את פלג הגוף העליון. כל הגוף צריך להיות בפריים.')}</ul>`;
+  if(C.pos){const okF=good.filter(g=>formPos(C.pos,g.P,tor)).length/good.length;
+    if(okF<.6)return `<ul>${bad(POSMSG[C.pos])}</ul><p class="muted">לכן לא ניתחתי את החזרות. ${esc(FORM[k].tip)}</p>`}
+  const rng=q=>{const xs=good.map(g=>g.P[q]&&g.P[q].x).filter(x=>x!=null).sort((a,b)=>a-b),ys=good.map(g=>g.P[q]&&g.P[q].y).filter(x=>x!=null).sort((a,b)=>a-b);
+    if(xs.length<10)return null;const pc=(a,f)=>a[Math.floor((a.length-1)*f)];return Math.hypot(pc(xs,.9)-pc(xs,.1),pc(ys,.9)-pc(ys,.1))/tor};
+  if(C.mov){const m=rng(C.mov);if(m!=null&&m<.25)return `<ul>${bad(`${PN[C.mov][0]} כמעט לא ${PN[C.mov][1]}. לא זיהיתי ביצוע של התרגיל.`)}</ul>`;
+    for(const q of (C.fix||'')){const f=rng(q);if(f==null||m==null)continue;
+      if(f>.4&&f>.5*m)return `<ul>${bad(`${PN[q][0]} ${PN[q][1]} כמעט כמו ${PN[C.mov][0]}. זה נראה כמו תנועה של כל הגוף ולא כמו התרגיל. בתרגיל הזה ${PN[q][0]} ${PN[q][2]} כמעט במקום.`)}</ul><p class="muted">לכן לא ניתחתי את החזרות.</p>`;
+      if(f>.3)FWARN.push(`${PN[q][0]} ${PN[q][1]} הרבה, כלומר יש תנופה או נדנוד. בתרגיל הזה ${PN[q][0]} ${PN[q][2]} כמעט במקום.`)}}
+  return null}
+let FWARN=[];
 function formAnalyze(k,sam){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</li>`,bad=s=>`<li class="bad">✗ ${s}</li>`;
-  const good=sam.filter(s=>s.a!=null&&(s.vis==null||s.vis>.4));
+  const good=sam.filter(s=>s.a!=null&&(s.vis==null||s.vis>.5));
   if(good.length<15)return {html:`<p>לא זיהיתי מספיק את הגוף בסרטון. ${esc(F.tip)} תאורה טובה, כל הגוף בפריים.</p>`};
+  FWARN=[];const inval=formValid(k,good);if(inval)return {html:inval};
   if(F.static){const a=good.map(s=>s.a);const dev=a.filter(x=>x<160).length/a.length;const dur=good[good.length-1].t-good[0].t;
     const L=[`<li>החזקה: ${Math.round(dur)} שניות</li>`,dev<.15?ok('הגוף ישר כמו קרש לאורך רוב הזמן'):bad(`הגוף לא ישר ב-${Math.round(dev*100)}% מהזמן. בטן ועכוז מכווצים, האגן לא צונח ולא מתרומם.`)];
     return {html:`<ul>${L.join('')}</ul>`,facts:`פלאנק ${Math.round(dur)} שניות, ${Math.round(dev*100)}% מהזמן הגוף לא ישר`}}
@@ -1687,8 +1724,9 @@ function formAnalyze(k,sam){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}
   L.push(nDeep===n?ok('טווח תנועה מלא בצד הקשה של התנועה'):bad(`${F.lo} (${n-nDeep} מתוך ${n})`));
   L.push(nFull===n?ok('חזרה מלאה בין החזרות'):bad(`${F.hi} (${n-nFull} מתוך ${n})`));
   if(F.max){const hi=reps.filter(r=>r.peak>F.max).length;if(hi)L.push(bad(`מרימים גבוה מדי, מעל הכתפיים (${hi} חזרות). עוצרים בגובה הכתף.`))}
-  if(F.lean){const sw=reps.filter(r=>{const l=r.lean.filter(x=>x!=null);return l.length&&Math.max(...l)-Math.min(...l)>F.lean}).length;L.push(sw?bad(`יש תנופה או נדנוד בגוף ב-${sw} חזרות. להוריד משקל ולשמור על הגוף יציב.`):ok('הגוף יציב, בלי תנופה'))}
+  if(F.lean){const sw=reps.filter(r=>{const l=r.lean.filter(x=>x!=null);return l.length&&Math.max(...l)-Math.min(...l)>F.lean}).length;if(sw)L.push(bad(`יש תנופה או נדנוד בגוף ב-${sw} חזרות. להוריד משקל ולשמור על הגוף יציב.`));else if(!FWARN.length)L.push(ok('הגוף יציב, בלי תנופה'))}
   if(F.knee){const sq=reps.filter(r=>Math.min(...r.knee.filter(x=>x!=null))<F.knee).length;if(sq)L.push(bad(`הברכיים מתכופפות יותר מדי (${sq} חזרות). זה הופך לסקוואט. ברכיים רכות וקבועות, התנועה מהאגן.`))}
+  for(const w of FWARN)L.push(bad(w));
   if(F.chin){const c=reps.filter(r=>r.chin.length&&Math.max(...r.chin)>0).length;L.push(c===n?ok('הסנטר עובר את המוט'):bad(`הסנטר לא עבר את המוט ב-${n-c} חזרות.`))}
   const durs=reps.map(r=>r.end-r.start).filter(x=>x>0);const avg=durs.reduce((t,x)=>t+x,0)/durs.length;
   L.push(avg<1.2?bad(`החזרות מהירות מדי (${avg.toFixed(1)} שנ׳ בממוצע). יורדים לאט, בערך 2 שניות.`):ok(`קצב מבוקר (${avg.toFixed(1)} שנ׳ לחזרה)`));
