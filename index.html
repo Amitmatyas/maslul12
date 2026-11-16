@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="מסלול 12">
+<meta name="apple-mobile-web-app-title" content="שרירץ">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px)}</style>
-<title>נמרץ</title>
+<title>שרירץ</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -547,9 +547,9 @@ details.adl[open]>summary{margin-bottom:6px}
 <div class="app" dir="rtl" lang="he">
   <header class="top">
     <div class="wrap">
-      <a class="brand" href="#today" aria-label="נמרץ, מסך הבית">
-        <svg viewBox="0 0 40 26" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="22" rx="11" stroke="#FF5A3C" stroke-width="3"/><rect x="9" y="8.5" width="22" height="9" rx="4.5" stroke="#F1F3F9" stroke-opacity=".5" stroke-width="1.5"/></svg>
-        <b class="logo">נמ<span>רץ</span></b>
+      <a class="brand" href="#today" aria-label="שרירץ, מסך הבית">
+        <svg viewBox="0 0 40 26" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="22" rx="11" stroke="#FF5A3C" stroke-width="3"/><path d="M13.5 13h13" stroke="#F1F3F9" stroke-width="2.2" stroke-linecap="round"/><rect x="10" y="8.5" width="3.6" height="9" rx="1.4" fill="#F1F3F9"/><rect x="26.4" y="8.5" width="3.6" height="9" rx="1.4" fill="#F1F3F9"/></svg>
+        <b class="logo">שרי<span>רץ</span></b>
       </a>
       <span class="badge" id="badge"></span>
       <span class="sync" id="sync" title="סטטוס שמירה"><i></i><span>נשמר במכשיר</span></span>
@@ -1240,7 +1240,7 @@ const CHAT_KEY='maslul12:chat';
 const CH={turns:(()=>{try{return JSON.parse(localStorage.getItem(CHAT_KEY)||'[]')}catch(e){return []}})(),busy:false,ctl:null,live:'',err:null};
 let SAMPLE=null;
 function saveChat(){try{localStorage.setItem(CHAT_KEY,JSON.stringify(CH.turns.slice(-30)))}catch(e){}}
-const COACH_RULES=`אתה "המאמן" באפליקציית האימונים "נמרץ". אתה מאמן ריצה וכוח של נער בן 14. ענה תמיד בעברית, בגובה העיניים, חם ומעודד כמו מאמן אמיתי, קצר וברור (עד כ-150 מילים, אלא אם ביקשו פירוט). אפשר רשימות קצרות.
+const COACH_RULES=`אתה "המאמן" באפליקציית האימונים "שרירץ". אתה מאמן ריצה וכוח של נער בן 14. ענה תמיד בעברית, בגובה העיניים, חם ומעודד כמו מאמן אמיתי, קצר וברור (עד כ-150 מילים, אלא אם ביקשו פירוט). אפשר רשימות קצרות.
 כללים שאסור לעבור עליהם:
 - לא ממליצים על ספרינטים מקסימליים, הרמות מקסימליות, כשל או אימון דרך כאב.
 - כאב מתמשך או כאב שמשנה את צורת הריצה: עוצרים, מספרים להורה/מאמן, ופונים לרופא או פיזיותרפיסט. אל תאבחן.
@@ -1275,7 +1275,7 @@ function viewChat(){const avail=SAMPLE?'yes':'no';
   const msgs=CH.turns.map(t=>t.role==='user'?`<div class="msg me">${esc(t.content)}</div>`:`<div class="msg ai"><div class="who">המאמן</div>${mdLite(t.content)}</div>`).join('')
     +(CH.busy?`<div class="msg ai" id="liveMsg"><div class="who">המאמן</div><div id="liveTxt">${CH.live?mdLite(CH.live):'<span class="typing"><i></i><i></i><i></i></span>'}</div></div>`:'')
     +(CH.err?`<div class="msg ai err"><div class="who">המאמן</div><p>${esc(CH.err)}</p></div>`:'');
-  const intro=`<div class="msg ai"><div class="who">המאמן</div><p>היי! אני המאמן שלך בנמרץ. אני רואה את התוכנית, את מה שרשמת ביומן ואת ההתאמות של השבוע. תשאל אותי כל דבר על האימונים.</p></div>`;
+  const intro=`<div class="msg ai"><div class="who">המאמן</div><p>היי! אני המאמן שלך בשרירץ. אני רואה את התוכנית, את מה שרשמת ביומן ואת ההתאמות של השבוע. תשאל אותי כל דבר על האימונים.</p></div>`;
   return `<div class="stack"><div><span class="eyebrow">צ׳אט · AI</span><h2 class="h-xl">שאל את המאמן</h2></div>
   <div class="chat"><div class="chatbox">
     <div class="msgs" id="msgs">${intro}${msgs}</div>
@@ -1613,6 +1613,7 @@ function openDemo(k){demoStop();if(D3[k])return open3D(k);const el=$('#sheet');
 // ===== technique-check engine (pure: frames in, verdict out) =====
 // ===== technique-check engine (pure: frames in, verdict out) =====
 // ===== technique-check engine (pure: frames in, verdict out) =====
+// ===== technique-check engine (pure: frames in, verdict out) =====
 const LM={nose:0,ls:11,rs:12,le:13,re:14,lw:15,rw:16,lh:23,rh:24,lk:25,rk:26,la:27,ra:28,lf:31,rf:32};
 const FJ={elbow:['s','e','w'],shoulder:['h','s','e'],shoulderW:['h','s','w'],hip:['s','h','k'],knee:['h','k','a'],ankle:['k','a','f'],body:['s','h','a']};
 // j: joint angle measured · min/max: the angle each end of the rep must reach (min end ≤ min, max end ≥ max)
@@ -1698,6 +1699,16 @@ function formEngine(k,frames,W,H){
   const S=raw.map(f=>{const P={};for(const j of ['s','e','w','h','k','a'])P[j]=pt(f,j);P.nose=f.nose;
     const tilt=P.s&&P.h?Math.atan2(P.s.x-P.h.x,P.h.y-P.s.y)*180/Math.PI:null;
     return {t:f.t,a:val(M,f),wv:WJ===M?null:val(WJ,f),rv:RJ===M?null:val(RJ,f),P,tilt,knee:side==='both'?null:met('knee',f,side)}});
+  // 2b. the set starts once the athlete is in the starting position and holds it ~1 s (walking to the bar,
+  //     jumping up, letting go and walking away are ignored)
+  let trimmed=false;
+  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));const still=i=>{const h0=S[i].P.h;if(!h0)return true;let m=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.3;q--){const h=S[q].P.h;if(h)m=Math.max(m,Math.abs(h.x-h0.x))}for(let q=i;q<S.length&&Math.abs(S[q].t-S[i].t)<=.3;q++){const h=S[q].P.h;if(h)m=Math.max(m,Math.abs(h.x-h0.x))}return m<.2*tor};
+    const win=(i,dir)=>{if(!still(i))return false;let y=0,n=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.8;q+=dir){if(ok[q]==null)continue;n++;if(ok[q])y++}return n>=4&&y/n>=.85};
+    let a=-1,b=-1;for(let i=0;i<S.length;i++)if(ok[i]&&win(i,1)){a=i;break}
+    for(let i=S.length-1;i>=0;i--)if(ok[i]&&win(i,-1)){b=i;break}
+    globalThis.FTRIM={a:a>=0?S[a].t:null,b:b>=0?S[b].t:null,t0:S[0].t,t1:S[S.length-1].t};
+    if(a>=0&&b>a){const t0=S[a].t-.15,t1=S[b].t+.1;if(t0>S[0].t+.2||t1<S[S.length-1].t-.2){trimmed=true;
+      const keep=f=>f.t>=t0&&f.t<=t1;const S2=S.filter(keep),R2=raw.filter(keep);S.length=0;S.push(...S2);raw.length=0;raw.push(...R2)}}}
   const valid=S.filter(s=>s.a!=null);
   if(valid.length<10||valid[valid.length-1].t-valid[0].t<1.5)return {bad:'body'};
   // 3. position check
@@ -1781,7 +1792,8 @@ function formEngine(k,frames,W,H){
     const chk=(v,end,fb,raw)=>{if(fb!=null)return okM(raw,end,fb)&&(v==null||okM(v,end,lim(end)));return okM(v!=null?v:raw,end,lim(end))};
     const workOk=chk(wv,WK,F.wfb,e.v),restOk=chk(rv,O,F.rfb,other.v);if(wv==null)wv=e.v;if(rv==null)rv=other.v;
     const ta=Sm[pv.i].t,tb=Sm[nx.i].t;
-    let act=0;for(let q=pv.i;q<=nx.i;q++){const v=Sm[q].v;if(v==null)continue;const ref=q<=e.i?pv.v:nx.v;if(Math.abs(v-ref)>.2*Math.abs(e.v-ref))act+=DT}
+    const restLvl=fMed(ex.filter(x=>x.ty===O&&!x.end).map(x=>x.v));const refL=(pv.edge||pv.end)&&restLvl!=null?restLvl:pv.v,refR=(nx.edge||nx.end)&&restLvl!=null?restLvl:nx.v;
+    let act=0;for(let q=pv.i;q<=nx.i;q++){const v=Sm[q].v;if(v==null)continue;const ref=q<=e.i?refL:refR;if(Math.abs(v-ref)>.2*Math.abs(e.v-ref))act+=DT}
     const inR=S.filter(s=>s.t>=ta&&s.t<=tb);
     const tl=inR.map(s=>s.tilt).filter(x=>x!=null),kn=inR.map(s=>s.knee).filter(x=>x!=null);
     const te=Sm[e.i].t,near=S.filter(s=>Math.abs(s.t-te)<=.35);
@@ -1984,7 +1996,7 @@ function aiLifts(){const out=[];const t=todayIso();for(const s of Object.values(
 let AI_BUSY=false;
 async function aiReview(force){if(AI_BUSY||!gqKey())return;const t=todayIso(),I=info(t);if(I.st==='after')return;const w=I.st==='in'?I.week:1;
   S.ai=S.ai||{};if(!force&&(S.ai[w]||S.aiTry===t))return;AI_BUSY=true;S.aiTry=t;if(force)toast('ה-AI בודק את השבוע…');
-  const sys=`אתה מאמן ריצה וכוח של נער בן 14 שמתאים את תוכנית השבוע באפליקציה "נמרץ". התוכנית כבר מותאמת בחוקים קבועים; התפקיד שלך הוא כוונון עדין נוסף לפי הנתונים בלבד.
+  const sys=`אתה מאמן ריצה וכוח של נער בן 14 שמתאים את תוכנית השבוע באפליקציה "שרירץ". התוכנית כבר מותאמת בחוקים קבועים; התפקיד שלך הוא כוונון עדין נוסף לפי הנתונים בלבד.
 החזר JSON בלבד במבנה: {"run":מספר,"q":מספר שלם,"sets":מספר שלם,"wt":{"מפתח_תרגיל":מספר},"summary":"משפט אחד בעברית","why":["סיבה קצרה בעברית"]}
 - run: מכפיל לק״מ של הריצות הקלות והארוכה, בין 0.85 ל-1.05 (1 = בלי שינוי).
 - q: שינוי במספר החזרות באימון האיכות, בין -2 ל-0.
@@ -2033,7 +2045,7 @@ async function initWebApp(){if(!WEBAPP||!('serviceWorker' in navigator))return;
 async function enablePush(){
   try{if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('המכשיר לא תומך בהתראות');
     const perm=await Notification.requestPermission();
-    if(perm!=='granted'){toast('לא אישרת התראות. אפשר לאשר בהגדרות הטלפון → התראות → נמרץ.');openSettings();return}
+    if(perm!=='granted'){toast('לא אישרת התראות. אפשר לאשר בהגדרות הטלפון → התראות → שרירץ.');openSettings();return}
     const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToU8(VAPID_PUBLIC)});
     PUSH.sub=sub;writeStatus();await pushRegister(sub);openSettings();toast('ההתראות פעילות')}
@@ -2041,7 +2053,7 @@ async function enablePush(){
 function notifSection(){
   let body='';
   if(!('serviceWorker' in navigator))body='<p class="hint">הדפדפן הזה לא תומך בהתראות.</p>';
-  else if(isIOS()&&!isStandalone())body=`<ol class="steps"><li>ב-Safari: כפתור השיתוף (ריבוע עם חץ) → <b>הוסף למסך הבית</b>.</li><li>פותחים את <b>נמרץ</b> מהמסך הבית, וחוזרים לכאן (גלגל השיניים).</li></ol>`;
+  else if(isIOS()&&!isStandalone())body=`<ol class="steps"><li>ב-Safari: כפתור השיתוף (ריבוע עם חץ) → <b>הוסף למסך הבית</b>.</li><li>פותחים את <b>שרירץ</b> מהמסך הבית, וחוזרים לכאן (גלגל השיניים).</li></ol>`;
   else if(!('PushManager' in window))body='<p class="hint">המכשיר הזה לא תומך בהתראות.</p>';
   else if(!PUSH.checked)body='<p class="hint">בודק…</p>';
   else if(!PUSH.sub||Notification.permission!=='granted')body=`<p class="hint">בבוקר מגיעה התראה עם האימון של היום. בערב, אם היום עוד לא סומן, מגיעה תזכורת לעשות או לסמן.</p><button class="cta" data-act="push-enable" style="margin-top:10px">${ic('today')}הפעל התראות</button>`;

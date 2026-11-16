@@ -55,23 +55,23 @@ async function buildNotification(p) {
   if (p.type === 'evening') {
     const finished = day && (day.done >= day.total || day.skipped);
     if (day && day.rest) {
-      return { title: 'נמרץ · יום מנוחה', body: `ללכת לישון מוקדם.${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
+      return { title: 'שרירץ · יום מנוחה', body: `ללכת לישון מוקדם.${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
     }
     if (finished) {
-      return { title: 'נמרץ · היום הושלם ✓', body: `כל הכבוד!${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
+      return { title: 'שרירץ · היום הושלם ✓', body: `כל הכבוד!${tomorrow ? ' מחר: ' + tomorrow.title : ''}`, tag: 'evening' };
     }
     const what = day ? day.title : p.title;
     return {
-      title: 'נמרץ · עוד לא סימנת',
+      title: 'שרירץ · עוד לא סימנת',
       body: `היום: ${what}. עשית? היכנס וסמן. לא הספקת? יש עוד זמן לגרסה קצרה.`,
       tag: 'evening',
       requireInteraction: true
     };
   }
   if (day) {
-    return { title: `נמרץ · ${day.title}`, body: day.body || 'בהצלחה היום!', tag: 'morning' };
+    return { title: `שרירץ · ${day.title}`, body: day.body || 'בהצלחה היום!', tag: 'morning' };
   }
-  return { title: `נמרץ · ${p.title || 'האימון של היום'}`, body: p.body || 'פתח את האפליקציה לפרטים.', tag: 'morning' };
+  return { title: `שרירץ · ${p.title || 'האימון של היום'}`, body: p.body || 'פתח את האפליקציה לפרטים.', tag: 'morning' };
 }
 
 async function show(p) {
