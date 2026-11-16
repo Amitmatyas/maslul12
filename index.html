@@ -1501,7 +1501,7 @@ let T3=null,G3=null,BODY=null;
 const TV='https://cdn.jsdelivr.net/npm/three@0.160.0/';
 async function three(){if(T3)return T3;const T=await import('three');const {GLTFLoader}=await import(TV+'examples/jsm/loaders/GLTFLoader.js');const {DRACOLoader}=await import(TV+'examples/jsm/loaders/DRACOLoader.js');const SU=await import(TV+'examples/jsm/utils/SkeletonUtils.js');T3={T,GLTFLoader,DRACOLoader,SU};return T3}
 async function bodyGltf(){if(BODY)return BODY;const {GLTFLoader,DRACOLoader}=await three();const l=new GLTFLoader();const d=new DRACOLoader();d.setDecoderPath(TV+'examples/jsm/libs/draco/gltf/');l.setDRACOLoader(d);
-  BODY=await new Promise((res,rej)=>l.load('body.glb?v=10',res,undefined,rej));return BODY}
+  BODY=await new Promise((res,rej)=>l.load('body.glb?v=13',res,undefined,rej));return BODY}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const MUSC={chest:'עיקרי',fdelt:'משני',tri:'משני'};
 const D3={
@@ -1522,7 +1522,7 @@ function ik2(T,S,W,a,b,pole){const u=W.clone().sub(S);let d=Math.min(u.length(),
 async function open3D(k){const D=D3[k],el=$('#sheet');
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m"></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
-    <div class="d3leg"><span><i style="background:#e8170f"></i>שריר עיקרי</span><span><i style="background:#db4d26"></i>שריר משני</span><span><i style="background:#9e402b"></i>שאר השרירים</span></div>
+    <div class="d3leg"><span><i style="background:#e01a12"></i>שריר עיקרי</span><span><i style="background:#f2734d"></i>שריר משני</span><span><i style="background:#e4e4e8;border:1px solid #bbb"></i>שאר הגוף</span></div>
     <ul class="d3n">${D.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
     <p class="muted" style="font-size:11px;margin-top:10px">מודל אנטומי: Z-Anatomy (CC BY-SA 4.0)</p></div>`;
   el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:40px 20px;text-align:center">טוען את המודל…</p>';
@@ -1541,8 +1541,8 @@ async function open3D(k){const D=D3[k],el=$('#sheet');
   body.traverse(o=>{if(o.isBone){bones[o.name]=o;o.userData.q0=o.quaternion.clone()}if(o.isMesh){skinned.push(o);o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
     if(/shorts/.test(o.name)||/shorts/.test(o.material&&o.material.name||'')){o.material=M.shorts;return}
     const ca=o.geometry.attributes.color;if(!ca){o.material=M.musc;return}const n=ca.count,col=new Float32Array(n*3),gids=new Uint8Array(n);
-    const CL=[[.62,.25,.17],[.93,.87,.84],[.88,.83,.74],[.84,.78,.74]],c1=[.92,.09,.06],c2=[.86,.30,.15];
-    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i),cl=Math.round(ca.getZ(i)*8);gids[i]=g;const v=cl===0?(lvl[g]||0):0;const b=v>=1?c1:v>0?c2:(CL[cl]||CL[0]);const sh=.18+.82*Math.pow(ao,1.8);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
+    const CL=[[.91,.91,.93],[.80,.80,.83],[.93,.92,.89],[.93,.92,.90]],c1=[.88,.10,.07],c2=[.95,.45,.30];
+    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i),cl=Math.round(ca.getZ(i)*8);gids[i]=g;const v=cl===0?(lvl[g]||0):0;const b=v>=1?c1:v>0?c2:(CL[cl]||CL[0]);const sh=.12+.88*Math.pow(ao,2.1);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
     o.geometry.setAttribute('color',new T.BufferAttribute(col,3));o.geometry.userData.gids=gids;chestG=o;o.material=M.skin}});
   const SK=bones;
   body.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});
