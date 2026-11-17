@@ -1503,116 +1503,404 @@ async function three(){if(T3)return T3;const T=await import('three');const {GLTF
 async function bodyGltf(){if(BODY)return BODY;const {GLTFLoader,DRACOLoader}=await three();const l=new GLTFLoader();const d=new DRACOLoader();d.setDecoderPath(TV+'examples/jsm/libs/draco/gltf/');l.setDRACOLoader(d);
   BODY=await new Promise((res,rej)=>l.load('body.glb?v=13',res,undefined,rej));return BODY}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
-const MUSC={chest:'עיקרי',fdelt:'משני',tri:'משני'};
-const D3={
-  bench:{period:4.4,cam:{az:.85,el:.5,r:3.3,tgt:[0,.6,.25]},
-    tl:[[0,.5,0,'נעילה למעלה, שכמות מכווצות'],[.5,2.5,1,'ירידה מבוקרת, 2 שניות'],[2.5,2.9,1,'נגיעה קלה בתחתית החזה'],[2.9,4,0,'דחיפה, בלי להקפיץ'],[4,4.4,0,'נעילה']],
-    mus:{chest:1,fdelt:.5,tri:.5},
-    notes:['אחיזה: בערך פעם וחצי רוחב הכתפיים.','המוט נוגע בתחתית החזה, בקו הפטמות. לא בצוואר ולא בבטן.','מרפקים בזווית של 45–60° מהגוף, לא 90°.','בתחתית האמה כמעט אנכית, כף היד מעל המרפק בערך.','שכמות מכווצות לאורך כל הסט, קשת קלה בגב, ישבן על הספסל, רגליים יציבות ברצפה.']}
-};
-function demo3Stop(){if(G3){G3.stop=1;cancelAnimationFrame(G3.raf);try{G3.r.dispose()}catch(e){}G3=null}}
-function aimBone(T,b,dir,up){const p=b.parent;p.updateWorldMatrix(true,false);const Qp=new T.Quaternion();p.getWorldQuaternion(Qp);
-  const Qw0=Qp.clone().multiply(b.userData.q0);const y0=new T.Vector3(0,1,0).applyQuaternion(Qw0);
-  let Qw=new T.Quaternion().setFromUnitVectors(y0,dir.clone().normalize()).multiply(Qw0);
-  if(up){const z=new T.Vector3(0,0,1).applyQuaternion(Qw);const d=dir.clone().normalize();const u=up.clone().sub(d.clone().multiplyScalar(up.dot(d))).normalize();const zz=z.sub(d.clone().multiplyScalar(z.dot(d))).normalize();
-    let a=Math.acos(Math.max(-1,Math.min(1,zz.dot(u))));if(new T.Vector3().crossVectors(zz,u).dot(d)<0)a=-a;Qw=new T.Quaternion().setFromAxisAngle(d,a).multiply(Qw)}
-  b.quaternion.copy(Qp.invert().multiply(Qw));b.updateWorldMatrix(false,true)}
+const GID={abs:1,add:2,bi:3,calf:4,chest:5,erect:6,face:7,fdelt:8,fore:9,glute:10,ham:11,lats:12,neck:13,obl:14,quad:15,rdelt:16,sdelt:17,shin:18,traps:19,tri:20,upback:21};
+// timeline from [duration, target 0..1, label] steps
+const PH=(...a)=>{let t=0;return a.map(([d,v,l])=>{const s=[t,t+d,v,l];t+=d;return s})};
 function ik2(T,S,W,a,b,pole){const u=W.clone().sub(S);let d=Math.min(u.length(),a+b-1e-4);u.normalize();const x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));
   const p=pole.clone().sub(u.clone().multiplyScalar(pole.dot(u))).normalize();return S.clone().add(u.multiplyScalar(x)).add(p.multiplyScalar(h))}
-async function open3D(k){const D=D3[k],el=$('#sheet');
+function demo3Stop(){if(G3){G3.stop=1;cancelAnimationFrame(G3.raf);try{G3.r.dispose()}catch(e){}G3=null}}
+// builds the posing rig on a fresh copy of the body; everything is in the standing rest frame (y up, the body faces +z)
+function makeRig(L3,gl,lvl){const T=L3.T;const body=L3.SU.clone(gl.scene);const SK={};
+  const V=(x,y,z)=>Array.isArray(x)?new T.Vector3(x[0],x[1],x[2]):x&&x.isVector3?x.clone():new T.Vector3(x,y,z);
+  body.traverse(o=>{if(o.isBone){SK[o.name]=o;o.userData.q0=o.quaternion.clone();o.userData.p0=o.position.clone()}});
+  body.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});body.updateMatrixWorld(true);
+  const RQ={},RP={};for(const n in SK){RQ[n]=SK[n].getWorldQuaternion(new T.Quaternion());RP[n]=SK[n].getWorldPosition(new T.Vector3())}
+  const CH={pelvis:'spine1',spine1:'spine2',spine2:'chest',chest:'neck',neck:'head'};
+  for(const s of 'LR'){Object.assign(CH,{['upperarm'+s]:'forearm1'+s,['forearm1'+s]:'forearm2'+s,['forearm2'+s]:'hand'+s,['hand'+s]:'f2P'+s,['thigh'+s]:'shin'+s,['shin'+s]:'foot'+s,['foot'+s]:'toes'+s})}
+  const len=(a,b)=>RP[a].distanceTo(RP[b]);
+  const D={LUA:len('upperarmL','forearm1L'),LFA:len('forearm1L','handL'),LTH:len('thighL','shinL'),LSH:len('shinL','footL')};
+  // body surface extents at rest (for lying / sitting contact)
+  const ext={back:0,front:0,frontAt:{}};{let mnB=1e9;const pts=[];body.traverse(o=>{if(!o.isMesh||/shorts/.test(o.name))return;const pa=o.geometry.attributes.position;const v=new T.Vector3();
+    for(let i=0;i<pa.count;i+=3){v.fromBufferAttribute(pa,i).applyMatrix4(o.matrixWorld);if(Math.abs(v.x)<.16&&v.y>.8&&v.y<1.42)pts.push([v.y,v.z,Math.abs(v.x)])}});
+    for(const p of pts)if(p[1]<mnB)mnB=p[1];ext.back=RP.pelvis.z-mnB;
+    ext.fz=(y,w=.1)=>{let m=-1e9;for(const p of pts)if(p[2]<w&&Math.abs(p[0]-y)<.025&&p[1]>m)m=p[1];return m}}
+  const X=new T.Vector3(1,0,0),Y=new T.Vector3(0,1,0),Z=new T.Vector3(0,0,1),RAD=Math.PI/180;
+  const qx=d=>new T.Quaternion().setFromAxisAngle(X,d*RAD),qy=d=>new T.Quaternion().setFromAxisAngle(Y,d*RAD),qz=d=>new T.Quaternion().setFromAxisAngle(Z,d*RAD);
+  const wp=n=>SK[n].getWorldPosition(new T.Vector3());
+  const setW=(n,Qw)=>{const b=SK[n];if(!b)return;const Qp=b.parent.getWorldQuaternion(new T.Quaternion());b.quaternion.copy(Qp.invert().multiply(Qw));b.updateMatrixWorld(true)};
+  const basis=(d,r)=>{const x=d.clone().normalize();const y=r.clone().sub(x.clone().multiplyScalar(r.dot(x)));if(y.lengthSq()<1e-9)y.copy(Math.abs(x.y)<.9?Y:Z).sub(x.clone().multiplyScalar(x.dot(Math.abs(x.y)<.9?Y:Z)));y.normalize();return new T.Matrix4().makeBasis(x,y,new T.Vector3().crossVectors(x,y))};
+  for(const s of 'LR'){CH['thumb0'+s]='f0P'+s;CH['f0P'+s]='f0D'+s}
+  const REF=n=>/^(foot|toes)/.test(n)?Y:Z;
+  const dir0=n=>CH[n]?RP[CH[n]].clone().sub(RP[n]):RP[n].clone().sub(RP[n.replace('f0D','f0P')]);
+  // point bone n along d, with the side that faced r0 at rest now facing r
+  const aim=(n,d,r)=>{const d0=dir0(n);const M=basis(d,r).multiply(basis(d0,REF(n)).transpose());setW(n,new T.Quaternion().setFromRotationMatrix(M).multiply(RQ[n]))};
+  const prj=(v,a)=>{const u=a.clone().normalize();return v.clone().sub(u.multiplyScalar(v.dot(u)))};
+  const curlF=(s,c,th)=>{for(let f=1;f<=4;f++){const a=[f===4?1.2:1.25,1.05,.8];['P','M','D'].forEach((sg,i)=>{const bn=SK[`f${f}${sg}${s}`];if(bn){bn.quaternion.copy(bn.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(X,a[i]*c));bn.updateMatrixWorld(true)}})}
+    const tb=SK['thumb0'+s];if(tb){tb.quaternion.copy(tb.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(X,.5*th));tb.updateMatrixWorld(true)}
+    for(const sg of ['f0P','f0D']){const bn=SK[sg+s];if(bn){bn.quaternion.copy(bn.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(X,.9*th));bn.updateMatrixWorld(true)}}};
+  // hand frame: d = wrist->knuckles, pn = the way the palm faces, t = thumb side; g = centre of the held handle
+  const GO=.068,PO=.016;
+  const hframe=(h,s)=>{const sg=s==='L'?1:-1;const pn=V(h.pn).normalize();const r=h.r||.015;
+    if(h.g){const ax=V(h.ax).normalize();let t=pn.clone().cross(V(h.dh)).multiplyScalar(sg);t=ax.clone().multiplyScalar(Math.sign(t.dot(ax))||1);
+      const pn2=prj(pn,t).normalize();const d=t.clone().cross(pn2).multiplyScalar(sg);
+      return {d,pn:pn2,t,r,W:V(h.g).sub(pn2.clone().multiplyScalar(r+PO)).sub(d.clone().multiplyScalar(GO))}}
+    const d=V(h.d).normalize();const pn2=prj(pn,d).normalize();return {d,pn:pn2,t:pn2.clone().cross(d).multiplyScalar(sg),r,W:V(h.w)}};
+  const arm=(s,h)=>{const sg=s==='L'?1:-1;const F=hframe(h,s);const S=wp('upperarm'+s);
+    const E=ik2(T,S,F.W,D.LUA,D.LFA,V(h.pole||[sg*.3,-1,-.2]));const ua=E.clone().sub(S),fa=F.W.clone().sub(E);
+    const k=Math.min(1,ua.clone().normalize().cross(fa.clone().normalize()).length()*3);
+    const mix=(a,b)=>a.normalize().multiplyScalar(k).add(b.normalize().multiplyScalar(1-k));
+    const pb=V(h.pole||[sg*.3,-1,-.2]).negate();
+    aim('upperarm'+s,ua,mix(prj(fa,ua),prj(pb,ua)));const r1=mix(prj(ua.clone().negate(),fa),prj(pb,fa));
+    aim('forearm1'+s,fa,r1);aim('forearm2'+s,fa,r1.clone().normalize().add(prj(F.pn,fa).normalize()));aim('hand'+s,F.d,F.pn);
+    const hold=!!h.g||h.r!=null;curlF(s,h.curl==null?1:h.curl,hold?0:(h.thumb==null?(h.curl==null?1:h.curl):h.thumb));
+    if(hold&&h.thumb!==0){const gc=wp('hand'+s).add(F.d.clone().multiplyScalar(GO)).add(F.pn.clone().multiplyScalar(F.r+PO)),dd=F.d,pp=F.pn,tt=F.t;const cmb=(a,b,c)=>dd.clone().multiplyScalar(a).add(pp.clone().multiplyScalar(b)).add(tt.clone().multiplyScalar(c));
+      for(const [n,v] of [['thumb0',cmb(.75,.45,.2)],['f0P',cmb(.25,.85,-.25)],['f0D',cmb(.6,.3,-.45)]]){const m=wp(n+s);aim(n+s,v,prj(gc.clone().sub(m),v))}}
+    const Wa=wp('hand'+s);F.g=Wa.clone().add(F.d.clone().multiplyScalar(GO)).add(F.pn.clone().multiplyScalar(F.r+PO));F.Wa=Wa;F.E=E;F.S=S;return F};
+  const leg=(s,l)=>{const H=wp('thigh'+s),A=V(l.a),pole=V(l.pole||[0,0,1]);const K=ik2(T,H,A,D.LTH,D.LSH,pole);
+    aim('thigh'+s,K.clone().sub(H),pole);aim('shin'+s,A.clone().sub(K),pole);
+    const fy=l.fy||0;setW('foot'+s,qx(l.fp||0).multiply(qy(fy)).multiply(RQ['foot'+s]));setW('toes'+s,qx(l.tp==null?(l.fp||0):l.tp).multiply(qy(fy)).multiply(RQ['toes'+s]));return {H,K,A}};
+  const C={T,V,SK,RP,RQ,D,ext,wp,qx,qy,qz,X,Y,Z,RAD,
+    sh:s=>wp('upperarm'+(s>0?'L':'R')),hip:s=>wp('thigh'+(s>0?'L':'R')),
+    rx:(v,d)=>V(v).applyQuaternion(qx(d)),
+    // where a rest-pose point ends up after the trunk is placed (pelvis frame)
+    frame:n=>{const q=SK[n].getWorldQuaternion(new T.Quaternion()).multiply(RQ[n].clone().invert());return {p:wp(n),up:Y.clone().applyQuaternion(q),fwd:Z.clone().applyQuaternion(q),x:X.clone().applyQuaternion(q),q}},
+    lerp:(a,b,t)=>a+(b-a)*t,lv:(a,b,t)=>V(a).lerp(V(b),t),nz:v=>V(v).normalize()};
+  // apply a pose: trunk first, then arms / legs (they may be functions of the placed trunk)
+  C.apply=P=>{for(const n in SK){SK[n].quaternion.copy(SK[n].userData.q0);SK[n].position.copy(SK[n].userData.p0)}body.updateMatrixWorld(true);
+    const th=P.th||0,fx=P.fx||0,nk=P.nk||0,lat=P.lat||0;
+    setW('pelvis',qx(th).multiply(qz(lat)).multiply(RQ.pelvis));
+    if(P.pel){const p=SK.pelvis;p.position.copy(p.parent.worldToLocal(V(P.pel)));p.updateMatrixWorld(true)}
+    setW('spine1',qx(th+fx*.3).multiply(RQ.spine1));setW('spine2',qx(th+fx*.65).multiply(RQ.spine2));setW('chest',qx(th+fx).multiply(RQ.chest));
+    setW('neck',qx(th+fx+nk*.5).multiply(RQ.neck));setW('head',qx(th+fx+nk).multiply(RQ.head));
+    const ca=th+fx,ce=P.clav||0;setW('clavL',qx(ca).multiply(qz(ce)).multiply(RQ.clavL));setW('clavR',qx(ca).multiply(qz(-ce)).multiply(RQ.clavR));
+    const A=typeof P.arms==='function'?P.arms(C):P.arms||{},Lg=typeof P.legs==='function'?P.legs(C):P.legs||{};
+    const H={};for(const s of 'LR')if(Lg[s])leg(s,Lg[s]);for(const s of 'LR')if(A[s])H[s]=arm(s,A[s]);C.H=H;C.P=P;return H};
+  return {body,C}}
+
+// equipment kit: simple primitives placed in the rest frame
+function kit(T,g,M){const X=new T.Vector3(1,0,0),Y=new T.Vector3(0,1,0);const V=(a)=>Array.isArray(a)?new T.Vector3(a[0],a[1],a[2]):a.clone();
+  const add=(o,par)=>{o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});(par||g).add(o);return o};
+  const K={M,
+    box:(w,h,d,p,m,rx,par)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m||M.white);o.position.copy(V(p));if(rx)o.rotation.x=rx;return add(o,par)},
+    // cylinder from a to b (re-placeable with .set)
+    rod:(r,a,b,m,seg,par)=>{const o=new T.Mesh(new T.CylinderGeometry(r,r,1,seg||16),m||M.steel);o.set=(a,b)=>{a=V(a);b=V(b);const d=b.clone().sub(a);const l=Math.max(1e-4,d.length());o.position.copy(a).add(b).multiplyScalar(.5);o.scale.set(1,l,1);o.quaternion.setFromUnitVectors(Y,d.normalize())};o.set(a,b);return add(o,par)},
+    // object whose local x axis is placed along ax at p
+    along:(o)=>{o.at=(p,ax)=>{o.position.copy(V(p));o.quaternion.setFromUnitVectors(X,V(ax).normalize())};return add(o)},
+    xcyl:(r,l,x,m,seg)=>{const o=new T.Mesh(new T.CylinderGeometry(r,r,l,seg||24),m);o.rotation.z=Math.PI/2;o.position.x=x||0;return o},
+    db:(hw)=>{const o=new T.Group();hw=hw||.075;o.add(K.xcyl(.016,hw*2+.02,0,M.steel));for(const x of [-1,1]){o.add(K.xcyl(.058,.075,x*(hw+.035),M.plate,8));o.add(K.xcyl(.03,.012,x*(hw+.005),M.steel))}return K.along(o)},
+    barbell:(len,pr)=>{const o=new T.Group();len=len||2;pr=pr||.225;o.add(K.xcyl(.014,len,0,M.steel));for(const x of [-1,1]){const px=x*(len/2-.33);o.add(K.xcyl(pr,.045,px,M.plate,40));o.add(K.xcyl(pr*.8,.03,px+x*.04,M.plate,40));o.add(K.xcyl(.025,.05,x*(len/2-.4),M.steel))}return K.along(o)},
+    bar:(len,r)=>K.along(new T.Group().add(K.xcyl(r||.014,len,0,M.steel))),
+    // D-handle: grip along x, frame toward +y
+    dh:()=>{const o=new T.Group();o.add(K.xcyl(.017,.12,0,M.pad));const f=new T.Mesh(new T.TorusGeometry(.075,.007,8,24,Math.PI),M.steel);f.position.y=0;o.add(f);return K.along(o)},
+    plate:(r,th)=>{const o=new T.Group();o.add(K.xcyl(r||.17,th||.03,0,M.plate,40));o.add(K.xcyl(.03,(th||.03)+.006,0,M.steel));return K.along(o)},
+    pulley:(p)=>{const o=new T.Mesh(new T.CylinderGeometry(.045,.045,.03,20),M.steel);o.rotation.z=Math.PI/2;o.position.copy(V(p));return add(o)},
+    column:(x,z,h,w)=>{K.box(w||.16,h||2.1,.16,[x,(h||2.1)/2,z],M.white);K.box(.32,.04,.32,[x,.02,z],M.white)},
+    cable:(a,b)=>K.rod(.0045,a,b,M.cable,6),
+    // place o with local x along ax and local y toward up
+    orient:(o,p,ax,up)=>{o.position.copy(V(p));const x=V(ax).normalize();const u=V(up);const y=u.sub(x.clone().multiplyScalar(u.dot(x))).normalize();o.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(x,y,new T.Vector3().crossVectors(x,y)))}};
+  return K}
+async function open3D(k){const D=D3[k],el=$('#sheet');const notes=D.notes||EX[k].cue.split(/(?<=\.)\s+/).filter(Boolean);
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
-    <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m"></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
+    <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m" hidden></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
     <div class="d3leg"><span><i style="background:#e01a12"></i>שריר עיקרי</span><span><i style="background:#f2734d"></i>שריר משני</span><span><i style="background:#e4e4e8;border:1px solid #bbb"></i>שאר הגוף</span></div>
-    <ul class="d3n">${D.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
+    <ul class="d3n">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
     <p class="muted" style="font-size:11px;margin-top:10px">מודל אנטומי: Z-Anatomy (CC BY-SA 4.0)</p></div>`;
   el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:40px 20px;text-align:center">טוען את המודל…</p>';
   let L3,gl;try{L3=await three();gl=await bodyGltf()}catch(e){box.innerHTML='<p class="muted" style="padding:20px">צריך חיבור לאינטרנט כדי לטעון את ההדגמה.</p>';return}
   if(!$('#d3c'))return;const T=L3.T;box.innerHTML='';demo3Stop();
-  const W=box.clientWidth||340,Hh=Math.round(W*.9);const r=new T.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,devicePixelRatio));r.setSize(W,Hh);r.outputColorSpace=T.SRGBColorSpace;r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;box.appendChild(r.domElement);
+  const W=box.clientWidth||340,Hh=Math.round(W*.9);const r=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:!!window.__dev});r.setPixelRatio(Math.min(2,devicePixelRatio));r.setSize(W,Hh);r.outputColorSpace=T.SRGBColorSpace;r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;box.appendChild(r.domElement);
   const sc=new T.Scene();sc.background=new T.Color(0xf4f5f7);const cam=new T.PerspectiveCamera(35,W/Hh,.05,30);
-  sc.add(new T.HemisphereLight(0xffffff,0x9aa0ae,1.25));const dl=new T.DirectionalLight(0xffffff,2.2);dl.position.set(1.6,3.2,1.2);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-1.5,right:1.5,top:1.5,bottom:-1.5});dl.shadow.bias=-.0005;sc.add(dl);
+  sc.add(new T.HemisphereLight(0xffffff,0x9aa0ae,1.25));const dl=new T.DirectionalLight(0xffffff,2.2);dl.position.set(1.6,3.2,1.2);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-2,right:2,top:2,bottom:-2});dl.shadow.bias=-.0005;sc.add(dl);
   const fill=new T.DirectionalLight(0xffffff,.7);fill.position.set(-2,1.5,-1.5);sc.add(fill);
-  const fl=new T.Mesh(new T.CircleGeometry(2.4,64),new T.ShadowMaterial({opacity:.18}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;sc.add(fl);
+  const fl=new T.Mesh(new T.CircleGeometry(3,64),new T.ShadowMaterial({opacity:.18}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;sc.add(fl);
   const mat=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.6,metalness:0},o||{}));
-  const M={skin:mat(0xffffff,{roughness:.52,vertexColors:true}),musc:mat(0xb4b6bd,{roughness:.5}),p1:mat(0xd9412b,{roughness:.45}),p2:mat(0xe98a5a,{roughness:.5}),bone:mat(0xe9e4d8,{roughness:.7}),shorts:mat(0x1d1f24,{roughness:.8,side:T.DoubleSide}),white:mat(0xf2f3f5,{roughness:.4}),pad:mat(0x202226,{roughness:.7}),steel:mat(0x9aa0aa,{metalness:.8,roughness:.3}),plate:mat(0x18191c,{roughness:.55})};
-  const body=L3.SU.clone(gl.scene);const bones={};const skinned=[];
-  const GID={abs:1,add:2,bi:3,calf:4,chest:5,erect:6,face:7,fdelt:8,fore:9,glute:10,ham:11,lats:12,neck:13,obl:14,quad:15,rdelt:16,sdelt:17,shin:18,traps:19,tri:20,upback:21};
-  const lvl=[];for(const [n,v] of Object.entries(D.mus))lvl[GID[n]]=v;let chestG=null;
-  body.traverse(o=>{if(o.isBone){bones[o.name]=o;o.userData.q0=o.quaternion.clone()}if(o.isMesh){skinned.push(o);o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
+  const M={skin:mat(0xffffff,{roughness:.52,vertexColors:true}),musc:mat(0xb4b6bd,{roughness:.5}),shorts:mat(0x1d1f24,{roughness:.8,side:T.DoubleSide}),white:mat(0xf2f3f5,{roughness:.4}),pad:mat(0x202226,{roughness:.7}),steel:mat(0x9aa0aa,{metalness:.8,roughness:.3}),plate:mat(0x18191c,{roughness:.55}),cable:mat(0x2a2c31,{roughness:.6}),rope:mat(0x3a3f4a,{roughness:.9})};
+  const lvl=[];for(const [n,v] of Object.entries(D.mus))lvl[GID[n]]=v;
+  const {body,C}=makeRig(L3,gl,lvl);
+  body.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
     if(/shorts/.test(o.name)||/shorts/.test(o.material&&o.material.name||'')){o.material=M.shorts;return}
-    const ca=o.geometry.attributes.color;if(!ca){o.material=M.musc;return}const n=ca.count,col=new Float32Array(n*3),gids=new Uint8Array(n);
+    const gm=o.geometry;if(!gm.userData.enc&&gm.attributes.color)gm.userData.enc=gm.attributes.color;const ca=gm.userData.enc;if(!ca){o.material=M.musc;return}const n=ca.count,col=new Float32Array(n*3);
     const CL=[[.91,.91,.93],[.80,.80,.83],[.93,.92,.89],[.93,.92,.90]],c1=[.88,.10,.07],c2=[.95,.45,.30];
-    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i),cl=Math.round(ca.getZ(i)*8);gids[i]=g;const v=cl===0?(lvl[g]||0):0;const b=v>=1?c1:v>0?c2:(CL[cl]||CL[0]);const sh=.12+.88*Math.pow(ao,2.1);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
-    o.geometry.setAttribute('color',new T.BufferAttribute(col,3));o.geometry.userData.gids=gids;chestG=o;o.material=M.skin}});
-  const SK=bones;
-  body.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});
-  body.rotation.x=-Math.PI/2;sc.add(body);body.updateMatrixWorld(true);
-  const wp=n=>SK[n].getWorldPosition(new T.Vector3());
-  const box3=new T.Box3().setFromObject(body);const BT=.47;body.position.y+=BT-box3.min.y+.005;body.position.z+=.12;body.updateMatrixWorld(true);
-  const len=(a,b)=>wp(a).distanceTo(wp(b));const LUA=len('upperarmL','forearm1L'),LFA=len('forearm1L','handL'),LTH=len('thighL','shinL'),LSH=len('shinL','footL');
-  const shL=wp('upperarmL'),shR=wp('upperarmR');const touchZ=shL.z+.12;let chestTop=null;
-  if(chestG){const o=chestG,gi=o.geometry.userData.gids;{const pa=o.geometry.attributes.position;const v=new T.Vector3();for(let i=0;i<pa.count;i++){if(gi[i]!==GID.chest)continue;v.fromBufferAttribute(pa,i).applyMatrix4(o.matrixWorld);if(Math.abs(v.x)<.12&&Math.abs(v.z-touchZ)<.035&&(!chestTop||v.y>chestTop.y))chestTop=v.clone()}}}
-  if(!chestTop)chestTop=new T.Vector3(0,BT+.25,shL.z+.15);
-  const barBot=chestTop.y+.016,GRIP=Math.max(.3,Math.abs(shL.x)*1.95);
-  const topY=shL.y+Math.sqrt(Math.max(.01,Math.pow((LUA+LFA)*.97,2)-Math.pow(GRIP-Math.abs(shL.x),2)-Math.pow(touchZ-shL.z,2)))+.07;
-  const g=new T.Group();sc.add(g);const bx=(w,h,d,x,y,z,m)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o};
-  const hipZ=wp('thighL').z,headZ=wp('head').z;
-  bx(.3,.07,(hipZ+.25)-(headZ-.12),0,BT-.035,((hipZ+.25)+(headZ-.12))/2,M.pad);for(const z of [headZ,hipZ+.15])bx(.06,BT-.07,.06,0,(BT-.07)/2,z,M.white);bx(.06,.05,hipZ+.25-headZ,0,.025,(hipZ+.25+headZ)/2,M.white);
-  for(const x of [-.72,.72]){bx(.07,2.05,.07,x,1.025,touchZ-.12,M.white);bx(.07,2.05,.07,x,1.025,touchZ+.12,M.white);bx(.07,.06,.4,x,.03,touchZ,M.white);bx(.07,.07,.4,x,2.05,touchZ,M.white)}
-  bx(1.5,.07,.07,0,2.05,touchZ-.12,M.white);
-  const bar=new T.Group();const rod=new T.Mesh(new T.CylinderGeometry(.014,.014,2.0,20),M.steel);rod.rotation.z=Math.PI/2;bar.add(rod);
-  for(const x of [-.6,.6]){const pl=new T.Mesh(new T.CylinderGeometry(.225,.225,.045,48),M.plate);pl.rotation.z=Math.PI/2;pl.position.x=x;pl.castShadow=true;bar.add(pl);const c=new T.Mesh(new T.CylinderGeometry(.03,.03,.1,16),M.steel);c.rotation.z=Math.PI/2;c.position.x=x*.97;bar.add(c)}
-  for(const x of [-.72,.72]){const sl=new T.Mesh(new T.BoxGeometry(.1,.05,.09),M.white);sl.position.x=x;bar.add(sl)}
-  g.add(bar);
-  const UP=new T.Vector3(0,1,0),FEET=new T.Vector3(0,0,1);
-  const pose=t=>{const by=topY+(barBot-topY)*t;bar.position.set(0,by,touchZ);
-    for(const [S,s] of [['L',1],['R',-1]]){
-      const sh=wp('upperarm'+S),Wt=new T.Vector3(s*GRIP,by-.04,touchZ-.03);
-      const E=ik2(T,sh,Wt,LUA,LFA,new T.Vector3(Wt.x-sh.x,-.35,Wt.z-sh.z));
-      aimBone(T,SK['upperarm'+S],E.clone().sub(sh));
-      const fd=Wt.clone().sub(E);const mid=new T.Vector3(s*.5,0,.5).normalize();
-      aimBone(T,SK['forearm1'+S],fd,mid);aimBone(T,SK['forearm2'+S],fd,FEET);
-      aimBone(T,SK['hand'+S],fd.clone().normalize().add(new T.Vector3(0,0,-.35)),FEET);
-      const curl=[[1,1.25,1.05,.8],[2,1.25,1.05,.8],[3,1.25,1.05,.8],[4,1.2,1.05,.8]];
-      for(const [f,a,b,c] of curl){for(const [sg,ang] of [['P',a],['M',b],['D',c]]){const bn=SK[`f${f}${sg}${S}`];if(bn){bn.quaternion.copy(bn.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),ang));bn.updateWorldMatrix(false,true)}}}
-      const tb=SK['thumb0'+S];if(tb){tb.quaternion.copy(tb.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),.5));tb.updateWorldMatrix(false,true)}
-      for(const sg of ['f0P','f0D']){const bn=SK[sg+S];if(bn){bn.quaternion.copy(bn.userData.q0).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),.9));bn.updateWorldMatrix(false,true)}}
-      const hp=wp('thigh'+S),At=new T.Vector3(s*.23,.1,hp.z+.47);const K=ik2(T,hp,At,LTH,LSH,new T.Vector3(s*.3,1,0));
-      aimBone(T,SK['thigh'+S],K.clone().sub(hp),UP);aimBone(T,SK['shin'+S],At.clone().sub(K),FEET);
-      aimBone(T,SK['foot'+S],new T.Vector3(s*.15,-.35,1),UP);aimBone(T,SK['toes'+S],new T.Vector3(s*.1,-.05,1),UP)}
-    const e=SK.forearm1L.getWorldPosition(new T.Vector3()),sh=wp('upperarmL'),w=SK.handL.getWorldPosition(new T.Vector3());
-    const ua=e.clone().sub(sh).normalize();
-    const fore=Math.round(w.clone().sub(e).normalize().angleTo(UP)*180/Math.PI);return {flare:Math.round(Math.atan2(Math.abs(ua.x),ua.z)*180/Math.PI),fore}};
-  let az=D.cam.az,el2=D.cam.el,rad=D.cam.r;const tgt=new T.Vector3(D.cam.tgt[0],D.cam.tgt[1],touchZ+.05);
+    for(let i=0;i<n;i++){const g=Math.round(ca.getX(i)*32),ao=ca.getY(i),cl=Math.round(ca.getZ(i)*8);const v=cl===0?(lvl[g]||0):0;const b=v>=1?c1:v>0?c2:(CL[cl]||CL[0]);const sh=.12+.88*Math.pow(ao,2.1);col[i*3]=b[0]*sh;col[i*3+1]=b[1]*sh;col[i*3+2]=b[2]*sh}
+    o.geometry.setAttribute('color',new T.BufferAttribute(col,3));o.material=M.skin});
+  const RB=new T.Group();sc.add(RB);RB.add(body);const g=new T.Group();RB.add(g);const K=kit(T,g,M);
+  let upd=null;const place=t=>{RB.position.set(0,0,0);RB.quaternion.identity();RB.updateMatrixWorld(true);const P=D.pose(t,C);C.apply(P);if(upd)upd(C.H,P,t);
+    if(P.G){const piv=C.V(P.G.piv);const q=C.qx(P.G.rx);RB.quaternion.copy(q);RB.position.copy(piv.clone().sub(piv.clone().applyQuaternion(q)))}return P};
+  place(0);RB.position.set(0,0,0);RB.quaternion.identity();RB.updateMatrixWorld(true);upd=D.eq?D.eq(K,C):null;place(0);
+  let az=D.cam.az,el2=D.cam.el,rad=D.cam.r;const tgt=new T.Vector3(...D.cam.tgt);
   const setCam=()=>{cam.position.set(tgt.x+rad*Math.cos(el2)*Math.sin(az),tgt.y+rad*Math.sin(el2),tgt.z+rad*Math.cos(el2)*Math.cos(az));cam.lookAt(tgt)};
   const cv=r.domElement;cv.style.touchAction='none';const pts=new Map();let pd=0;
   cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY])});
   cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const o=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);
     if(pts.size===1){az-=(e.clientX-o[0])*.01;el2=Math.max(-.05,Math.min(1.5,el2+(e.clientY-o[1])*.01))}
-    else if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)rad=Math.max(.8,Math.min(5,rad*pd/d));pd=d}});
+    else if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)rad=Math.max(.6,Math.min(6,rad*pd/d));pd=d}});
   const up=e=>{pts.delete(e.pointerId);pd=0};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-  cv.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(.8,Math.min(5,rad*(1+e.deltaY*.001)))},{passive:false});
-  const ph=$('#d3ph'),me=$('#d3m');let lastPh='';const tl=D.tl,per=D.period;
-  const t0=performance.now();G3={r,SK,T,sc,view:(a,e,rr,tx,ty,tz)=>{az=a;el2=e;rad=rr;if(tx!=null)tgt.set(tx,ty,tz)}};const self=G3;
+  cv.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(.6,Math.min(6,rad*(1+e.deltaY*.001)))},{passive:false});
+  const ph=$('#d3ph'),me=$('#d3m');let lastPh='';const tl=D.tl,per=tl[tl.length-1][1];
+  const t0=performance.now();G3={r,C,T,sc,K,view:(a,e,rr,tx,ty,tz)=>{az=a;el2=e;rad=rr;if(tx!=null)tgt.set(tx,ty,tz)}};const self=G3;if(window.__dev)G3.snap=(p,v)=>{const P=place(p);if(v){az=v[0];el2=v[1];rad=v[2];if(v[3]==='hL')tgt.copy(C.H.L.g).applyMatrix4(RB.matrixWorld);else if(v[3])tgt.set(...v[3])}setCam();r.render(sc,cam);return r.domElement.toDataURL('image/jpeg',.85)};
   const frame=now=>{if(self.stop)return;const tt=self.fixT!=null?self.fixT:((now-t0)/1000)%per;const sg=tl.find(s=>tt>=s[0]&&tt<s[1])||tl[0];
-    const i=tl.indexOf(sg),prev=i?tl[i-1][2]:tl[tl.length-1][2];const t=prev+(sg[2]-prev)*ease((tt-sg[0])/(sg[1]-sg[0]));
+    const i=tl.indexOf(sg),prev=i?tl[i-1][2]:tl[tl.length-1][2];const t=self.fixP!=null?self.fixP:prev+(sg[2]-prev)*ease((tt-sg[0])/(sg[1]-sg[0]));
     if(sg[3]!==lastPh){lastPh=sg[3];if(ph)ph.textContent=lastPh}
-    const m=pose(t);if(me)me.textContent=`מרפק מהגוף ${m.flare}° · אמה ${m.fore}° מהאנך`;
+    const P=place(t);if(D.metric&&me){me.hidden=false;me.textContent=D.metric(C)}
     setCam();r.render(sc,cam);self.raf=requestAnimationFrame(frame)};
   self.raf=requestAnimationFrame(frame)}
+
+// ===== 3D exercise demos: pose(t) for t 0..1 (start → end of the rep), equipment, camera, phases =====
+const STAND3=(w,fy,z)=>({L:{a:[w||.1,.066,z||-.03],fy:fy==null?6:fy},R:{a:[-(w||.1),.066,z||-.03],fy:-(fy==null?6:fy)}});
+const HANG=(C,s,l)=>{const S=C.sh(s);return C.V(S.x+s*(l.x||.02),S.y-(l.y||.555),S.z+(l.z||0))};
+const BYS=f=>C=>({L:f(1,C),R:f(-1,C)});
+const DBS=(K)=>{const a=K.db(),b=K.db();return H=>{a.at(H.L.g,H.L.t);b.at(H.R.g,H.R.t)}};
+const D3={
+  bench:{cam:{az:.85,el:.5,r:3.3,tgt:[0,.6,-.9]},
+    tl:PH([.5,0,'נעילה למעלה, שכמות מכווצות'],[2,1,'ירידה מבוקרת, 2 שניות'],[.4,1,'נגיעה קלה בתחתית החזה'],[1.1,0,'דחיפה, בלי להקפיץ'],[.4,0,'נעילה']),
+    mus:{chest:1,fdelt:.5,tri:.5},
+    notes:['אחיזה: בערך פעם וחצי רוחב הכתפיים. האצבעות עוטפות את המוט מלמעלה והמוט יושב בבסיס כף היד, מעל האמה.','המוט נוגע בתחתית החזה, בקו הפטמות. לא בצוואר ולא בבטן.','מרפקים בזווית של 45–60° מהגוף, לא 90°.','בתחתית האמה כמעט אנכית, כף היד מעל המרפק בערך.','שכמות מכווצות לאורך כל הסט, קשת קלה בגב, ישבן על הספסל, רגליים יציבות ברצפה.'],
+    pose:(t,C)=>{const BT=.47,pz=-.75,py=BT+C.ext.back;const tz=pz-(1.25-C.RP.pelvis.y);
+      return {pel:[0,py,pz],th:-90,fx:-6,
+        legs:C=>BYS((s)=>{const h=C.hip(s);return {a:[s*.24,.1,h.z+.47],pole:[s*.3,1,0],fy:s*10}})(C),
+        arms:C=>{const S=C.sh(1),L=(C.D.LUA+C.D.LFA)*.97,G=.34;const top=S.y+Math.sqrt(Math.max(.01,L*L-Math.pow(G-S.x,2)-Math.pow(tz-S.z,2)))+.068;
+          const bot=py+(C.ext.fz(1.25)-C.RP.pelvis.z)+.02;const by=C.lerp(top,bot,t);
+          return BYS(s=>({g:[s*G,by,tz],ax:[1,0,0],pn:[0,.57,.82],dh:[0,1,-.4],r:.014,pole:[s*.8,-.45,.45]}))(C)}}},
+    eq:(K,C)=>{const tz=C.H.L.g.z,hz=C.wp('head').z,hipZ=C.wp('thighL').z,BT=.47,M=K.M;
+      K.box(.3,.07,(hipZ+.25)-(hz-.12),[0,BT-.035,((hipZ+.25)+(hz-.12))/2],M.pad);for(const z of [hz,hipZ+.15])K.box(.06,BT-.07,.06,[0,(BT-.07)/2,z]);K.box(.06,.05,hipZ+.25-hz,[0,.025,(hipZ+.25+hz)/2]);
+      for(const x of [-.72,.72]){K.box(.07,2.05,.07,[x,1.025,tz-.12]);K.box(.07,2.05,.07,[x,1.025,tz+.12]);K.box(.07,.06,.4,[x,.03,tz]);K.box(.07,.07,.4,[x,2.05,tz])}K.box(1.5,.07,.07,[0,2.05,tz-.12]);
+      const bar=K.barbell(2);const sl=[-.72,.72].map(x=>K.box(.1,.05,.09,[x,0,0]));
+      return H=>{const c=H.L.g.clone().add(H.R.g).multiplyScalar(.5);bar.at(c,[1,0,0]);sl.forEach((b,i)=>b.position.set(i?.72:-.72,c.y,c.z))}},
+    metric:C=>{const e=C.wp('forearm1L'),sh=C.wp('upperarmL'),w=C.wp('handL');const ua=e.clone().sub(sh).normalize();
+      return `מרפק מהגוף ${Math.round(Math.atan2(Math.abs(ua.x),ua.z)*180/Math.PI)}° · אמה ${Math.round(w.clone().sub(e).normalize().angleTo(C.Y)*180/Math.PI)}° מהאנך`}},
+
+  curl:{cam:{az:.9,el:.12,r:2.7,tgt:[0,1.05,0]},
+    tl:PH([.4,0,'ידיים ישרות למטה'],[1.1,1,'כפיפה, מרפקים צמודים'],[.4,1,'עצירה קצרה למעלה'],[2,0,'ירידה איטית, 2 שניות']),
+    mus:{bi:1,fore:.5},
+    pose:(t,C)=>({pel:[0,.865,-.02],th:0,legs:STAND3(),
+      arms:BYS((s,C)=>{const S=C.sh(s),f=(12+128*t)*C.RAD;const E=C.V(S.x+s*.03,S.y-.30,S.z+.02);const fd=C.V(0,-Math.cos(f),Math.sin(f));
+        return {w:E.clone().add(fd.clone().multiplyScalar(C.D.LFA)),d:fd,pn:[s*.12,Math.sin(f),Math.cos(f)],r:.016,pole:[s*.2,-.2,-1]}})}),
+    eq:K=>DBS(K)},
+
+  pullup:{cam:{az:.95,el:.2,r:3.6,tgt:[0,1.45,0]},
+    tl:PH([.5,0,'תלייה מלאה, ידיים ישרות'],[1.2,1,'משיכה, מרפקים למטה ולאחור'],[.4,1,'סנטר מעל המוט'],[1.9,0,'ירידה מבוקרת עד תלייה מלאה']),
+    mus:{lats:1,upback:.7,bi:.6,rdelt:.3,fore:.4},
+    pose:(t,C)=>{const YB=2.32,sy=C.lerp(YB-.6,YB-.1,t);const py=sy-(C.RP.upperarmL.y-C.RP.pelvis.y);
+      return {pel:[0,py,C.lerp(-.03,-.14,t)],th:C.lerp(0,-8,t),nk:C.lerp(0,-12,t),clav:C.lerp(18,-4,t),
+        legs:C=>BYS(s=>{const h=C.hip(s);return {a:[s*.06,h.y-.66,h.z-.3],pole:[0,0,1],fp:35,fy:s*6}})(C),
+        arms:BYS(s=>({g:[s*.3,YB,0],ax:[1,0,0],pn:[0,0,1],dh:[0,1,0],r:.016,pole:[s*1,C.lerp(-.1,-.9,t),C.lerp(.2,-.3,t)]}))}},
+    eq:(K,C)=>{const YB=2.32;for(const x of [-.7,.7])K.box(.07,YB+.05,.07,[x,(YB+.05)/2,0]);K.bar(1.5,.016).at([0,YB,0],[1,0,0]);
+      const pl=K.plate(.14,.03),ch=[K.rod(.004,[0,0,0],[0,1,0],K.M.steel),K.rod(.004,[0,0,0],[0,1,0],K.M.steel)];
+      return (H,P)=>{const h1=C.wp('thighL'),h2=C.wp('thighR');const c=h1.clone().add(h2).multiplyScalar(.5);const p=c.clone().add(C.V(0,-.42,.16));pl.at(p,[0,0,1]);ch[0].set(h1.clone().add(C.V(.05,.02,.08)),p.clone().add(C.V(0,.14,0)));ch[1].set(h2.clone().add(C.V(-.05,.02,.08)),p.clone().add(C.V(0,.14,0)))}}},
+
+  goblet:{cam:{az:.8,el:.15,r:2.9,tgt:[0,.85,0]},
+    tl:PH([.5,0,'עמידה, משקולת צמודה לחזה'],[2,1,'ירידה, ברכיים בכיוון האצבעות'],[.4,1,'למטה, גב ישר'],[1.3,0,'עלייה דרך העקבים']),
+    mus:{quad:1,glute:.8,add:.5,erect:.3},
+    pose:(t,C)=>({pel:[0,C.lerp(.85,.47,t),C.lerp(-.03,-.2,t)],th:C.lerp(4,32,t),nk:C.lerp(-4,-26,t),legs:{L:{a:[.17,.066,.02],fy:22,pole:[.45,0,1]},R:{a:[-.17,.066,.02],fy:-22,pole:[-.45,0,1]}},
+      arms:C=>{const F=C.frame('chest');const Hc=F.p.clone().add(F.fwd.clone().multiplyScalar(.2)).add(F.up.clone().multiplyScalar(-.02));
+        return BYS(s=>({g:Hc.clone().add(F.x.clone().multiplyScalar(s*.055)),ax:F.up,pn:F.x.clone().multiplyScalar(-s).add(F.fwd.clone().multiplyScalar(.3)),dh:F.up.clone().add(F.fwd.clone().multiplyScalar(-.3)),r:.014,pole:[s*.25,-1,.1],curl:.9}))(C)}}),
+    eq:(K,C)=>{const M=K.M;const kb=new C.T.Group();const bell=new C.T.Mesh(new C.T.SphereGeometry(.1,24,16),M.plate);bell.position.y=-.12;kb.add(bell);const hd=new C.T.Mesh(new C.T.TorusGeometry(.065,.012,10,28,Math.PI),M.plate);hd.position.y=-.06;kb.add(hd);K.along(kb);
+      return (H,P)=>{kb.position.copy(H.L.g.clone().add(H.R.g).multiplyScalar(.5));kb.position.y+=.0;kb.quaternion.identity()}}}
+};
+
+// cable helpers: a D-handle (or other attachment) hanging on a cable from pulley p
+const DHC=(K,p)=>{const h=K.dh(),c=K.cable(p,p);K.pulley(p);return (g,ax)=>{const u=new g.constructor(p[0],p[1],p[2]).sub(g).normalize();K.orient(h,g,ax,u);c.set(p,g.clone().add(u.multiplyScalar(.075)))}};
+const SEAT=(K,y,z,d)=>{K.box(.36,.07,d||.38,[0,y-.035,z||.04],K.M.pad);K.box(.06,y-.07,.06,[0,(y-.07)/2,z||.04])};
+const BACKPAD=(K,C,pel,th,len,up)=>{const a=th*C.RAD;const U=C.V(0,Math.cos(a),Math.sin(a)),F=C.V(0,-Math.sin(a),Math.cos(a));const c=C.V(pel).add(U.clone().multiplyScalar(up==null?.42:up)).sub(F.clone().multiplyScalar(C.ext.back+.035));K.box(.36,len||.85,.07,c,K.M.pad,a);return {c,U,F}};
+const ROW=(close)=>({cam:{az:1.05,el:.18,r:3.2,tgt:[0,.75,.35]},
+  tl:PH([.4,0,'ידיים ישרות, גב זקוף'],[1.1,1,'משיכה לבטן, שכמות נצמדות'],[.5,1,'עצירה קצרה'],[1.8,0,'חזרה איטית, בלי להתקפל']),
+  mus:close?{lats:1,upback:.8,bi:.5,rdelt:.3}:{upback:1,lats:.8,rdelt:.5,bi:.5},
+  pose:(t,C)=>({pel:[0,.48,0],th:C.lerp(12,-4,t),nk:-4,legs:{L:{a:[.13,.30,.72],fp:-70,tp:-70,pole:[.25,1,0],fy:5},R:{a:[-.13,.30,.72],fp:-70,tp:-70,pole:[-.25,1,0],fy:-5}},
+    arms:BYS((s,C)=>{const S=C.sh(s),x=close?.075:.22;const W=C.lv([s*x,S.y-.1,S.z+.49],[s*(x+.03),.79,.21],t);
+      return close?{w:W,d:[0,-.05,1],pn:[-s,0,0],r:.016,pole:[s*.3,-.7,-1]}:{w:W,d:[0,-.05,1],pn:[0,-1,0],r:.014,pole:[s*.4,-.6,-1]}})}),
+  eq:(K,C)=>{const M=K.M;K.box(.3,.38,1.05,[0,.19,.02],M.pad);K.box(.5,.36,.04,[0,.26,.83],M.white,-.35);K.column(0,1.25,1.3);const P=[0,.33,1.12];K.pulley(P);const cab=K.cable(P,P);
+    if(close){const gr=[K.along(new C.T.Group().add(K.xcyl(.017,.11,0,M.pad))),K.along(new C.T.Group().add(K.xcyl(.017,.11,0,M.pad)))],br=[K.rod(.008,[0,0,0],[0,1,0]),K.rod(.008,[0,0,0],[0,1,0])];
+      return H=>{const m=H.L.g.clone().add(H.R.g).multiplyScalar(.5);const A=m.clone().add(C.V(P).sub(m).normalize().multiplyScalar(.14));gr[0].at(H.L.g,H.L.t);gr[1].at(H.R.g,H.R.t);br[0].set(H.L.g,A);br[1].set(H.R.g,A);cab.set(P,A)}}
+    const bar=K.bar(.7,.014);return H=>{const m=H.L.g.clone().add(H.R.g).multiplyScalar(.5);bar.at(m,[1,0,0]);cab.set(P,m)}}});
+const RDL=(bb)=>({cam:{az:1.2,el:.15,r:3,tgt:[0,.75,0]},
+  tl:PH([.4,0,'עמידה, גב ישר'],[2,1,'ציר: אגן לאחור, '+(bb?'המוט צמוד לרגליים':'המשקולות קרובות לרגליים')],[.4,1,'מתיחה מאחורי הירך'],[1.4,0,'דוחפים את האגן קדימה ומזדקפים']),
+  mus:bb?{ham:1,glute:.8,erect:.7,fore:.3,traps:.3}:{ham:1,glute:.8,erect:.6,fore:.3},
+  pose:(t,C)=>({pel:C.lv([0,.86,-.02],[0,.79,-.26],t),th:C.lerp(0,74,t),nk:-6,legs:STAND3(.1,6),
+    arms:BYS((s,C)=>{const S=C.sh(s);return bb?{w:[S.x+s*.075,S.y-.53,S.z-.02-.1*t],d:[0,-1,0],pn:[0,0,-1],r:.014,pole:[s*.3,0,-1]}:{w:[S.x+s*.035,S.y-.545,S.z-.04*t],d:[0,-1,0],pn:[-s,0,0],r:.016,pole:[s*.3,0,-1]}})}),
+  eq:K=>{if(!bb)return DBS(K);const b=K.barbell(2);return H=>b.at(H.L.g.clone().add(H.R.g).multiplyScalar(.5),[1,0,0])}});
+const CALF=(hack)=>({cam:hack?{az:1.25,el:.2,r:3.3,tgt:[0,.95,-.2]}:{az:1.1,el:.15,r:3,tgt:[0,.95,0]},
+  tl:PH([.5,0,'עקבים למטה, מתיחה מלאה'],[1,1,'עלייה עד הסוף על קצות האצבעות'],[.6,1,'עצירה למעלה'],[1.6,0,'ירידה איטית']),
+  mus:{calf:1},
+  pose:(t,C)=>{const top=hack?.25:.1,fp=C.lerp(-18,28,t);const ank=s=>{const n=s>0?'L':'R';const R0=C.RP['toes'+n].clone().sub(C.RP['foot'+n]);return C.V(s*.12,top+.02,.12).sub(R0.applyQuaternion(C.qx(fp)))};
+    const a=ank(1),b=ank(-1);const pel=a.clone().add(b).multiplyScalar(.5).add(C.V(0,.798,.016));
+    return {pel,th:0,nk:-3,legs:{L:{a,fp,tp:0,pole:[0,0,1]},R:{a:b,fp,tp:0,pole:[0,0,1]}},
+      arms:BYS((s,C)=>{const S=C.sh(s);return {w:[S.x+s*.11,S.y+.14,S.z+.09],d:[0,1,.15],pn:[-s,0,.2],r:.016,curl:.9,pole:[s*.6,-1,.1]}}),
+      G:hack?{rx:-24,piv:[0,top,.12]}:null}},
+  eq:(K,C)=>{const M=K.M,top=hack?.25:.1;K.box(.7,hack?.06:top,hack?.55:.28,[0,hack?top-.03:top/2,hack?.05:.16],hack?M.white:M.pad);
+    if(hack){const p=C.wp('pelvis');K.box(.42,.95,.07,[0,p.y+.38,p.z-C.ext.back-.04],M.pad);for(const x of [-.2,.2])K.box(.05,1.9,.05,[x,1.05,p.z-C.ext.back-.12])}
+    else{K.column(0,-.55,2.2)}
+    const pads=[K.box(.13,.07,.24,[0,0,0],M.pad),K.box(.13,.07,.24,[0,0,0],M.pad)],yoke=K.rod(.02,[0,0,0],[0,1,0]),arm=hack?null:K.rod(.025,[0,0,0],[0,1,0]),hd=[K.rod(.015,[0,0,0],[0,1,0]),K.rod(.015,[0,0,0],[0,1,0])];
+    return H=>{const pp=[C.sh(1),C.sh(-1)].map((S,i)=>S.add(C.V(i?.02:-.02,.085,0)));pads.forEach((b,i)=>b.position.copy(pp[i]));const bk=pp.map(p=>p.clone().add(C.V(0,.03,-.16)));yoke.set(bk[0],bk[1]);
+      if(arm)arm.set(bk[0].clone().add(bk[1]).multiplyScalar(.5),C.V(0,bk[0].y,-.5));[H.L,H.R].forEach((h,i)=>hd[i].set(h.g.clone().add(C.V(0,-.07,0)),h.g.clone().add(C.V(0,.07,0))))}}});
+
+Object.assign(D3,{
+  hammer:{cam:{az:.9,el:.12,r:2.7,tgt:[0,1.05,0]},
+    tl:PH([.4,0,'ידיים למטה, אגודלים קדימה'],[1.1,1,'כפיפה, אחיזה ניטרלית'],[.4,1,'עצירה קצרה למעלה'],[2,0,'ירידה איטית']),
+    mus:{bi:1,fore:1},
+    pose:(t,C)=>({pel:[0,.865,-.02],legs:STAND3(),
+      arms:BYS((s,C)=>{const S=C.sh(s),f=(10+125*t)*C.RAD;const E=C.V(S.x+s*.04,S.y-.30,S.z+.02);const fd=C.V(0,-Math.cos(f),Math.sin(f));
+        return {w:E.clone().add(fd.clone().multiplyScalar(C.D.LFA)),d:fd,pn:[-s,0,0],r:.016,pole:[s*.2,-.2,-1]}})}),
+    eq:K=>DBS(K)},
+
+  incline:{cam:{az:.95,el:.3,r:3,tgt:[0,.95,.05]},
+    tl:PH([.4,0,'ידיים ישרות מעל החזה העליון'],[2,1,'ירידה מבוקרת, מרפקים ב-45°'],[.3,1,'משקולות בגובה החזה'],[1.2,0,'דחיפה למעלה'],[.3,0,'למעלה']),
+    mus:{chest:1,fdelt:.7,tri:.5},
+    pose:(t,C)=>({pel:[0,.52,0],th:-55,fx:-4,
+      legs:BYS((s,C)=>{const h=C.hip(s);return {a:[s*.24,.066,h.z+.52],pole:[s*.2,.3,1],fy:s*10}}),
+      arms:BYS((s,C)=>{const S=C.sh(s);return {w:C.lv([S.x+s*.04,S.y+.53,S.z+.06],[S.x+s*.19,S.y-.07,S.z+.12],t),d:[0,1,0],pn:[0,.3,1],r:.016,pole:[s*.7,-.7,-.15]}})}),
+    eq:(K,C)=>{SEAT(K,.45,.06);BACKPAD(K,C,[0,.52,0],-55,1);return DBS(K)}},
+
+  ohp:{cam:{az:.95,el:.18,r:3,tgt:[0,1.2,0]},
+    tl:PH([.4,0,'משקולות בגובה הכתפיים'],[1.2,1,'דחיפה מעל הראש'],[.3,1,'ידיים כמעט ישרות'],[1.8,0,'ירידה מבוקרת עד הכתפיים']),
+    mus:{fdelt:1,sdelt:.7,tri:.6,traps:.3},
+    pose:(t,C)=>({pel:[0,.56,0],th:-4,clav:C.lerp(0,10,t),
+      legs:BYS((s,C)=>{const h=C.hip(s);return {a:[s*.21,.066,h.z+.5],pole:[s*.2,.3,1],fy:s*8}}),
+      arms:BYS((s,C)=>{const S=C.sh(s);return {w:C.lv([S.x+s*.15,S.y+.2,S.z+.08],[S.x+s*.08,S.y+.53,S.z+.04],t),d:[0,1,0],pn:[0,0,1],r:.016,pole:[s,-.6,.15]}})}),
+    eq:(K,C)=>{SEAT(K,.46,.06);BACKPAD(K,C,[0,.56,0],-4,.85,.45);return DBS(K)}},
+
+  lateral:{cam:{az:.35,el:.12,r:3,tgt:[-.1,1.1,0]},
+    tl:PH([.4,0,'יד ליד הגוף, ידית בכבל נמוך'],[1.2,1,'הרמה לצד עד גובה הכתף'],[.3,1,'עצירה קצרה'],[1.8,0,'ירידה איטית']),
+    mus:{sdelt:1,fdelt:.3,traps:.3},
+    pose:(t,C)=>({pel:[0,.865,-.02],lat:-3,legs:STAND3(),
+      arms:C=>{const S=C.sh(1),a=(-6+92*t)*C.RAD;const u=C.nz([Math.sin(a),-Math.cos(a),.22]);
+        return {L:{w:S.clone().add(u.clone().multiplyScalar(.535)),d:u,pn:[-Math.cos(a),-Math.sin(a),0],r:.016,pole:[.2,.4,-1]},
+          R:{w:HANG(C,-1,{x:.04,y:.54}),d:[0,-1,0],pn:[1,0,0],curl:.3,pole:[-.3,-1,-.2]}}}}),
+    eq:(K,C)=>{K.column(-.62,.05,2.1);const f=DHC(K,[-.5,.12,.05]);return H=>f(H.L.g,H.L.t)}},
+
+  pushdown:{cam:{az:1.4,el:.12,r:3.1,tgt:[0,1.15,.2]},
+    tl:PH([.4,0,'מרפקים צמודים לגוף'],[1,1,'פשיטה עד הסוף למטה'],[.4,1,'נעילה'],[1.6,0,'חזרה איטית, מרפקים במקום']),
+    mus:{tri:1},
+    pose:(t,C)=>({pel:[0,.86,-.04],th:8,nk:-6,legs:STAND3(.12,6,-.06),
+      arms:BYS((s,C)=>{const S=C.sh(s),f=(95-95*t)*C.RAD;const E=C.V(S.x+s*.035,S.y-.29,S.z+.07);const fd=C.V(0,-Math.cos(f),Math.sin(f));
+        return {w:E.clone().add(fd.clone().multiplyScalar(C.D.LFA)),d:fd,pn:[0,-Math.sin(f),-Math.cos(f)],r:.014,pole:[s*.15,-.2,-1]}})}),
+    eq:(K,C)=>{K.column(0,.62,2.2);const P=[0,2.05,.5];K.pulley(P);const cab=K.cable(P,P),bar=K.bar(.46,.014);
+      return H=>{const m=H.L.g.clone().add(H.R.g).multiplyScalar(.5);bar.at(m,[1,0,0]);cab.set(P,m)}}},
+
+  pushup:{cam:{az:1.15,el:.25,r:3.3,tgt:[0,.3,.6]},
+    tl:PH([.4,0,'ידיים ישרות, גוף כמו קרש'],[1.4,1,'ירידה עד שהחזה כמעט נוגע'],[.2,1,'למטה'],[1,0,'דחיפה, הגוף עולה בבת אחת']),
+    mus:{chest:1,tri:.6,fdelt:.5,abs:.3},
+    pose:(t,C)=>{const b=C.lerp(21,4,t),r=b*C.RAD;const pel=C.V(0,.09+.804*Math.sin(r),.804*Math.cos(r));
+      const rt=21*C.RAD,pt=C.V(0,.09+.804*Math.sin(rt),.804*Math.cos(rt)),St=pt.add(C.rx(C.RP.upperarmL.clone().sub(C.RP.pelvis),90-21));
+      return {pel,th:90-b,nk:-12,legs:{L:{a:[.1,.09,0],fp:90-b,tp:22,pole:[0,-1,0]},R:{a:[-.1,.09,0],fp:90-b,tp:22,pole:[0,-1,0]}},
+        arms:BYS(s=>({w:[s*.27,.035,St.z],d:[s*.25,0,1],pn:[0,-1,0],curl:.12,thumb:.1,pole:[s*.6,.5,-.6]}))}},
+    eq:K=>{K.box(.7,.008,2,[0,.004,.45],K.M.pad);return null}},
+
+  row:ROW(false),crow:ROW(true),
+
+  lat:{cam:{az:.95,el:.12,r:4,tgt:[0,1.35,.1]},
+    tl:PH([.4,0,'ידיים ישרות למעלה'],[1.1,1,'משיכה לחזה העליון, מרפקים למטה'],[.4,1,'חזה פתוח'],[1.8,0,'חזרה מבוקרת למעלה']),
+    mus:{lats:1,upback:.6,bi:.5,rdelt:.3},
+    pose:(t,C)=>({pel:[0,.58,0],th:C.lerp(-6,-16,t),nk:C.lerp(0,-8,t),clav:C.lerp(14,0,t),
+      legs:BYS((s,C)=>({a:[s*.16,.066,.5],pole:[s*.2,.3,1],fy:s*8})),
+      arms:BYS((s,C)=>{const S=C.sh(s);return {g:C.lv([s*.42,S.y+.5,S.z+.06],[s*.42,S.y+.05,S.z+.17],t),ax:[1,0,0],pn:[0,0,1],dh:[0,1,0],r:.016,pole:[s,-.3,-.25]}})}),
+    eq:(K,C)=>{const M=K.M;SEAT(K,.48,.05);K.rod(.05,[-.22,.69,.36],[.22,.69,.36],M.pad);K.box(.06,.2,.06,[0,.69,.36+.1]);K.column(0,.62,2.45);K.box(.08,.06,.66,[0,2.42,.29]);
+      const P=[0,2.38,.02];K.pulley(P);const cab=K.cable(P,P),bar=K.bar(1.15,.014);return H=>{const m=H.L.g.clone().add(H.R.g).multiplyScalar(.5);bar.at(m,[1,0,0]);cab.set(P,m)}}},
+
+  face:{cam:{az:1.05,el:.15,r:3,tgt:[0,1.35,.35]},
+    tl:PH([.4,0,'ידיים ישרות לכיוון הכבל'],[1.1,1,'משיכה לפנים, מרפקים גבוהים ולצדדים'],[.4,1,'ידיים ליד האוזניים'],[1.6,0,'חזרה מבוקרת']),
+    mus:{rdelt:1,upback:.8,traps:.5,sdelt:.3},
+    pose:(t,C)=>({pel:[0,.865,-.04],th:-4,legs:STAND3(.12,8,-.06),
+      arms:BYS((s,C)=>{const S=C.sh(s);return {w:C.lv([s*.08,S.y+.1,S.z+.5],[S.x+s*.08,S.y+.17,S.z+.03],t),d:C.lv([0,.12,1],[s*.05,1,.25],t),pn:C.lv([-s,0,0],[-s*.45,0,.9],t),r:.014,pole:C.lv([s*.5,-.5,-1],[s,.15,-.45],t)}})}),
+    eq:(K,C)=>{K.column(0,1.2,2.1);const P=[0,1.62,1.08];K.pulley(P);const cab=K.cable(P,P),rp=[K.rod(.011,[0,0,0],[0,1,0],K.M.rope),K.rod(.011,[0,0,0],[0,1,0],K.M.rope)];
+      return H=>{const m=H.L.g.clone().add(H.R.g).multiplyScalar(.5);const A=m.clone().add(C.V(P).sub(m).normalize().multiplyScalar(.16));[H.L,H.R].forEach((h,i)=>rp[i].set(A,h.g.clone().add(h.g.clone().sub(A).normalize().multiplyScalar(.05))));cab.set(P,A)}}},
+
+  rdl:RDL(false),bbrdl:RDL(true),
+
+  legpress:{cam:{az:1.35,el:.2,r:3.4,tgt:[0,.8,.4]},
+    tl:PH([.4,0,'רגליים כמעט ישרות, בלי לנעול'],[1.8,1,'ירידה מבוקרת, ברכיים לכיוון החזה'],[.3,1,'גב צמוד למושב'],[1.3,0,'דחיפה דרך העקבים']),
+    mus:{quad:1,glute:.7,add:.4,ham:.3},
+    pose:(t,C)=>({pel:[0,.55,0],th:-52,nk:8,
+      legs:BYS((s,C)=>{const d=C.lerp(.76,.43,t);return {a:[s*.15,.55+.707*d,.03+.707*d],pole:[s*.3,1,-.4],fp:-135,tp:-135,fy:s*8}}),
+      arms:BYS(s=>({w:[s*.3,.6,.1],d:[0,-.1,1],pn:[-s,0,0],curl:.9,pole:[s*.3,-1,-.2]}))}),
+    eq:(K,C)=>{const M=K.M;SEAT(K,.46,.02,.42);BACKPAD(K,C,[0,.55,0],-52,.85,.45);const U=C.nz([0,1,1]);for(const x of [-.32,.32])K.rod(.03,[x,.3,.22],[x,1.75,1.67],M.white);K.box(.9,.05,1.9,[0,.025,.7],M.white);
+      for(const x of [-.32,.32])K.box(.05,.3,.05,[x,.15,.95]);
+      const pl=K.box(.72,.5,.05,[0,0,0],M.white,-Math.PI/4),wt=[K.plate(.2,.05),K.plate(.2,.05)];
+      return H=>{const a=C.wp('footL').add(C.wp('footR')).multiplyScalar(.5);const c=a.add(U.clone().multiplyScalar(.09));pl.position.copy(c);wt[0].at(c.clone().add(C.V(.42,0,0)),[1,0,0]);wt[1].at(c.clone().add(C.V(-.42,0,0)),[1,0,0])}}},
+
+  legcurl:{cam:{az:1.45,el:.25,r:3.2,tgt:[0,.65,.1]},
+    tl:PH([.4,0,'רגליים ישרות, אגן צמוד לספסל'],[1.1,1,'כפיפה עד הסוף'],[.4,1,'עצירה קצרה'],[1.8,0,'פשיטה איטית']),
+    mus:{ham:1,calf:.3,glute:.2},
+    pose:(t,C)=>{const BT=.62,k=(8+112*t)*C.RAD;const py=BT+(C.ext.fz(.93,.15)-C.RP.pelvis.z);
+      return {pel:[0,py,0],th:90,nk:-18,
+        legs:BYS((s,C)=>{const h=C.hip(s);const K=C.V(h.x+s*.02,h.y-.01,h.z-C.D.LTH);return {a:K.add(C.V(0,Math.sin(k),-Math.cos(k)).multiplyScalar(C.D.LSH)),pole:[0,-1,0],fp:80+k/C.RAD,tp:80+k/C.RAD}}),
+        arms:BYS((s,C)=>{const S=C.sh(s);return {w:[s*.22,BT+.03,S.z+.22],d:[0,-.3,1],pn:[-s,0,0],r:.016,curl:.9,pole:[s*.6,-.4,-.6]}})}},
+    eq:(K,C)=>{const M=K.M,BT=.62;K.box(.34,.08,1.4,[0,BT-.04,.32],M.pad);for(const z of [-.3,.95])K.box(.06,BT-.08,.06,[0,(BT-.08)/2,z]);K.box(.06,.05,1.3,[0,.025,.32]);
+      const sz=C.sh(1).z;for(const x of [-.22,.22])K.rod(.015,[x,BT-.12,sz+.26],[x,BT+.08,sz+.26]);
+      const kz=C.wp('shinL').z,ky=C.wp('shinL').y;K.box(.08,.12,.12,[.3,ky,kz]);const rl=K.rod(.05,[0,0,0],[1,0,0],M.pad),lv=K.rod(.022,[0,0,0],[0,1,0]);
+      return ()=>{const a=C.wp('footL').add(C.wp('footR')).multiplyScalar(.5),kk=C.wp('shinL');const sd=a.clone().sub(kk).normalize();const n=C.V(0,-sd.z,sd.y);if(n.y<0)n.negate();
+        const c=a.clone().add(sd.multiplyScalar(-.03)).add(n.multiplyScalar(.07));rl.set(c.clone().add(C.V(-.22,0,0)),c.clone().add(C.V(.22,0,0)));lv.set(C.V(.3,ky,kz),C.V(.25,c.y,c.z))}}},
+
+  calf:CALF(false),hackcalf:CALF(true),
+
+  hlr:{cam:{az:1.3,el:.12,r:3.5,tgt:[0,1.35,.15]},
+    tl:PH([.4,0,'תלייה מלאה, בלי תנופה'],[1.2,1,'הרמת רגליים ישרות עד 90°'],[.4,1,'עצירה קצרה'],[1.9,0,'ירידה איטית']),
+    mus:{abs:1,obl:.5,quad:.3,fore:.4},
+    pose:(t,C)=>{const YB=2.32;return {pel:[0,YB-.6-.53,.03*t],th:-16*t,fx:16*t,clav:18,
+      legs:BYS((s,C)=>{const h=C.hip(s),a=(4+96*t)*C.RAD;return {a:h.add(C.V(s*.01,-Math.cos(a),Math.sin(a)).multiplyScalar(.79)),pole:[0,Math.sin(a),Math.cos(a)],fp:a/C.RAD+25,fy:s*4}}),
+      arms:BYS(s=>({g:[s*.3,YB,0],ax:[1,0,0],pn:[0,0,1],dh:[0,1,0],r:.016,pole:[s,-.1,.2]}))}},
+    eq:K=>{const YB=2.32;for(const x of [-.7,.7])K.box(.07,YB+.05,.07,[x,(YB+.05)/2,0]);K.bar(1.5,.016).at([0,YB,0],[1,0,0]);return null}},
+
+  dcrunch:{cam:{az:1.5,el:.2,r:3,tgt:[0,.75,-.2]},
+    tl:PH([.4,0,'שכיבה בספסל השלילי, צלחת על החזה'],[1.2,1,'גלגול הגב מלמעלה למטה'],[.4,1,'עצירה קצרה'],[2,0,'ירידה איטית עד שהגב כמעט נוגע']),
+    mus:{abs:1,obl:.6},
+    pose:(t,C)=>{const BT=.55;return {pel:[0,BT+C.ext.back,0],th:-90,fx:70*t,nk:5+15*t,
+      legs:BYS((s,C)=>{const h=C.hip(s),K=h.clone().add(C.V(s*.03,C.D.LTH*.55,C.D.LTH*.83));return {a:K.add(C.V(s*.02,-C.D.LSH*.8,C.D.LSH*.6)),pole:[0,1,.2],fp:-37,fy:s*5}}),
+      arms:C=>{const F=C.frame('chest');const pc=F.p.clone().add(F.fwd.clone().multiplyScalar(.15)).add(F.up.clone().multiplyScalar(-.03));C.pc=pc;C.pf=F.fwd;
+        return BYS(s=>({g:pc.clone().add(F.x.clone().multiplyScalar(s*.16)),ax:F.up,pn:F.x.clone().multiplyScalar(-s),dh:F.fwd,r:.015,pole:F.x.clone().multiplyScalar(s).add(F.fwd.clone().multiplyScalar(-.3))}))(C)},
+      G:{rx:-22,piv:[0,BT,0]}}},
+    eq:(K,C)=>{const M=K.M,BT=.55;K.box(.32,.07,1.15,[0,BT-.035,-.4],M.pad);const h=C.wp('thighL'),k=C.wp('shinL'),a=C.wp('footL');
+      K.rod(.05,[0,h.y-.06,h.z],[0,k.y-.08,k.z],M.pad);K.rod(.045,[-.17,a.y+.07,a.z+.05],[.17,a.y+.07,a.z+.05],M.pad);K.rod(.025,[0,BT-.07,-.9],[0,BT-.07,a.z]);for(const z of [-.9,.15])K.rod(.025,[0,BT-.07,z],[0,.0,z]);
+      const pl=K.plate(.17,.03);return ()=>pl.at(C.pc,C.pf)}},
+
+  tbar:{cam:{az:1.2,el:.2,r:3.3,tgt:[0,.75,-.1]},
+    tl:PH([.4,0,'ציר בירכיים, גב ישר ב-45°'],[1,1,'משיכה לחזה התחתון, מרפקים לצדדים'],[.4,1,'שכמות נצמדות'],[1.6,0,'ירידה מבוקרת']),
+    mus:{upback:1,lats:.8,rdelt:.6,bi:.4,erect:.4,traps:.3},
+    pose:(t,C)=>({pel:[0,.76,-.22],th:45,nk:-14,legs:{L:{a:[.21,.066,.02],fy:15,pole:[.3,0,1]},R:{a:[-.21,.066,.02],fy:-15,pole:[-.3,0,1]}},
+      arms:C=>{const F=C.frame('chest');return BYS(s=>{const S=C.sh(s);const We=F.p.clone().add(F.fwd.clone().multiplyScalar(.2)).add(F.up.clone().multiplyScalar(-.2)).add(C.V(s*.33,0,0));
+        return {w:C.lv([s*.33,S.y-.5,S.z+.03],We,t),d:C.lv([0,-1,0],[0,-.5,.85],t),pn:[0,0,-1],r:.014,pole:[s,.35,-.25]}})(C)}}),
+    eq:(K,C)=>{const M=K.M,PV=C.V(0,.06,-1.3);K.box(.25,.06,.25,[0,.03,-1.3],M.white);const bar=K.rod(.022,PV,PV),cb=K.rod(.014,PV,PV),pl=K.plate(.225,.05);
+      return H=>{const m=H.L.g.clone().add(H.R.g).multiplyScalar(.5).add(C.V(0,-.02,0));const d=m.clone().sub(PV).normalize();const e=m.clone().add(d.clone().multiplyScalar(.25));bar.set(PV,e);cb.set(H.L.g.clone().add(C.V(.06,0,0)),H.R.g.clone().add(C.V(-.06,0,0)));pl.at(e.clone().add(d.clone().multiplyScalar(-.05)),d)}}},
+
+  revfly:{cam:{az:.25,el:.25,r:3.2,tgt:[0,1.25,.15]},
+    tl:PH([.4,0,'ידיים מוצלבות מלפנים'],[1.1,1,'פתיחה לצדדים עד קו הגוף'],[.4,1,'עצירה קצרה'],[1.7,0,'חזרה איטית']),
+    mus:{rdelt:1,upback:.7,traps:.3},
+    pose:(t,C)=>({pel:[0,.865,-.02],legs:STAND3(.12,8),
+      arms:BYS((s,C)=>{const S=C.sh(s),b=(-24+112*t)*C.RAD;const u=C.nz([s*Math.sin(b),-.06,Math.cos(b)]);return {w:S.clone().add(u.clone().multiplyScalar(.535)).add(C.V(0,s*.025*(1-t),0)),d:u,pn:[0,-1,0],r:.016,pole:[s*.2,.35,-1]}})}),
+    eq:(K,C)=>{for(const x of [-1,1])K.column(x*1,.55,2.1);const fL=DHC(K,[-.9,1.4,.55]),fR=DHC(K,[.9,1.4,.55]);return H=>{fL(H.L.g,H.L.t);fR(H.R.g,H.R.t)}}},
+
+  bss:{cam:{az:1.25,el:.15,r:3.2,tgt:[0,.7,-.05]},
+    tl:PH([.4,0,'רגל אחורית על הספסל'],[1.6,1,'ירידה ישרה למטה'],[.4,1,'ירך קדמית מקבילה לרצפה'],[1.2,0,'עלייה, לחץ על העקב הקדמי']),
+    mus:{quad:1,glute:1,add:.4,ham:.3},
+    pose:(t,C)=>({pel:C.lv([0,.78,.05],[0,.5,.05],t),th:C.lerp(8,18,t),nk:-8,
+      legs:{L:{a:[.12,.066,.45],fy:6,pole:[.1,0,1]},R:{a:[-.13,.51,-.62],fp:150,tp:150,pole:[0,-1,.25]}},
+      arms:BYS((s,C)=>({w:HANG(C,s,{x:.035,y:.545}),d:[0,-1,0],pn:[-s,0,0],r:.016,pole:[s*.3,0,-1]}))}),
+    eq:K=>{K.box(.42,.45,.36,[-.04,.225,-.72],K.M.pad);return DBS(K)}},
+
+  legext:{cam:{az:1.35,el:.15,r:3,tgt:[0,.65,.2]},
+    tl:PH([.4,0,'ברכיים ב-90°, גב צמוד'],[1.1,1,'פשיטה עד הסוף'],[.5,1,'עצירה קצרה למעלה'],[1.8,0,'ירידה איטית']),
+    mus:{quad:1},
+    pose:(t,C)=>({pel:[0,.6,0],th:-8,
+      legs:BYS((s,C)=>{const h=C.hip(s);const K=h.clone().add(C.V(s*.03,-.03,C.D.LTH*.99)),b=(2+86*t)*C.RAD;return {a:K.add(C.V(0,-Math.cos(b),Math.sin(b)).multiplyScalar(C.D.LSH)),pole:[0,.25,1],fp:-b/C.RAD+8,tp:-b/C.RAD+8,fy:s*4}}),
+      arms:BYS(s=>({w:[s*.3,.62,.08],d:[0,-.2,1],pn:[-s,0,0],curl:.9,r:.016,pole:[s*.3,-1,-.2]}))}),
+    eq:(K,C)=>{const M=K.M;SEAT(K,.52,.18,.5);BACKPAD(K,C,[0,.6,0],-8,.75,.42);const kk=C.wp('shinL');K.box(.1,.14,.14,[.32,kk.y,kk.z],M.white);K.box(.06,kk.y,.06,[.32,kk.y/2,kk.z]);
+      for(const x of [-.3,.3])K.rod(.015,[x,.5,.05],[x,.5,.2]);const rl=K.rod(.05,[0,0,0],[1,0,0],M.pad),lv=K.rod(.022,[0,0,0],[0,1,0]);
+      return ()=>{const a=C.wp('footL').add(C.wp('footR')).multiplyScalar(.5),kn=C.wp('shinL');const sd=a.clone().sub(kn).normalize();const n=C.V(0,-sd.z,sd.y);if(n.z<0)n.negate();
+        const c=a.clone().add(sd.multiplyScalar(-.04)).add(n.multiplyScalar(.07));rl.set(c.clone().add(C.V(-.2,0,0)),c.clone().add(C.V(.2,0,0)));lv.set(C.V(.3,kn.y,kn.z),C.V(.22,c.y,c.z))}}},
+
+  plank:{cam:{az:1.2,el:.2,r:3.2,tgt:[0,.3,.6]},
+    tl:PH([2,0,'גוף ישר מהראש עד העקבים'],[2,0,'בטן ועכוז מכווצים, נושמים']),
+    mus:{abs:1,obl:.6,glute:.3,quad:.3,fdelt:.3},
+    pose:(t,C)=>{const b=11.5*C.RAD;return {pel:[0,.09+.804*Math.sin(b),.804*Math.cos(b)],th:90-11.5,nk:-4,
+      legs:{L:{a:[.1,.09,0],fp:78.5,tp:22,pole:[0,-1,0]},R:{a:[-.1,.09,0],fp:78.5,tp:22,pole:[0,-1,0]}},
+      arms:BYS((s,C)=>{const S=C.sh(s);return {w:[s*.1,.045,S.z+.25],d:[-s*.3,0,1],pn:[-s*.6,-.8,0],curl:.7,pole:[0,-1,-.15]}})}},
+    eq:K=>{K.box(.7,.008,2,[0,.004,.45],K.M.pad);return null}}
+});
 
 function openDemo(k){demoStop();if(D3[k])return open3D(k);const el=$('#sheet');
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     ${demoSvg(k)}<p style="margin-top:12px">${esc(EX[k].cue)}</p>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
   el.hidden=false;const t0=performance.now();DM={k};const loop=now=>{if(!DM)return;const ph=((now-t0)/2600)%1;if(!demoDraw(k,ph<.5?ph*2:2-ph*2)){DM=null;return}DM.raf=requestAnimationFrame(loop)};DM.raf=requestAnimationFrame(loop)}
 
-// ===== technique-check engine (pure: frames in, verdict out) =====
-// ===== technique-check engine (pure: frames in, verdict out) =====
-// ===== technique-check engine (pure: frames in, verdict out) =====
-// ===== technique-check engine (pure: frames in, verdict out) =====
-// ===== technique-check engine (pure: frames in, verdict out) =====
-// ===== technique-check engine (pure: frames in, verdict out) =====
-// ===== technique-check engine (pure: frames in, verdict out) =====
 // ===== technique-check engine (pure: frames in, verdict out) =====
 const LM={nose:0,ls:11,rs:12,le:13,re:14,lw:15,rw:16,lh:23,rh:24,lk:25,rk:26,la:27,ra:28,lf:31,rf:32};
 const FJ={elbow:['s','e','w'],shoulder:['h','s','e'],shoulderW:['h','s','w'],hip:['s','h','k'],knee:['h','k','a'],ankle:['k','a','f'],body:['s','h','a']};
@@ -1650,7 +1938,10 @@ const fPct=(a,p)=>{const b=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);re
 function formEngine(k,frames,W,H){
   const F=FORM[k],VT=.35;
   // 1. pixel landmarks for both sides
-  const raw=frames.filter(f=>f&&f.lm).map(f=>{const g=(n)=>{const p=f.lm[LM[n]];return p&&(p.visibility==null||p.visibility>=VT)?{x:p.x*W,y:p.y*H,v:p.visibility==null?1:p.visibility}:null};
+  // a leg joint on the far side of the body has a low visibility score all the time; for such a joint accept lower scores
+  // (not for arms: a hidden arm is often placed in a wrong spot)
+  const VTJ={};{const fl=frames.filter(f=>f&&f.lm);for(const n in LM){const vs=fl.map(f=>f.lm[LM[n]]&&f.lm[LM[n]].visibility).filter(v=>v!=null);VTJ[n]=/^[lr][hkaf]$/.test(n)&&vs.length&&fMed(vs)<.7?.2:VT}}
+  const raw=frames.filter(f=>f&&f.lm).map(f=>{const g=(n)=>{const p=f.lm[LM[n]];return p&&(p.visibility==null||p.visibility>=VTJ[n])?{x:p.x*W,y:p.y*H,v:p.visibility==null?1:p.visibility}:null};
     const o={t:f.t,l:{},r:{},nose:g('nose')};for(const j of ['s','e','w','h','k','a','f'])o.l[j]=g('l'+j),o.r[j]=g('r'+j);return o});
   if(raw.length<10)return {bad:'body'};
   const T0s=fMed(raw.map(f=>{const a=f.l.s&&f.l.h?Math.hypot(f.l.s.x-f.l.h.x,f.l.s.y-f.l.h.y):null,b=f.r.s&&f.r.h?Math.hypot(f.r.s.x-f.r.h.x,f.r.s.y-f.r.h.y):null;return a||b}))||100;
@@ -1661,9 +1952,9 @@ function formEngine(k,frames,W,H){
       flip.push(n>=3&&cs<.45*ci&&ci/n>.25*T0s)}
     raw.forEach((f,i)=>{if(flip[i]){const t=f.l;f.l=f.r;f.r=t}})}
   // drop short glitches: a point that jumps away in one frame, sits there 1-5 frames, and jumps back
-  {const dd=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
+  {const dd=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);const DTm=fMed(raw.slice(1).map((f,i)=>f.t-raw[i].t))||.05;
     for(const sd of ['l','r'])for(const j of ['s','e','w','h','k','a','f']){
-      for(let i=1;i<raw.length-1;i++){const a=raw[i-1][sd][j],b=raw[i][sd][j];if(!a||!b)continue;const jmp=dd(a,b);if(jmp<.2*T0s)continue;
+      for(let i=1;i<raw.length-1;i++){const a=raw[i-1][sd][j],b=raw[i][sd][j];if(!a||!b)continue;if(raw[i].t-raw[i-1].t>1.6*DTm)continue;const jmp=dd(a,b);if(jmp<.2*T0s)continue;
         const z=i>=2?raw[i-2][sd][j]:null;if(z&&dd(z,a)>.3*jmp)continue;
         for(let kk=1;kk<=5&&i+kk<raw.length;kk++){const c=raw[i+kk][sd][j];if(!c)continue;if(dd(c,a)>=.5*jmp)continue;
           let ok=true;for(let q=i;q<i+kk;q++){const p=raw[q][sd][j];if(!p)continue;if(dd(p,b)>.35*jmp||dd(p,a)<.6*jmp){ok=false;break}}
@@ -1673,11 +1964,13 @@ function formEngine(k,frames,W,H){
   const tq=raw.map(torOf);raw.forEach((f,i)=>{const w=tq.slice(Math.max(0,i-6),i+7).filter(x=>x);const m=w.length>=3?fMed(w):tor;f.tor=Math.max(.75*tor,Math.min(1.33*tor,m))});
   // typical projected limb lengths (to drop frames where a point jumped)
   const LEN={};for(const sd of ['l','r'])for(const [p,q] of [['s','e'],['e','w'],['h','k'],['k','a'],['a','f'],['s','h'],['h','s']]){const v=raw.map(f=>f[sd][p]&&f[sd][q]?Math.hypot(f[sd][p].x-f[sd][q].x,f[sd][p].y-f[sd][q].y):null);LEN[sd+p+q]=fPct(v,.75);LEN[sd+q+p]=LEN[sd+p+q]}
+  let KC=1;// horizontal shortening of the leg plane when the camera is not exactly at the side (knee exercises)
   // metric of one side in one frame
   const met=(name,f,sd)=>{const P=f[sd];
     if(name==='elbowR'){const a=P.s,b=P.e,c=P.w;if(!a||!b||!c)return null;const r1=Math.hypot(a.x-b.x,a.y-b.y)/(LEN[sd+'se']||1),r2=Math.hypot(c.x-b.x,c.y-b.y)/(LEN[sd+'ew']||1);if(r1<.75||r2<.75||r1>1.5||r2>1.5)return null;return fAng(a,b,c)}
-    if(FJ[name]){const J=FJ[name];const a=P[J[0]],b=P[J[1]],c=P[J[2]];if(!a||!b||!c)return null;
+    if(FJ[name]){const J=FJ[name];let a=P[J[0]],b=P[J[1]],c=P[J[2]];if(!a||!b||!c)return null;
       const L1=LEN[sd+J[0]+J[1]],L2=LEN[sd+J[1]+J[2]];if(L1&&L2){const r1=Math.hypot(a.x-b.x,a.y-b.y)/L1,r2=Math.hypot(c.x-b.x,c.y-b.y)/L2;if(r1<.55||r1>1.6||r2<.55||r2>1.6)return null}
+      if(name==='knee'&&KC<1){a={x:a.x/KC,y:a.y};b={x:b.x/KC,y:b.y};c={x:c.x/KC,y:c.y}}
       return fAng(a,b,c)}
     if(name==='reach'){if(!P.s||!P.w)return null;const d=Math.hypot(P.s.x-P.w.x,P.s.y-P.w.y)/f.tor;const c=(.36+.2916-d*d)/(2*.6*.54);return Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI}
     const armOk=()=>{if(!P.e||!P.w||!P.s)return true;const L2=LEN[sd+'ew'],L1=LEN[sd+'se'];const r2=L2?Math.hypot(P.e.x-P.w.x,P.e.y-P.w.y)/L2:1,r1=L1?Math.hypot(P.s.x-P.e.x,P.s.y-P.e.y)/L1:1;return r2>.45&&r2<1.7&&r1<1.7};
@@ -1694,6 +1987,9 @@ function formEngine(k,frames,W,H){
     if(F.pick==='lowfoot'){const lowf=sd=>fMed(raw.map(f=>f[sd].a&&f[sd].h?(f[sd].a.y-f[sd].h.y)/tor:null));const a=lowf('l'),b=lowf('r');side=a==null?'r':b==null?'l':(a>=b?'l':'r')}
     else if(F.pick==='range'){const rg=sd=>{const v=raw.map(f=>met(M,f,sd)).filter(x=>x!=null);return v.length>=Math.max(15,raw.length*.2)?fPct(v,.95)-fPct(v,.05):-1};side=rg('l')>=rg('r')?'l':'r'}
     else{const vs=sd=>raw.reduce((t,f)=>t+need.reduce((u,j)=>u+(f[sd][j]?f[sd][j].v:0),0),0);side=vs('l')>=vs('r')?'l':'r'}}
+  if(F.j==='knee'&&side!=='both'){const est=[];for(const [p,q] of [['h','k'],['k','a']]){const Ls=raw.map(f=>{const A=f[side][p],B=f[side][q];if(!A||!B)return null;const l=Math.hypot(A.x-B.x,A.y-B.y);return Math.abs(A.x-B.x)<.25*l?l:null}).filter(x=>x!=null);if(Ls.length<5)continue;const Lt=fMed(Ls);
+      for(const f of raw){const A=f[side][p],B=f[side][q];if(!A||!B)continue;const dy=Math.abs(A.y-B.y),r=Lt*Lt-dy*dy;if(r<(.75*Lt)**2)continue;est.push(Math.abs(A.x-B.x)/Math.sqrt(r))}}
+    if(est.length>=10){const c=fMed(est);if(c<.9)KC=Math.max(.6,c)}}
   const val=(name,f)=>side==='both'?both(name,f):met(name,f,side);
   const pt=(f,j)=>{if(side!=='both')return f[side][j]||null;const a=f.l[j],b=f.r[j];if(a&&b)return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};return a||b||null};
   const S=raw.map(f=>{const P={};for(const j of ['s','e','w','h','k','a'])P[j]=pt(f,j);P.nose=f.nose;
@@ -1702,7 +1998,7 @@ function formEngine(k,frames,W,H){
   // 2b. the set starts once the athlete is in the starting position and holds it ~1 s (walking to the bar,
   //     jumping up, letting go and walking away are ignored)
   let trimmed=false;
-  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));const still=i=>{const h0=S[i].P.h;if(!h0)return true;let m=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.3;q--){const h=S[q].P.h;if(h)m=Math.max(m,Math.abs(h.x-h0.x))}for(let q=i;q<S.length&&Math.abs(S[q].t-S[i].t)<=.3;q++){const h=S[q].P.h;if(h)m=Math.max(m,Math.abs(h.x-h0.x))}return m<.2*tor};
+  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));const HA=S.map(s=>s.P.h?s.P.h.x:null),HB=raw.map(f=>side==='r'?(f.l.h?f.l.h.x:null):(f.r.h?f.r.h.x:null));const still=i=>{const HX=HA[i]!=null?HA:HB;if(HX[i]==null)return true;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
     const win=(i,dir)=>{if(!still(i))return false;let y=0,n=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.8;q+=dir){if(ok[q]==null)continue;n++;if(ok[q])y++}return n>=4&&y/n>=.85};
     let a=-1,b=-1;for(let i=0;i<S.length;i++)if(ok[i]&&win(i,1)){a=i;break}
     for(let i=S.length-1;i>=0;i--)if(ok[i]&&win(i,-1)){b=i;break}
@@ -1716,7 +2012,14 @@ function formEngine(k,frames,W,H){
   if(F.static){const a=valid.map(s=>s.a);const dev=a.filter(x=>x<160).length/a.length;const dur=valid[valid.length-1].t-valid[0].t;return {static:1,dur,dev}}
   // 4. clean the signal: drop single-frame spikes, resample to 20 Hz, smooth
   const A0=valid.map(s=>s.a),T0=valid.map(s=>s.t);
-  for(let i=0;i<A0.length;i++){const w=valid.slice(Math.max(0,i-3),i+4).map(s=>s.a);const m=fMed(w);const mad=fMed(w.map(x=>Math.abs(x-m)))||0;if(Math.abs(valid[i].a-m)>Math.max(25,4*1.48*mad))A0[i]=null}
+  const DTv=fMed(valid.slice(1).map((s,i)=>s.t-valid[i].t))||.05;
+  const HW=Math.max(1,Math.min(3,Math.floor(.15/DTv+.01)));// at a low frame rate a fast rep is only a few frames: a narrow window, or its turning point looks like a spike
+  for(let i=0;i<A0.length;i++){if(i>0&&i<A0.length-1&&(valid[i].t-valid[i-1].t>2.5*DTv||valid[i+1].t-valid[i].t>2.5*DTv)){let qa=i-1;while(qa>=0&&A0[qa]==null)qa--;const qb=i+1;const q=qa<0?qb:(valid[i].t-valid[qa].t<valid[qb].t-valid[i].t?qa:qb);if(Math.abs(valid[i].a-valid[q].a)/Math.max(DTv,Math.abs(valid[i].t-valid[q].t))<1000)continue}const w=A0.slice(Math.max(0,i-HW),i+HW+1).filter((x,q)=>x!=null&&Math.max(0,i-HW)+q!==i).concat([valid[i].a]);const m=fMed(w);const mad=fMed(w.map(x=>Math.abs(x-m)))||0;if(Math.abs(valid[i].a-m)>Math.max(25,4*1.48*mad)){const dv=valid[i].a-m;const nb=j=>j>=0&&j<valid.length&&Math.abs(valid[j].t-valid[i].t)<=2.5*DTv&&(valid[j].a-m)*Math.sign(dv)>=.35*Math.abs(dv);const gp=j=>j<0||j>=valid.length||Math.abs(valid[j].t-valid[i].t)>1.6*DTv;const ramp=j=>{const r=(valid[j].a-m)*Math.sign(dv)/Math.abs(dv);return r>=.35&&r<=.8};if(!(nb(i-1)&&nb(i+1))&&!(gp(i-1)&&!gp(i+1)&&ramp(i+1))&&!(gp(i+1)&&!gp(i-1)&&ramp(i-1)))A0[i]=null}}
+  // a held jump: the value snaps away in one frame, stays there 2-6 frames, and snaps back (tracking glitch, not motion)
+  if(DTv<=.07)for(let i=1;i<A0.length-2;i++){const a=A0[i-1];if(a==null||A0[i]==null||valid[i].t-valid[i-1].t>1.6*DTv)continue;const off=A0[i]-a;if(Math.abs(off)<15)continue;
+    for(let n=2;n<=6&&i+n<A0.length;n++){const c=A0[i+n];if(c==null)break;let gap=false;for(let q=i+1;q<=i+n;q++)if(valid[q].t-valid[q-1].t>1.6*DTv)gap=true;if(gap)break;if(valid[i+n-1].t-valid[i].t>.32)break;
+      const seg=A0.slice(i,i+n);if(seg.some(x=>x==null))break;const ins=seg.map(x=>(x-a)/off);if(Math.min(...ins)<.65||Math.max(...ins)>1.35)continue;if(n>=3){const ex2=Math.max(...seg.slice(1,-1).map(x=>(x-a)*Math.sign(off)));if(ex2-Math.max((seg[0]-a)*Math.sign(off),(seg[n-1]-a)*Math.sign(off))>Math.max(8,.15*Math.abs(off)))break}
+      if(Math.abs((c-a)/off)<.3){const pre=A0[i-2],post=A0[i+n+1],tol=Math.max(6,.12*Math.abs(off));if((pre==null||Math.abs(pre-a)<tol)&&(post==null||Math.abs(post-c)<tol||Math.abs(post-c)>.6*Math.abs(off))){for(let q=i;q<i+n;q++)A0[q]=null;i+=n}break}}}
   const DT=.05,t0=T0[0],t1=T0[T0.length-1],G=[];let j=0;
   const pts=T0.map((t,i)=>[t,A0[i]]).filter(p=>p[1]!=null);
   if(pts.length<10)return {bad:'body'};
@@ -1732,11 +2035,12 @@ function formEngine(k,frames,W,H){
   const minAmp=F.amp||20;
   if(range<minAmp)return {bad:'still'};
   // 5. whole-body movement / still anchors
-  const rng1=get=>{const ps=raw.map(get).filter(p=>p);if(ps.length<10)return null;const xs=ps.map(p=>p.x),ys=ps.map(p=>p.y);return Math.hypot(fPct(xs,.9)-fPct(xs,.1),fPct(ys,.9)-fPct(ys,.1))/tor};
-  const rng=q=>{if(side!=='both')return rng1(f=>f[side][q]);const a=rng1(f=>f.l[q]),b=rng1(f=>f.r[q]);return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
+  const rng1=(get,xo)=>{const ps=raw.map(get).filter(p=>p);if(ps.length<10)return null;const md=a=>a.map((v,i)=>fMed(a.slice(Math.max(0,i-2),i+3)));const xs=md(ps.map(p=>p.x)),ys=md(ps.map(p=>p.y));return Math.hypot(fPct(xs,.9)-fPct(xs,.1),xo?0:fPct(ys,.9)-fPct(ys,.1))/tor};
+  const rng=(q,xo)=>{if(side!=='both')return rng1(f=>f[side][q],xo);const a=rng1(f=>f.l[q],xo),b=rng1(f=>f.r[q],xo);return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
   const warn=[];
   if(F.mov){const m=rng(F.mov);if(m!=null&&m<.2)return {bad:'nomove',q:F.mov};
-    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3))return {bad:'whole',q,mv:F.mov};if(f>.35)warn.push(q)}}
+    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3))return {bad:'whole',q,mv:F.mov};// standing still, the hips can only sway sideways in the picture (up-down jitter of the hip point is the detector)
+      const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rng(q,1):f;if(fw!=null&&fw>.35)warn.push(q)}}
   // 6. turning points (zig-zag with a hysteresis of delta)
   const delta=Math.max(minAmp*.6,Math.min(25,.22*range));
   const ex=[];let trend=0,mx=null,mn=null;
@@ -1757,11 +2061,14 @@ function formEngine(k,frames,W,H){
     for(let q=0;q+1<ex.length;q++)if(ex[q].ty===ex[q+1].ty){const keep=ex[q].ty==='max'?(ex[q].v>=ex[q+1].v?q:q+1):(ex[q].v<=ex[q+1].v?q:q+1);const drop=keep===q?q+1:q;if(ex[drop].end)ex[keep].end=1;ex.splice(drop,1);q--}}
   // a glitch: two turning points of the same kind < 0.6 s apart, with no real return to the other end in between
   const spd=(a,b)=>Math.abs(b.v-a.v)/Math.max(.05,Sm[b.i].t-Sm[a.i].t);
+  // where the forearm looks much too short the arm is hidden (bench filmed straight from the side): the value there is unreliable
+  const FR=F.armSee?S.map(s=>({t:s.t,r:s.P.e&&s.P.w&&LEN[side+'ew']?Math.hypot(s.P.e.x-s.P.w.x,s.P.e.y-s.P.w.y)/LEN[side+'ew']:null})).filter(x=>x.r!=null):null;
+  const hidden=(ta,tb)=>{if(!FR)return false;const w=FR.filter(x=>x.t>=ta&&x.t<=tb);return w.length>=4&&w.filter(x=>x.r<.7).length/w.length>=.8};
   for(let guard=0;guard<200;guard++){const lvl=ty=>fMed(ex.filter(e=>e.ty===ty).map(e=>e.v));const Lmax=lvl('max'),Lmin=lvl('min');let done=true;
     const sp=[];for(let q=0;q+1<ex.length;q++)sp.push(spd(ex[q],ex[q+1]));const medS=fMed(sp)||1;
     for(let q=0;q+2<ex.length;q++){const A=ex[q],Bm=ex[q+1],Cc=ex[q+2];if(A.ty!==Cc.ty)continue;
-      const dt=Sm[Cc.i].t-Sm[A.i].t;if(dt>=.6)continue;const far=A.ty==='min'?Lmax:Lmin,near=(A.v+Cc.v)/2;
-      const back=Math.abs(Bm.v-near)/Math.max(1e-6,Math.abs(far-near));const jump=Math.max(spd(A,Bm),spd(Bm,Cc))>2.5*medS;if(back>=.6&&!jump)continue;
+      const dt=Sm[Cc.i].t-Sm[A.i].t;const hid=dt<1.6&&hidden(Sm[A.i].t,Sm[Cc.i].t);if(dt>=.6&&!hid)continue;const far=A.ty==='min'?Lmax:Lmin,near=(A.v+Cc.v)/2;
+      const back=Math.abs(Bm.v-near)/Math.max(1e-6,Math.abs(far-near));const jump=dt<.35&&Math.max(spd(A,Bm),spd(Bm,Cc))>2.5*medS;if(back>=.6&&!jump)continue;
       const keepA=A.ty==='min'?A.v<=Cc.v:A.v>=Cc.v;if(!keepA&&!Cc.end){ex.splice(q,2)}else{if(Cc.end)A.end=1;ex.splice(q+1,2)}done=false;break}
     if(done)break}
   const fi=Sm.findIndex(g=>g.v!=null);let li=Sm.length-1;while(li>0&&Sm[li].v==null)li--;
@@ -1774,7 +2081,7 @@ function formEngine(k,frames,W,H){
   ex.forEach((e,n)=>{if(!isRep(e,n,WK))return;
     const pv=n>0?ex[n-1]:first,nx=ex[n+1]&&ex[n+1].ty===O?ex[n+1]:last;
     reps.push({e,pv,nx})});
-  if(globalThis.FDBG)globalThis.FDBG={Sm,ex,delta,range,first,last};
+  if(globalThis.FDBG)globalThis.FDBG={Sm,ex,delta,range,first,last,valid,A0,G,KC,side};
   if(!reps.length)return {bad:'reps'};
   // both legs must rise together (a standing knee raise keeps one foot down)
   if(F.twoLegs){const up=sd=>{const ys=raw.map(f=>f[sd].a?f[sd].a.y:null);const base=fPct(ys,.85);return {ys,base}};const L=up('l'),Rr=up('r');let one=0,both=0;
@@ -1874,13 +2181,21 @@ async function formRun(k,file){const out=$('#fOut');formStop();
   const dur=Math.min(isFinite(v.duration)?v.duration:0,90);if(dur<1.5){st.textContent='הסרטון קצר מדי. צריך לפחות 3 חזרות.';return}
   cv.width=v.videoWidth;cv.height=v.videoHeight;const cx=cv.getContext('2d');
   const FTS0=FTS+1000;
-  const fps=dur>45?10:dur>25?15:20,frames=[];let lastTs=FTS,notReady=0;
+  const fps=dur>45?15:20,frames=[];let lastTs=FTS,notReady=0;
   for(let t=0;t<dur;t+=1/fps){if(me.stop)return;await fSeek(v,t);if(me.stop)return;
     let r=null;const ts=Math.max(lastTs+1,FTS0+Math.round(t*1000)+1);lastTs=ts;FTS=ts;if(v.readyState>=2){try{r=lm.detectForVideo(v,ts)}catch(e){}}else notReady++;
     const l=r&&r.landmarks&&r.landmarks[0];cx.clearRect(0,0,cv.width,cv.height);
     if(l){cx.strokeStyle='#ff7a1a';cx.lineWidth=Math.max(3,cv.width/150);for(const [a,b] of BONES){cx.beginPath();cx.moveTo(l[a].x*cv.width,l[a].y*cv.height);cx.lineTo(l[b].x*cv.width,l[b].y*cv.height);cx.stroke()}}
     frames.push({t,lm:l?l.map(p=>({x:p.x,y:p.y,visibility:p.visibility})):null});
     st.textContent=`מנתח… ${Math.min(99,Math.round(100*t/dur))}%`}
+  // the pose tracker sometimes finds the person only a moment after the set starts (or loses them for a moment):
+  // go back from the first frame where the person was found, frame by frame, so the tracker follows them into the gap
+  {let extra=0;const maxExtra=Math.ceil(frames.length*.5);
+    for(let i=0;i<frames.length&&extra<maxExtra;i++){if(frames[i].lm)continue;let j=i;while(j<frames.length&&!frames[j].lm)j++;const len=j-i;
+      if(len>=3&&j<frames.length){const run=async q=>{if(me.stop)return null;await fSeek(v,frames[q].t);const ts=lastTs+1;lastTs=ts;FTS=ts;let r=null;if(v.readyState>=2){try{r=lm.detectForVideo(v,ts)}catch(e){}}extra++;return r&&r.landmarks&&r.landmarks[0]};
+        await run(j);let miss=0;for(let q=j-1;q>=i&&miss<4&&extra<maxExtra;q--){const l=await run(q);if(me.stop)return;if(l){frames[q].lm=l.map(p=>({x:p.x,y:p.y,visibility:p.visibility}));miss=0}else miss++;
+          st.textContent=`משלים קטעים חסרים… ${Math.min(99,Math.round(100*extra/maxExtra))}%`}}
+      i=j}}
   if(me.stop)return;v.controls=true;st.textContent='';cx.clearRect(0,0,cv.width,cv.height);
   if(notReady>frames.length*.3){st.textContent='הטלפון לא הצליח לקרוא חלק גדול מהסרטון. נסה שוב.';return}
   let res;try{res=formEngine(k,frames,v.videoWidth,v.videoHeight)}catch(e){res={bad:'body'}}
