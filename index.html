@@ -1997,8 +1997,8 @@ function formEngine(k,frames,W,H){
     return {t:f.t,a:val(M,f),wv:WJ===M?null:val(WJ,f),rv:RJ===M?null:val(RJ,f),P,tilt,knee:side==='both'?null:met('knee',f,side)}});
   // 2b. the set starts once the athlete is in the starting position and holds it ~1 s (walking to the bar,
   //     jumping up, letting go and walking away are ignored)
-  let trimmed=false;
-  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));const HA=S.map(s=>s.P.h?s.P.h.x:null),HB=raw.map(f=>side==='r'?(f.l.h?f.l.h.x:null):(f.r.h?f.r.h.x:null));const still=i=>{const HX=HA[i]!=null?HA:HB;if(HX[i]==null)return true;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
+  let trimmed=false,okFr=1;
+  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));{const q=ok.filter(x=>x!=null);okFr=q.filter(x=>x).length/Math.max(1,q.length)}const HA=S.map(s=>s.P.h?s.P.h.x:null),HB=raw.map(f=>side==='r'?(f.l.h?f.l.h.x:null):(f.r.h?f.r.h.x:null));const still=i=>{const HX=HA[i]!=null?HA:HB;if(HX[i]==null)return true;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
     const win=(i,dir)=>{if(!still(i))return false;let y=0,n=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.8;q+=dir){if(ok[q]==null)continue;n++;if(ok[q])y++}return n>=4&&y/n>=.85};
     let a=-1,b=-1;for(let i=0;i<S.length;i++)if(ok[i]&&win(i,1)){a=i;break}
     for(let i=S.length-1;i>=0;i--)if(ok[i]&&win(i,-1)){b=i;break}
@@ -2006,7 +2006,7 @@ function formEngine(k,frames,W,H){
     if(a>=0&&b>a){const t0=S[a].t-.15,t1=S[b].t+.1;if(t0>S[0].t+.2||t1<S[S.length-1].t-.2){trimmed=true;
       const keep=f=>f.t>=t0&&f.t<=t1;const S2=S.filter(keep),R2=raw.filter(keep);S.length=0;S.push(...S2);raw.length=0;raw.push(...R2)}}}
   const valid=S.filter(s=>s.a!=null);
-  if(valid.length<10||valid[valid.length-1].t-valid[0].t<1.5)return {bad:'body'};
+  if(valid.length<10||valid[valid.length-1].t-valid[0].t<1.5)return F.pos&&okFr<.6?{bad:'pos',msg:FPOSMSG[F.pos]}:{bad:'body'};
   // 3. position check
   if(F.pos){const pv=S.map(s=>fPos(F.pos,s.P,tor)).filter(x=>x!=null);if(globalThis.FDBG)globalThis.FDBG={side,posN:pv.length,posOk:pv.filter(x=>x).length,frames:raw.length};const fr=pv.filter(x=>x).length/Math.max(1,pv.length);if(pv.length<8||fr<.6)return {bad:'pos',msg:FPOSMSG[F.pos]}}
   if(F.static){const a=valid.map(s=>s.a);const dev=a.filter(x=>x<160).length/a.length;const dur=valid[valid.length-1].t-valid[0].t;return {static:1,dur,dev}}
@@ -2035,12 +2035,13 @@ function formEngine(k,frames,W,H){
   const minAmp=F.amp||20;
   if(range<minAmp)return {bad:'still'};
   // 5. whole-body movement / still anchors
-  const rng1=(get,xo)=>{const ps=raw.map(get).filter(p=>p);if(ps.length<10)return null;const md=a=>a.map((v,i)=>fMed(a.slice(Math.max(0,i-2),i+3)));const xs=md(ps.map(p=>p.x)),ys=md(ps.map(p=>p.y));return Math.hypot(fPct(xs,.9)-fPct(xs,.1),xo?0:fPct(ys,.9)-fPct(ys,.1))/tor};
+  let RW=null;const rng1=(get,xo)=>{const ps=(RW?raw.filter(f=>f.t>=RW[0]&&f.t<=RW[1]):raw).map(get).filter(p=>p);if(ps.length<10)return null;const md=a=>a.map((v,i)=>fMed(a.slice(Math.max(0,i-2),i+3)));const xs=md(ps.map(p=>p.x)),ys=md(ps.map(p=>p.y));return Math.hypot(fPct(xs,.9)-fPct(xs,.1),xo?0:fPct(ys,.9)-fPct(ys,.1))/tor};
   const rng=(q,xo)=>{if(side!=='both')return rng1(f=>f[side][q],xo);const a=rng1(f=>f.l[q],xo),b=rng1(f=>f.r[q],xo);return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
   const warn=[];
   if(F.mov){const m=rng(F.mov);if(m!=null&&m<.2)return {bad:'nomove',q:F.mov};
     for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3))return {bad:'whole',q,mv:F.mov};// standing still, the hips can only sway sideways in the picture (up-down jitter of the hip point is the detector)
-      const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rng(q,1):f;if(fw!=null&&fw>.35)warn.push(q)}}
+}}
+  const warnCalc=()=>{if(!F.mov)return;for(const q of (F.fix||'')){const f=rng(q);if(f==null)continue;const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rng(q,1):f;if(fw!=null&&fw>.35)warn.push(q)}};
   // 6. turning points (zig-zag with a hysteresis of delta)
   const delta=Math.max(minAmp*.6,Math.min(25,.22*range));
   const ex=[];let trend=0,mx=null,mn=null;
@@ -2073,7 +2074,10 @@ function formEngine(k,frames,W,H){
     if(done)break}
   const fi=Sm.findIndex(g=>g.v!=null);let li=Sm.length-1;while(li>0&&Sm[li].v==null)li--;
   const first={i:fi,v:Sm[fi].v,edge:1},last={i:li,v:Sm[li].v,edge:1};
-  const isRep=(e,n,ty)=>e.ty===ty&&!e.end&&(n>0||Math.abs(e.v-first.v)>=delta);
+  // a rep that reaches full depth right as the video ends still counts, if its swing is a normal full swing
+  const swM=fMed(ex.slice(1).map((e,q)=>e.end||ex[q].end?null:Math.abs(e.v-ex[q].v)).filter(x=>x!=null));
+  const endOk=(e,n,ty)=>n===ex.length-1&&n>0&&swM!=null&&Math.abs(e.v-ex[n-1].v)>=.85*swM&&(ty==='min'?(F.min!=null&&e.v<=F.min):(F.max!=null&&e.v>=F.max));
+  const isRep=(e,n,ty)=>e.ty===ty&&(!e.end||endOk(e,n,ty))&&(n>0||Math.abs(e.v-first.v)>=delta);
   const cMin=ex.filter((e,n)=>isRep(e,n,'min')).length,cMax=ex.filter((e,n)=>isRep(e,n,'max')).length;
   let WK=F.work;if(Math.abs(cMin-cMax)>=2)WK=cMin>cMax?'min':'max';
   const O=WK==='min'?'max':'min';
@@ -2081,6 +2085,12 @@ function formEngine(k,frames,W,H){
   ex.forEach((e,n)=>{if(!isRep(e,n,WK))return;
     const pv=n>0?ex[n-1]:first,nx=ex[n+1]&&ex[n+1].ty===O?ex[n+1]:last;
     reps.push({e,pv,nx})});
+  {const rl=fMed(ex.filter(x=>x.ty===O&&!x.end).map(x=>x.v));
+    if(reps.length&&rl!=null){const r0=reps[0],rN=reps[reps.length-1];const near=(j,e)=>Sm[j].v!=null&&Math.abs(Sm[j].v-rl)<=.15*Math.abs(e.v-rl);
+      const odd=(x,e)=>x.edge||Math.abs(x.v-rl)>.3*Math.abs(e.v-rl);
+      if(odd(r0.pv,r0.e)){let j=r0.e.i;while(j>0&&!near(j,r0.e))j--;if(j>r0.pv.i)r0.ws=j}
+      if(odd(rN.nx,rN.e)){let j=rN.e.i;while(j<Sm.length-1&&!near(j,rN.e))j++;if(j<rN.nx.i)rN.we=j}}
+    if(reps.length){const r0=reps[0],rN=reps[reps.length-1];RW=[Sm[r0.ws!=null?r0.ws:r0.pv.i].t-.3,Sm[rN.we!=null?rN.we:rN.nx.i].t+.3]}warnCalc();RW=null}
   if(globalThis.FDBG)globalThis.FDBG={Sm,ex,delta,range,first,last,valid,A0,G,KC,side};
   if(!reps.length)return {bad:'reps'};
   // both legs must rise together (a standing knee raise keeps one foot down)
@@ -2092,20 +2102,21 @@ function formEngine(k,frames,W,H){
   // value of a check-metric at a turning point: best value within ±0.3 s
   const at=(ti,kind,dirn)=>{const tt=Sm[ti].t;const v=S.filter(s=>Math.abs(s.t-tt)<=.3).map(s=>kind===M?s.a:(kind===WJ?s.wv:s.rv)).filter(x=>x!=null);
     if(v.length<3)return null;return dirn==='min'?fPct(v,.25):fPct(v,.75)};
-  const R=reps.map(({e,pv,nx})=>{
+  const R=reps.map(({e,pv,nx,ws,we})=>{
     const other=!nx.edge?nx:(!pv.edge?pv:(Math.abs(nx.v-e.v)>=Math.abs(pv.v-e.v)?nx:pv));
     let wv=WJ===M?e.v:at(e.i,WJ,WK),rv=RJ===M?other.v:at(other.i,RJ,O);
     const okM=(v,end,lim)=>end==='min'?v<=lim:v>=lim,lim=end=>end==='min'?F.min:F.max;
     const chk=(v,end,fb,raw)=>{if(fb!=null)return okM(raw,end,fb)&&(v==null||okM(v,end,lim(end)));return okM(v!=null?v:raw,end,lim(end))};
-    const workOk=chk(wv,WK,F.wfb,e.v),restOk=chk(rv,O,F.rfb,other.v);if(wv==null)wv=e.v;if(rv==null)rv=other.v;
-    const ta=Sm[pv.i].t,tb=Sm[nx.i].t;
+    const workOk=chk(wv,WK,F.wfb,e.v)||(F.wfb!=null&&WK==='max'&&wv!=null&&e.v>=150&&wv>=lim(WK)-10),restOk=chk(rv,O,F.rfb,other.v);if(wv==null)wv=e.v;if(rv==null)rv=other.v;
+    const ta=Sm[ws!=null?ws:pv.i].t,tb=Sm[we!=null?we:nx.i].t;
     const restLvl=fMed(ex.filter(x=>x.ty===O&&!x.end).map(x=>x.v));const refL=(pv.edge||pv.end)&&restLvl!=null?restLvl:pv.v,refR=(nx.edge||nx.end)&&restLvl!=null?restLvl:nx.v;
     let act=0;for(let q=pv.i;q<=nx.i;q++){const v=Sm[q].v;if(v==null)continue;const ref=q<=e.i?refL:refR;if(Math.abs(v-ref)>.2*Math.abs(e.v-ref))act+=DT}
     const inR=S.filter(s=>s.t>=ta&&s.t<=tb);
     const tl=inR.map(s=>s.tilt).filter(x=>x!=null),kn=inR.map(s=>s.knee).filter(x=>x!=null);
     const te=Sm[e.i].t,near=S.filter(s=>Math.abs(s.t-te)<=.35);
     const chin=near.some(s=>s.P.nose&&s.P.w&&s.P.nose.y<s.P.w.y);
-    let seen=true;if(F.armSee){const rr=near.map(s=>s.P.e&&s.P.w&&LEN[side+'ew']?Math.hypot(s.P.e.x-s.P.w.x,s.P.e.y-s.P.w.y)/LEN[side+'ew']:null).filter(x=>x!=null);seen=rr.length>=2&&fMed(rr)>=.62}
+    let seen=true;if(F.armSee&&!workOk){let run=0,best=0;for(const g of Sm){if(Math.abs(g.t-te)>.7){run=0;continue}if(g.v==null){run+=DT;best=Math.max(best,run)}else run=0}if(best>=.3)seen=false}
+    if(F.armSee&&seen){const rr=near.map(s=>s.P.e&&s.P.w&&LEN[side+'ew']?Math.hypot(s.P.e.x-s.P.w.x,s.P.e.y-s.P.w.y)/LEN[side+'ew']:null).filter(x=>x!=null);seen=rr.length>=2&&fMed(rr)>=.62}
     return {t:te,work:wv,rest:rv,workRaw:e.v,restRaw:other.v,workOk,restOk,act,seen,swing:tl.length>2?fPct(tl,.95)-fPct(tl,.05):0,knee:kn.length>2?fPct(kn,.1):null,chin}});
   return {side,W:WK,reps:R,warn,range,delta,tor}}
 function fPos(pos,P,tor){const {s,h,w,k,a,nose}=P;if(!s||!h)return null;
@@ -2114,7 +2125,7 @@ function fPos(pos,P,tor){const {s,h,w,k,a,nose}=P;if(!s||!h)return null;
     case 'lie':return tilt>55&&(!w||w.y<s.y+.15*tor);
     case 'incl':return tilt>12&&tilt<78&&s.y<h.y;
     case 'up':if(!a)return tilt<35&&s.y<h.y;return tilt<35&&s.y<h.y&&a.y>h.y;
-    case 'hang':if(!w)return null;return w.y<s.y+.1*tor&&s.y<h.y&&tilt<45&&(!a||a.y>h.y);
+    case 'hang':if(!w)return null;return w.y<s.y+.1*tor&&s.y<h.y&&tilt<45&&(!a||a.y>h.y-.8*tor);
     case 'sit':return tilt<55&&s.y<h.y&&(!k||Math.abs(k.y-h.y)<.7*tor);
     case 'bent':return tilt>20&&tilt<88&&(!a||a.y>h.y);
     case 'stand':if(!a)return null;return a.y>h.y+.5*tor&&(!k||(k.y>h.y-.1*tor&&k.y<a.y+.1*tor));
