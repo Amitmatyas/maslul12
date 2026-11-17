@@ -1998,7 +1998,8 @@ function formEngine(k,frames,W,H){
   // 2b. the set starts once the athlete is in the starting position and holds it ~1 s (walking to the bar,
   //     jumping up, letting go and walking away are ignored)
   let trimmed=false,okFr=1;
-  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));{const q=ok.filter(x=>x!=null);okFr=q.filter(x=>x).length/Math.max(1,q.length)}const HA=S.map(s=>s.P.h?s.P.h.x:null),HB=raw.map(f=>side==='r'?(f.l.h?f.l.h.x:null):(f.r.h?f.r.h.x:null));const still=i=>{const HX=HA[i]!=null?HA:HB;if(HX[i]==null)return true;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
+  if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));{const q=ok.filter(x=>x!=null);okFr=q.filter(x=>x).length/Math.max(1,q.length)}const anch=['lie','incl','sit'].includes(F.pos),rel=(h,s)=>h&&s?h.x-s.x:null;// positions nobody walks in: hip measured from the shoulder, so a panning camera does not look like walking
+    const HA=S.map(s=>anch?rel(s.P.h,s.P.s):(s.P.h?s.P.h.x:null)),HB=raw.map(f=>{const o=side==='r'?f.l:f.r;return anch?rel(o.h,o.s):(o.h?o.h.x:null)});const still=i=>{const HX=HA[i]!=null?HA:HB;if(HX[i]==null)return true;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
     const win=(i,dir)=>{if(!still(i))return false;let y=0,n=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.8;q+=dir){if(ok[q]==null)continue;n++;if(ok[q])y++}return n>=4&&y/n>=.85};
     let a=-1,b=-1;for(let i=0;i<S.length;i++)if(ok[i]&&win(i,1)){a=i;break}
     for(let i=S.length-1;i>=0;i--)if(ok[i]&&win(i,-1)){b=i;break}
@@ -2038,10 +2039,15 @@ function formEngine(k,frames,W,H){
   let RW=null;const rng1=(get,xo)=>{const ps=(RW?raw.filter(f=>f.t>=RW[0]&&f.t<=RW[1]):raw).map(get).filter(p=>p);if(ps.length<10)return null;const md=a=>a.map((v,i)=>fMed(a.slice(Math.max(0,i-2),i+3)));const xs=md(ps.map(p=>p.x)),ys=md(ps.map(p=>p.y));return Math.hypot(fPct(xs,.9)-fPct(xs,.1),xo?0:fPct(ys,.9)-fPct(ys,.1))/tor};
   const rng=(q,xo)=>{if(side!=='both')return rng1(f=>f[side][q],xo);const a=rng1(f=>f.l[q],xo),b=rng1(f=>f.r[q],xo);return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
   const warn=[];
+  // lying/seated: the hip is pinned to the bench, so motion measured from the hip ignores a handheld camera panning or zooming
+  const ANCH=F.pos==='lie'||F.pos==='incl'||F.pos==='sit';const tz=raw.map(torOf);raw.forEach((f,i)=>{const w=tz.slice(Math.max(0,i-6),i+7).filter(x=>x);f.tz=w.length>=3?fMed(w):null});
+  const rngR=q=>{const g=s=>f=>{const a=f[s][q],h=f[s].h;return a&&h&&f.tz?{x:(a.x-h.x)*tor/f.tz,y:(a.y-h.y)*tor/f.tz}:null};if(side!=='both')return rng1(g(side));const a=rng1(g('l')),b=rng1(g('r'));return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
+  let wholeQ=null,wholeBad=false;const wholeChk=()=>{const m=rngR(F.mov),f=rngR(wholeQ);return m==null||f==null||(f>.6&&f>.7*m)};
   if(F.mov){const m=rng(F.mov);if(m!=null&&m<.2)return {bad:'nomove',q:F.mov};
-    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3))return {bad:'whole',q,mv:F.mov};// standing still, the hips can only sway sideways in the picture (up-down jitter of the hip point is the detector)
+    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3)){if(ANCH&&q!=='h'&&range>=35){wholeQ=q;break}return range>=35?{bad:'cam'}:{bad:'whole',q,mv:F.mov}}// the exercise joint moves fully, yet the anchor travels with it: the picture moved (camera, someone else, a cut), not a cheat// standing still, the hips can only sway sideways in the picture (up-down jitter of the hip point is the detector)
 }}
-  const warnCalc=()=>{if(!F.mov)return;for(const q of (F.fix||'')){const f=rng(q);if(f==null)continue;const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rng(q,1):f;if(fw!=null&&fw>.35)warn.push(q)}};
+  const camChk=ANCH&&!(F.fix||'').includes('h');let camMv=false;
+  const warnCalc=()=>{if(!F.mov)return;for(const q of (F.fix||'')){const f=rng(q);if(f==null)continue;const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rng(q,1):f;if(fw!=null&&fw>.35){if(camChk&&q!=='h'){const h=rng('h');if(h!=null&&h>.3){camMv=true;continue}}warn.push(q)}}};// a body pinned to a bench whose hip still travels across the picture means the camera moved
   // 6. turning points (zig-zag with a hysteresis of delta)
   const delta=Math.max(minAmp*.6,Math.min(25,.22*range));
   const ex=[];let trend=0,mx=null,mn=null;
@@ -2090,7 +2096,8 @@ function formEngine(k,frames,W,H){
       const odd=(x,e)=>x.edge||Math.abs(x.v-rl)>.3*Math.abs(e.v-rl);
       if(odd(r0.pv,r0.e)){let j=r0.e.i;while(j>0&&!near(j,r0.e))j--;if(j>r0.pv.i)r0.ws=j}
       if(odd(rN.nx,rN.e)){let j=rN.e.i;while(j<Sm.length-1&&!near(j,rN.e))j++;if(j<rN.nx.i)rN.we=j}}
-    if(reps.length){const r0=reps[0],rN=reps[reps.length-1];RW=[Sm[r0.ws!=null?r0.ws:r0.pv.i].t-.3,Sm[rN.we!=null?rN.we:rN.nx.i].t+.3]}warnCalc();RW=null}
+    if(reps.length){const r0=reps[0],rN=reps[reps.length-1];RW=[Sm[r0.ws!=null?r0.ws:r0.pv.i].t-.3,Sm[rN.we!=null?rN.we:rN.nx.i].t+.3]}warnCalc();if(wholeQ)wholeBad=wholeChk();RW=null}
+  if(wholeQ&&(!reps.length||wholeBad))return {bad:'cam'};// pinned to the bench yet the shoulder still wanders against the hip: the picture itself is unreliable (camera moving, someone else in frame)
   if(globalThis.FDBG)globalThis.FDBG={Sm,ex,delta,range,first,last,valid,A0,G,KC,side};
   if(!reps.length)return {bad:'reps'};
   // both legs must rise together (a standing knee raise keeps one foot down)
@@ -2118,7 +2125,7 @@ function formEngine(k,frames,W,H){
     let seen=true;if(F.armSee&&!workOk){let run=0,best=0;for(const g of Sm){if(Math.abs(g.t-te)>.7){run=0;continue}if(g.v==null){run+=DT;best=Math.max(best,run)}else run=0}if(best>=.3)seen=false}
     if(F.armSee&&seen){const rr=near.map(s=>s.P.e&&s.P.w&&LEN[side+'ew']?Math.hypot(s.P.e.x-s.P.w.x,s.P.e.y-s.P.w.y)/LEN[side+'ew']:null).filter(x=>x!=null);seen=rr.length>=2&&fMed(rr)>=.62}
     return {t:te,work:wv,rest:rv,workRaw:e.v,restRaw:other.v,workOk,restOk,act,seen,swing:tl.length>2?fPct(tl,.95)-fPct(tl,.05):0,knee:kn.length>2?fPct(kn,.1):null,chin}});
-  return {side,W:WK,reps:R,warn,range,delta,tor}}
+  return {side,W:WK,reps:R,warn,range,delta,tor,camMv}}
 function fPos(pos,P,tor){const {s,h,w,k,a,nose}=P;if(!s||!h)return null;
   const tilt=Math.atan2(Math.abs(s.x-h.x),Math.abs(s.y-h.y))*180/Math.PI;
   switch(pos){
@@ -2136,6 +2143,7 @@ function formReport(k,r){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</l
   const tip=` <span class="muted">${F.tip}</span>`;
   if(r.bad==='body')return {html:`<p>לא זיהיתי מספיק את הגוף בסרטון.${tip} תאורה טובה, כל הגוף בפריים, 3 חזרות לפחות.</p>`};
   if(r.bad==='pos')return {html:`<ul>${bad(r.msg)}</ul><p class="muted">לכן לא ניתחתי את החזרות. ${F.tip}</p>`};
+  if(r.bad==='cam')return {html:`<ul>${bad('התמונה זזה יותר מדי: המצלמה זזה, נכנסו לתמונה אנשים אחרים, או שכל הגוף זז ולא רק התרגיל. לכן לא הצלחתי לעקוב אחרי החזרות.')}</ul><p class="muted">מניחים את הטלפון על משהו יציב (לא ביד) ומתחילים לצלם רגע לפני הסט. ${F.tip}</p>`};
   if(r.bad==='still')return {html:`<ul>${bad('לא זיהיתי תנועה של התרגיל בסרטון.')}</ul><p class="muted">${F.tip}</p>`};
   if(r.bad==='nomove')return {html:`<ul>${bad(`${FPN[r.q][0]} כמעט לא ${FPN[r.q][1]}. לא זיהיתי ביצוע של התרגיל.`)}</ul>`};
   if(r.bad==='whole')return {html:`<ul>${bad(`${FPN[r.q][0]} ${FPN[r.q][1]} כמעט כמו ${FPN[r.mv][0]}. זה נראה כמו תנועה של כל הגוף ולא כמו התרגיל. בתרגיל הזה ${FPN[r.q][0]} ${FPN[r.q][2]} כמעט במקום.`)}</ul><p class="muted">לכן לא ניתחתי את החזרות.</p>`};
@@ -2146,13 +2154,14 @@ function formReport(k,r){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</l
   const R=r.reps,n=R.length,msgMin=F.lo,msgMax=F.hi;
   const unseen=F.armSee?R.filter(x=>!x.seen).length:0,blind=unseen>n/2;
   const nW=blind?0:R.filter(x=>!x.workOk&&x.seen!==false).length,nR=blind?0:R.filter(x=>!x.restOk).length;
-  const L=[blind?`<li><b>בערך ${n} חזרות</b></li>`:`<li><b>${n} חזרות</b> זוהו</li>`];
+  const L=[blind?`<li><b>בערך ${n===1?'חזרה אחת':n+' חזרות'}</b></li>`:(n===1?`<li><b>חזרה אחת</b> זוהתה</li>`:`<li><b>${n} חזרות</b> זוהו</li>`)];
   const wMsg=r.W==='min'?msgMin:msgMax,rMsg=r.W==='min'?msgMax:msgMin;
   if(blind)L.push(`<li class="bad">? לא ראיתי טוב את הזרוע בתחתית התנועה, אז לא בדקתי את העומק. צלמו בזווית קצת מלפנים (לא בדיוק מהצד).</li>`);
   else L.push(nW?bad(`${wMsg} (${nW} מתוך ${n})`):ok('טווח תנועה מלא בצד הקשה של התנועה'));
   if(!blind)L.push(nR?bad(`${rMsg} (${nR} מתוך ${n})`):ok('חזרה מלאה בין החזרות'));
   if(F.top){const hi=R.filter(x=>x.work>F.top).length;if(hi)L.push(bad(`מרימים גבוה מדי, מעל הכתפיים (${hi} חזרות). עוצרים בגובה הכתף.`))}
   if(F.lean&&F.view!=='front'){const sw=R.filter(x=>x.swing>F.lean).length;if(sw)L.push(bad(`יש תנופה או נדנוד בגוף ב-${sw} חזרות. להוריד משקל ולשמור על הגוף יציב.`));else if(!r.warn.length)L.push(ok('הגוף יציב, בלי תנופה'))}
+  if(r.camMv)L.push(`<li class="bad">? המצלמה זזה במהלך הסט, אז לא בדקתי אם ${FPN[F.fix[0]][0]} ${FPN[F.fix[0]][2]} במקום. בפעם הבאה מניחים את הטלפון על משהו יציב.</li>`);
   for(const q of r.warn)L.push(bad(`${FPN[q][0]} ${FPN[q][1]} הרבה, כלומר יש תנופה או נדנוד. בתרגיל הזה ${FPN[q][0]} ${FPN[q][2]} כמעט במקום.`));
   if(F.knee){const sq=R.filter(x=>x.knee!=null&&x.knee<F.knee).length;if(sq)L.push(bad(`הברכיים מתכופפות יותר מדי (${sq} חזרות). זה הופך לסקוואט. ברכיים רכות וקבועות, התנועה מהאגן.`))}
   if(F.chin){const c=R.filter(x=>x.chin).length;L.push(c===n?ok('הסנטר עובר את המוט'):bad(`הסנטר לא עבר את המוט ב-${n-c} חזרות.`))}
@@ -2409,6 +2418,7 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
   const act=a.dataset.act,d=a.dataset.d;
   switch(act){
     case 'sel':V.sel=a.dataset.date;go('today');break;
+    case 'close-sheet':closeSheet();break;
     case 'demo':openDemo(a.dataset.k);break;
     case 'form':openForm(a.dataset.k);break;
     case 'form-pick':$('#formIn').click();break;
