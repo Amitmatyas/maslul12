@@ -1999,7 +1999,11 @@ function formEngine(k,frames,W,H){
   //     jumping up, letting go and walking away are ignored)
   let trimmed=false,okFr=1;
   if(F.pos){const ok=S.map(s=>fPos(F.pos,s.P,tor));{const q=ok.filter(x=>x!=null);okFr=q.filter(x=>x).length/Math.max(1,q.length)}const anch=['lie','incl','sit'].includes(F.pos),rel=(h,s)=>h&&s?h.x-s.x:null;// positions nobody walks in: hip measured from the shoulder, so a panning camera does not look like walking
-    const HA=S.map(s=>anch?rel(s.P.h,s.P.s):(s.P.h?s.P.h.x:null)),HB=raw.map(f=>{const o=side==='r'?f.l:f.r;return anch?rel(o.h,o.s):(o.h?o.h.x:null)});const still=i=>{const HX=HA[i]!=null?HA:HB;if(HX[i]==null)return true;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
+    const HA=S.map(s=>anch?rel(s.P.h,s.P.s):(s.P.h?s.P.h.x:null)),HB=raw.map(f=>{const o=side==='r'?f.l:f.r;return anch?rel(o.h,o.s):(o.h?o.h.x:null)});const stillOn=(HX,i,strict)=>{if(HX[i]==null)return !strict;let lo=1e9,hi=-1e9,t0=S[i].t,t1=S[i].t,n=0;for(let q=i;q>=0&&S[i].t-S[q].t<=.3;q--){if(HX[q]!=null){n++;lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t0=S[q].t}}for(let q=i;q<S.length&&S[q].t-S[i].t<=.3;q++){if(HX[q]!=null){n++;lo=Math.min(lo,HX[q]);hi=Math.max(hi,HX[q]);t1=S[q].t}}if(strict&&n<5)return false;return (hi-lo)*.6/Math.max(.3,t1-t0)<.2*tor};
+    // hanging or standing: a handheld phone pans the whole picture, so also accept both legs still relative to the hip
+    //  (walking to the bar or away always moves a leg); hanging also needs the hip still relative to the hands on the bar
+    const HG=['hang','up','stand','bent'].includes(F.pos),RH=F.pos==='hang'?S.map(s=>rel(s.P.h,s.P.w)):null,lg=(sd,ax)=>raw.map(f=>{const o=f[sd];return o.a&&o.h?o.a[ax]-o.h[ax]:null});const LG=HG?[lg('l','x'),lg('l','y'),lg('r','x'),lg('r','y')]:null;
+    const still=i=>{const HX=HA[i]!=null?HA:HB;if(stillOn(HX,i))return true;if(!HG)return false;return (!RH||stillOn(RH,i,1))&&LG.every(L=>stillOn(L,i,1))};
     const win=(i,dir)=>{if(!still(i))return false;let y=0,n=0;for(let q=i;q>=0&&q<S.length&&Math.abs(S[q].t-S[i].t)<=.8;q+=dir){if(ok[q]==null)continue;n++;if(ok[q])y++}return n>=4&&y/n>=.85};
     let a=-1,b=-1;for(let i=0;i<S.length;i++)if(ok[i]&&win(i,1)){a=i;break}
     for(let i=S.length-1;i>=0;i--)if(ok[i]&&win(i,-1)){b=i;break}
@@ -2042,12 +2046,22 @@ function formEngine(k,frames,W,H){
   // lying/seated: the hip is pinned to the bench, so motion measured from the hip ignores a handheld camera panning or zooming
   const ANCH=F.pos==='lie'||F.pos==='incl'||F.pos==='sit';const tz=raw.map(torOf);raw.forEach((f,i)=>{const w=tz.slice(Math.max(0,i-6),i+7).filter(x=>x);f.tz=w.length>=3?fMed(w):null});
   const rngR=q=>{const g=s=>f=>{const a=f[s][q],h=f[s].h;return a&&h&&f.tz?{x:(a.x-h.x)*tor/f.tz,y:(a.y-h.y)*tor/f.tz}:null};if(side!=='both')return rng1(g(side));const a=rng1(g('l')),b=rng1(g('r'));return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
+  // standing: the feet are planted; hanging: the hands hold the bar. Measured from that anchor, a handheld camera's pan/zoom cancels out
+  const REFQ=F.pos==='up'||F.pos==='stand'?'a':(F.pos==='hang'?'w':null);const refOK=REFQ&&raw.filter(f=>f.l[REFQ]||f.r[REFQ]).length>=.8*raw.length;
+  const rngX=(q,xo)=>{if(!refOK||q===REFQ)return rng(q,xo);const g=s=>f=>{const a=f[s][q],r=f[s][REFQ];return a&&r&&f.tz?{x:(a.x-r.x)*tor/f.tz,y:(a.y-r.y)*tor/f.tz}:null};if(side!=='both')return rng1(g(side),xo);const a=rng1(g('l'),xo),b=rng1(g('r'),xo);return a!=null&&b!=null?Math.max(a,b):(a!=null?a:b)};
+  const bigW=(q,f,m)=>{if(!refOK)return f>.6&&f>.7*m;if(q===REFQ){const mr=rngX(F.mov);return mr!=null&&mr<.5&&f>.6&&f>.7*m}const fr=rngX(q),mr=rngX(F.mov);return fr!=null&&mr!=null&&fr>.6&&fr>.7*mr};
+  const camChk=ANCH&&!(F.fix||'').includes('h');let camMv=false;
+  // a point that is itself the anchor is checked against its partner that also stays put (other foot / other hand / the planted foot), so camera motion cancels
+  const SREF={a:'X',w:'X',h:'a',s:'h'};
+  const rngW=(q,xo)=>{if(camChk)return rng(q,xo);if(refOK&&q!==REFQ)return rngX(q,xo);const sr=SREF[q];if(!sr)return rng(q,xo);
+    const g=s=>f=>{const o=s==='l'?'r':'l';const a=f[s][q],r=sr==='X'?f[o][q]:f[s][sr];return a&&r&&f.tz?{x:(a.x-r.x)*tor/f.tz,y:(a.y-r.y)*tor/f.tz}:null};
+    const cov=raw.filter(g('l')).length+raw.filter(g('r')).length;if(cov<.8*raw.length)return rng(q,xo);
+    if(side!=='both'&&sr!=='X')return rng1(g(side),xo);const a=rng1(g('l'),xo),b=rng1(g('r'),xo);return sr==='X'?(a!=null&&b!=null?Math.min(a,b):(a!=null?a:b)):(a!=null&&b!=null?Math.max(a,b):(a!=null?a:b))};
   let wholeQ=null,wholeBad=false;const wholeChk=()=>{const m=rngR(F.mov),f=rngR(wholeQ);return m==null||f==null||(f>.6&&f>.7*m)};
   if(F.mov){const m=rng(F.mov);if(m!=null&&m<.2)return {bad:'nomove',q:F.mov};
-    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if((f>.6&&f>.7*m)||(range<35&&f>.3)){if(ANCH&&q!=='h'&&range>=35){wholeQ=q;break}return range>=35?{bad:'cam'}:{bad:'whole',q,mv:F.mov}}// the exercise joint moves fully, yet the anchor travels with it: the picture moved (camera, someone else, a cut), not a cheat// standing still, the hips can only sway sideways in the picture (up-down jitter of the hip point is the detector)
+    for(const q of (F.fix||'')){const f=rng(q);if(f==null||m==null)continue;if(((ANCH&&q!=='h')?(f>.6&&f>.7*m):(refOK?bigW(q,f,m):(()=>{const fr=rngW(q);return fr!=null&&fr>.6&&fr>.7*m})()))||(range<35&&f>.3)){if(ANCH&&q!=='h'&&range>=35){wholeQ=q;break}return range>=35?{bad:'cam'}:{bad:'whole',q,mv:F.mov}}// the exercise joint moves fully, yet the anchor travels with it: the picture moved (camera, someone else, a cut), not a cheat// standing still, the hips can only sway sideways in the picture (up-down jitter of the hip point is the detector)
 }}
-  const camChk=ANCH&&!(F.fix||'').includes('h');let camMv=false;
-  const warnCalc=()=>{if(!F.mov)return;for(const q of (F.fix||'')){const f=rng(q);if(f==null)continue;const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rng(q,1):f;if(fw!=null&&fw>.35){if(camChk&&q!=='h'){const h=rng('h');if(h!=null&&h>.3){camMv=true;continue}}warn.push(q)}}};// a body pinned to a bench whose hip still travels across the picture means the camera moved
+  const warnCalc=()=>{if(!F.mov)return;for(const q of (F.fix||'')){const f=rngW(q);if(f==null)continue;const fw=q==='h'&&(F.pos==='up'||F.pos==='stand')?rngW(q,1):f;if(fw!=null&&fw>.35){if(camChk&&q!=='h'){const h=rng('h');if(h!=null&&h>.3){camMv=true;continue}}warn.push(q)}}};// a body pinned to a bench whose hip still travels across the picture means the camera moved
   // 6. turning points (zig-zag with a hysteresis of delta)
   const delta=Math.max(minAmp*.6,Math.min(25,.22*range));
   const ex=[];let trend=0,mx=null,mn=null;
