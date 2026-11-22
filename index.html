@@ -463,6 +463,20 @@ details.more[open]>summary::after{transform:rotate(180deg)}
 .exlist .w small{font-family:var(--body);font-size:11px;color:var(--mute);margin-left:3px}
 .exlist .up{color:var(--easy);font-weight:700}
 .exlist li.on .n{text-decoration:line-through;text-decoration-color:var(--c);color:var(--mute)}
+.s-head .eyebrow{display:block;margin-bottom:6px}
+.s-head h1{font-family:var(--display);font-size:52px;line-height:.9;font-weight:700}.s-head h1 span{color:var(--iron)}
+.s-task{display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:var(--r);border:1px solid color-mix(in srgb,var(--c) 40%,var(--line));background:linear-gradient(165deg,color-mix(in srgb,var(--c) 12%,var(--ink2)),var(--ink2) 60%)}
+.s-task.is-done{border-color:var(--c)}.s-task.is-done .donebtn{background:var(--c);color:var(--ink);border-style:solid;border-color:var(--c)}
+.s-top{display:flex;align-items:center;gap:14px}.s-top>div{flex:1;min-width:0}
+.s-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c)}
+.s-task h3{font-family:var(--display);font-size:34px;line-height:.95;font-weight:700}.s-task p{color:var(--mute);font-size:14.5px;margin-top:4px}
+.s-ok{color:var(--c);font-weight:700;font-size:14px;white-space:nowrap}
+.s-alldone{display:flex;gap:14px;align-items:center;padding:18px;border-radius:var(--r);background:color-mix(in srgb,var(--easy) 14%,var(--ink2));border:1px solid var(--easy);color:var(--easy)}
+.s-alldone b{display:block;font-size:18px;color:var(--chalk)}.s-alldone span{color:var(--mute);font-size:14px}
+.s-easy{display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:14px;border:1px dashed var(--line2);color:var(--mute);font-size:14.5px;text-align:start}.s-easy b{color:var(--chalk)}
+.s-more{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--r);background:var(--ink2);border:1px solid var(--line);text-align:start;font-size:13.5px;color:var(--mute)}
+.s-more b{display:block;color:var(--chalk);font-size:16px;margin-bottom:2px}
+.s-back{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--mute);padding:6px 0}
 .nudge{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;border:1px solid color-mix(in srgb,var(--iron) 50%,var(--line));background:color-mix(in srgb,var(--iron) 9%,var(--ink2));--c:var(--iron)}
 .nudge p{font-size:15.5px}
 .nudge b{color:var(--iron)}
@@ -971,8 +985,27 @@ function adaptLine(w){const E=effWeek(w);const A=E.A;if(E.adaptLv===0&&!A.good.l
   const head=E.ov?'חזרת לתוכנית המקורית':E.adaptLv>0?`השבוע ${LV_T[lvl]}`:(A.good[0]||A.notes[0]);
   return `<details class="panel adapt lv-${lvl} adl" data-k="${key}" ${o?'open':''}><summary><span class="chip lvl">${E.ov?'מקורית':LV_T[lvl]}</span><span class="adh">${head}</span><span class="linkbtn">${o?'סגור':'למה?'}</span></summary>${adaptBody(w,false)}</details>`}
 
-function viewToday(){
-  const t=todayIso(),It=info(t);let h='<div class="stack">';
+function viewToday(){const t=todayIso(),It=info(t);
+  if(It.st==='after')return '<div class="stack">'+viewFinished()+'</div>';
+  const d=It.st==='in'?t:S.start,I=info(d),bl=blocksFor(I.week,I.dow,d),e=peek(d);
+  let h='<div class="stack simple">';
+  if(It.st==='before'){const n=-It.n;h+=`<section class="countdown"><div class="stack" style="gap:6px"><span class="eyebrow">מתחילים ביום ראשון, ${fmtDate(S.start)}</span><h2>${n===1?'מחר יוצאים לדרך':`יוצאים לדרך בעוד ${n} ימים`}</h2><p class="muted">ככה נראה היום הראשון:</p></div><div class="cd-num">${n}</div></section>`}
+  else h+=`<header class="s-head"><span class="eyebrow">שבוע ${I.week}/12 · ${fmtDate(d)}</span><h1>היום: יום <span>${DAYS[I.dow]}</span></h1></header>`;
+  if(It.st==='in')h+=nudges(d,I,true);
+  const todo=bl.filter(b=>b.type!=='rest');
+  if(It.st==='in'&&todo.length&&todo.every(b=>isDone(d,b)))h+=`<section class="s-alldone">${ic('check')}<div><b>סיימת את היום!</b><span>כל הכבוד. מחר: ${dayBlocks(addDays(d,1)).map(blkName).join(' + ')||'סוף המחזור'}.</span></div></section>`;
+  h+=bl.map(b=>simpleTask(d,b,It.st==='in')).join('');
+  if(It.st==='in'&&todo.some(b=>!isDone(d,b)))h+=`<button class="s-easy" data-act="easy-mode" data-d="${d}">${e.easyMode?`${ic('check')}<span><b>גרסה קלה פעילה</b> · לחזור לתוכנית הרגילה</span>`:`${ic('bolt')}<span>עייף או כבד היום? <b>עבור לגרסה קלה</b></span>`}</button>`;
+  h+=`<button class="s-more" data-act="day-full" data-d="${d}"><span><b>כל הפרטים</b>משקלים, רישום ריצה, בדיקת בוקר, ימים אחרים</span>${ic('prev')}</button>`;
+  h+=`<p class="flagline">כאב שלא עובר, או כאב שמשנה את התנועה → עוצרים ומספרים להורה או למאמן.</p>`;
+  return h+'</div>'}
+function simpleTask(d,b,act){const done=isDone(d,b);
+  const sub=b.type==='iron'?`${b.ex.length} תרגילים · ${b.sub}${b.light||b.dl?' · סט אחד פחות':''}`:b.type==='easy'?`${range(b.min,b.max)} ק״מ · קצב שאפשר לדבר בו`:b.type==='long'?`${range(b.min,b.max)} ק״מ · קצב נוח`:b.type==='quality'?`${qShort(b.q)} · כולל חימום ושחרור`:b.type==='swim'?'35–45 דק׳':'אין אימון היום. שינה, אוכל ושתייה.';
+  const name=b.type==='iron'?`כוח · ${b.title}`:b.type==='quality'?'אימון איכות':b.type==='rest'?'מנוחה':b.title;
+  const btns=!act?'':b.type==='rest'?doneBtn(d,b,'נחתי היום'):done?doneBtn(d,b):`<div class="actrow">${liveBtn(d,b,'התחל')}${doneBtn(d,b,'עשיתי')}</div>`;
+  return `<article class="s-task t-${b.type} ${done?'is-done':''}"><div class="s-top"><span class="s-ic">${ic(b.type)}</span><div><h3>${name}</h3><p>${sub}</p></div>${done?'<span class="s-ok">בוצע ✓</span>':''}</div>${btns}</article>`}
+function viewDay(){
+  const t=todayIso(),It=info(t);let h='<div class="stack"><button class="s-back" data-act="go-today">'+ic('next')+'חזרה למסך הפשוט</button>';
   if(It.st==='before'){const n=-It.n;h+=`<section class="countdown"><div class="stack" style="gap:6px"><span class="eyebrow">מחזור 1 · מסע של 18 חודשים</span><h2>${n===1?'מחר יוצאים לדרך':`יוצאים לדרך בעוד ${n} ימים`}</h2><p class="muted">שבוע 1 מתחיל ביום ראשון, ${fmtDate(S.start)}. ככה נראה האימון הראשון.</p></div><div class="cd-num">${n}</div></section>`}
   const I=info(V.sel);
   if(I.st==='after'){h+=viewFinished()+'</div>';return h}
@@ -995,9 +1028,10 @@ function readyCard(d,I){const e=peek(d);const sg=readySuggest(d,I);
    <button class="ck pain ${e.pain?'on':''}" data-act="pain" data-d="${d}" aria-pressed="${!!e.pain}"><span class="box"></span><span class="txt">יש לי כאב שלא עובר, או כאב שמשנה את התנועה</span></button>
    ${sg?sugg(sg,d):''}</section>`}
 const blkName=b=>b.type==='iron'?b.title:T_LABEL[b.type];
-function nudges(d,I){let h='';const hr=new Date().getHours();
+function nudges(d,I,yOnly){let h='';const hr=new Date().getHours();
   const y=addDays(d,-1);if(info(y).st==='in'){const ye=peek(y);const yb=dayBlocks(y).filter(b=>b.type!=='rest'&&!isDone(y,b));
     if(yb.length&&!ye.skipped)h+=`<section class="nudge"><p><b>אתמול (${DAYS[info(y).dow]})</b> לא סומן: ${yb.map(blkName).join(', ')}. עשית?</p><div class="btnrow"><button class="cta" data-act="yday-done" data-d="${y}">${ic('check')}כן, עשיתי</button><button class="ghost" data-act="yday-skip" data-d="${y}">לא, פספסתי</button></div></section>`}
+  if(yOnly)return h;
   const e=peek(d);const un=dayBlocks(d).filter(b=>b.type!=='rest'&&!isDone(d,b));
   if(hr>=18&&un.length&&!e.skipped)h+=`<section class="nudge"><p><b>ערב טוב!</b> עוד לא סימנת: ${un.map(blkName).join(', ')}. ${hr<21?'לא הספקת? יש עוד זמן לגרסה קצרה וקלה.':'אם עשית — סמן. אם לא — זה בסדר, התוכנית תתאים את עצמה.'}</p><div class="btnrow"><button class="cta" data-act="today-done" data-d="${d}">${ic('check')}עשיתי, סמן</button>${hr<21?`<button class="ghost" data-act="live" data-d="${d}" data-b="${un[0].id}">${ic('play')}מתחיל עכשיו</button>`:''}<button class="ghost" data-act="today-skip" data-d="${d}">לא היום</button></div></section>`;
   return h}
@@ -1151,7 +1185,7 @@ function liveEnter(i){L.i=i;const s=L.steps[i];L.fired={};L.lastBeep=null;
   let say=s.say||'';
   if(s.t==='set'){const w=liveWeight(s.x);const E=EQ[equipOf(s.x.k)];const tgt=s.x.time?`${s.x.range[1]} שניות`:`${range(...s.x.range)} חזרות`;
     say=`${s.x.n}. סט ${s.s+1} מתוך ${s.x.s}. ${E.inc!==0&&w!=null&&!s.x.time?fmtKg(w)+' קילו. ':''}${tgt}.${s.s===0?' '+EX[s.x.k].cue:''}`}
-  if(s.t==='feel')say=`איך הרגיש ה${s.x.n}?`;
+  if(s.t==='feel')say=`${s.x.n}: איך הרגיש התרגיל?`;
   if(s.t==='log')say=s.kind==='run'?'סיימת! רשום כמה קילומטרים רצת.':'סיימת את האימון. כל הכבוד!';
   setCue(say,s.t!=='timed'||L.run);
   if(V.view==='live')render();
@@ -2412,12 +2446,12 @@ function badge(){const I=info(todayIso());const el=$('#badge');
   if(I.st==='before')el.innerHTML=`מתחילים בעוד <strong>${-I.n}</strong> ימים`;
   else if(I.st==='after')el.innerHTML=`<strong>מחזור 1 הושלם</strong>`;
   else el.innerHTML=`שבוע <strong>${I.week}</strong>/12 · יום <strong>${I.n+1}</strong>`}
-function nav(){$('#nav').innerHTML=VIEWS.map(([k,l])=>`<a href="#${k}" ${V.view===k?'aria-current="page"':''} title="${l}">${ic(k)}<span>${l}</span></a>`).join('')}
-function render(){const fn={today:viewToday,week:()=>viewWeek()+'<div style="height:36px"></div>'+viewPlan(),live:viewLive,chat:viewChat,journal:()=>viewJournal()+'<div style="height:36px"></div>'+viewGoals()}[V.view];
+function nav(){$('#nav').innerHTML=VIEWS.map(([k,l])=>`<a href="#${k}" ${V.view===k||(k==='today'&&V.view==='day')?'aria-current="page"':''} title="${l}">${ic(k)}<span>${l}</span></a>`).join('')}
+function render(){const fn={today:viewToday,day:viewDay,week:()=>viewWeek()+'<div style="height:36px"></div>'+viewPlan(),live:viewLive,chat:viewChat,journal:()=>viewJournal()+'<div style="height:36px"></div>'+viewGoals()}[V.view];
   $('#view').innerHTML=fn();badge();nav();paintSync();if(V.view==='live')paintLive();paintPill();
   if(V.lastView!==V.view){window.scrollTo(0,0);V.lastView=V.view;if(V.view==='chat')setTimeout(scrollChat,30)}
   if(V.scrollTo){const el=document.getElementById(V.scrollTo);V.scrollTo=null;if(el)setTimeout(()=>el.scrollIntoView({block:'start'}),30)}}
-function route(){let h=location.hash.slice(1);if(h==='rules')V.scrollTo='rules';h=ALIAS[h]||h;V.view=VIEWS.some(v=>v[0]===h)?h:'today';render()}
+function route(){let h=location.hash.slice(1);if(h==='rules')V.scrollTo='rules';h=ALIAS[h]||h;V.view=VIEWS.some(v=>v[0]===h)||h==='day'?h:'today';render()}
 function go(view){if(location.hash.slice(1)===view)render();else location.hash=view}
 window.addEventListener('hashchange',route);
 let rw=innerWidth<900;window.addEventListener('resize',()=>{const n=innerWidth<900;if(n!==rw){rw=n;nav()}});
@@ -2431,8 +2465,13 @@ function recordSet(d,k,s,reps,w){if(!d)return;const e=ent(d);const l=e.lifts[k]|
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a||a.disabled)return;ac();
   const act=a.dataset.act,d=a.dataset.d;
   switch(act){
-    case 'sel':V.sel=a.dataset.date;go('today');break;
+    case 'sel':V.sel=a.dataset.date;go('day');break;
     case 'close-sheet':closeSheet();break;
+    case 'ready-edit':V.readyEdit=true;render();break;
+    case 'ready-close':V.readyEdit=false;render();break;
+    case 'yday-done':case 'today-done':{const before=dayDone(d);const E=ent(d);for(const b of dayBlocks(d))E.done[b.id]=true;delete E.skipped;save();render();if(act==='today-done')completeCheck(d,before);else toast('אתמול סומן כבוצע');break}
+    case 'yday-skip':case 'today-skip':{const E=ent(d);E.skipped=true;save();render();toast(act==='yday-skip'?'נרשם. התוכנית תתאים את עצמה.':'בסדר. מחר ממשיכים.');break}
+    case 'day-full':if(d)V.sel=d;go('day');break;
     case 'demo':openDemo(a.dataset.k);break;
     case 'form':openForm(a.dataset.k);break;
     case 'form-pick':$('#formIn').click();break;
@@ -2449,6 +2488,7 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'override':{const w=+a.dataset.w;if(S.override[w]==='plan')delete S.override[w];else S.override[w]='plan';save();render();break}
     case 'chk':S.checks[a.dataset.id]=!S.checks[a.dataset.id];save();render();break;
     case 'go-chat':go('chat');break;
+    case 'go-today':go('today');break;
     case 'live':if(L.on&&!(L.d===d&&L.bid===a.dataset.b)){liveEnd()}if(L.on&&L.d===d&&L.bid===a.dataset.b){go('live');break}liveStart(d,a.dataset.b);break;
     case 'live-free':liveStart(null,null,+a.dataset.w);break;
     case 'go-live':go('live');break;
