@@ -911,6 +911,7 @@ const ic=(k,cls='')=>`<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" str
 const VIEWS=[['today','היום'],['week','שבוע'],['live','אימון'],['chat','מאמן'],['journal','התקדמות']];
 const ALIAS={timer:'live',rules:'journal',goals:'journal',plan:'week',day:'week'};
 const V={view:'today',sel:null,week:null,lastView:null,resetArm:false,exitArm:false,scrollTo:null,open:{},readyEdit:false};
+function syncSel(){const I=V.sel?info(V.sel):null;if(I&&I.st==='in'&&I.week===V.week)return;const t=todayIso(),It=info(t);V.sel=It.st==='in'&&It.week===V.week?t:dateOf(V.week,0)}
 function selDay(d){if(!d)return;V.sel=d;const I=info(d);if(I.st==='in')V.week=I.week;V.scrollTo='dayp';if(V.view!=='week')go('week');else render()}
 function initSel(){const t=todayIso();const I=info(t);V.sel=I.st==='before'?S.start:t;V.week=currentWeek()}
 initSel();
@@ -1113,7 +1114,6 @@ function dayView(d,I,emb){
   if(isT&&I.dow!==2)h+=readyCard(d,I);
   const next=bl.find(b=>!isDone(d,b)&&b.type!=='rest');
   if(isT&&next)h+=`<button class="golive" data-act="live" data-d="${d}" data-b="${next.id}"><div><b>יאללה: ${next.type==='iron'?next.title:T_LABEL[next.type]}</b><span>המאמן מוביל אותך בקול, שלב אחרי שלב</span></div><span class="playc">${ic('play')}</span></button>`;
-  h+=adaptLine(I.week);
   h+=`<div class="blocks">${bl.map(b=>RENDER[b.type](d,b)).join('')}</div>`;
   if(I.dow===6&&CHECKPOINTS[I.week])h+=checkpointCard(I.week);
   if(I.week===1&&!S.k10Fresh&&I.dow!==2)h+=`<p class="tipline">${ic('goals')}<span>אחרי ריצת ה-10 ק״מ הקרובה — <a href="#journal" style="color:var(--chalk)">עדכן את התוצאה</a> כדי לכייל קצבים.</span></p>`;
@@ -1134,21 +1134,22 @@ function checkpointCard(w){const C=CHECKPOINTS[w];
 function viewFinished(){let tot=0,dn=0,km=0;for(let w=1;w<=12;w++){const s=weekStats(w);tot+=s.total;dn+=s.done;km+=s.km}
   return `<section class="hero t-iron"><div class="hero-num" aria-hidden="true">12</div><div class="hero-main"><span class="eyebrow">מחזור 1 הושלם</span><h1>סיימת <span>12</span> שבועות</h1><p class="hero-sum">${dn} מתוך ${tot} אימונים · ${Math.round(km)} ק״מ רשומים</p><div class="chips"><a class="chip hot" href="#journal">לעדכן שיאים ולכייל עצימויות</a><button class="chip" data-act="day-last">לחזור לשבוע 12</button></div></div></section>${checkpointCard(12)}`}
 
-function viewWeek(){const w=V.week;const E=effWeek(w);const ph=phaseOf(w);const s=weekStats(w);const [lo,hi]=volRange(w);const q=E.q;
+function viewWeek(){const w=V.week;syncSel();const E=effWeek(w);const ph=phaseOf(w);const s=weekStats(w);const [lo,hi]=volRange(w);const q=E.q;
   let h=`<div class="stack"><div class="weekhead"><div class="stack" style="gap:6px"><span class="eyebrow">${fmtDM(dateOf(w,0))} – ${fmtDM(dateOf(w,6))}</span><h1>שבוע ${w}</h1><div class="chips"><span class="chip">${ph.t}</span><span class="chip lvl lv-${E.ov?'green':E.level}">${E.ov?'תוכנית מקורית':LV_T[E.level]}</span>${w===currentWeek()&&info(todayIso()).st==='in'?'<span class="chip hot">השבוע הנוכחי</span>':''}</div></div>
-    <div class="daynav"><button class="iconbtn" data-act="wk-prev" ${w<=1?'disabled':''} aria-label="שבוע קודם">${ic('prev')}</button><button class="iconbtn" data-act="wk-now">נוכחי</button><button class="iconbtn" data-act="wk-next" ${w>=12?'disabled':''} aria-label="שבוע הבא">${ic('next')}</button></div></div>
-  <div class="kpis">
+    <div class="daynav"><button class="iconbtn" data-act="wk-prev" ${w<=1?'disabled':''} aria-label="שבוע קודם">${ic('prev')}</button><button class="iconbtn" data-act="wk-now">נוכחי</button><button class="iconbtn" data-act="wk-next" ${w>=12?'disabled':''} aria-label="שבוע הבא">${ic('next')}</button></div></div>`;
+  if(V.sel&&info(V.sel).st==='in'&&info(V.sel).week===w)h+=`<div id="dayp" class="dayp">${dayView(V.sel,info(V.sel))}</div>`;
+  let kp=`<div class="kpis">
     <div class="kpi"><span class="v">${s.done}/${s.total}</span><span class="l">אימונים שבוצעו</span></div>
     <div class="kpi"><span class="v">${r1(s.km)}</span><span class="l">ק״מ רשומים · מתוכנן ${lo}–${hi}</span></div>
     <div class="kpi"><span class="v" style="color:var(--tartan)">${E.lv===3?'—':q.reps>1?`${q.reps}×${minLabel(q.work)}`:minLabel(q.work)}</span><span class="l">אימון האיכות של שני</span></div>
     <div class="kpi"><span class="v" style="color:var(--long)">${range(E.long[0],E.long[1])}</span><span class="l">ריצה ארוכה בשבת (ק״מ)${E.cond?' · רק אם ההתאוששות טובה':''}</span></div>
-  </div>${adaptCard(w)}<div class="days">`;
+  </div>${adaptCard(w)}`;
+  h+='<div class="days">';
   for(let i=0;i<7;i++){const d=dateOf(w,i);const bl=blocksFor(w,i,d);const all=dayDone(d);
     const lines=bl.map(b=>{const lbl=b.type==='iron'?`${b.title} · ${b.sub}`:b.type==='easy'?`${b.swap?'קלה במקום איכות':'ריצה קלה'} ${range(b.min,b.max)} ק״מ`:b.type==='long'?`ארוכה ${range(b.min,b.max)} ק״מ`:b.type==='quality'?`איכות · ${qShort(b.q)}`:b.type==='swim'?'שחייה 35–45 דק׳':'מנוחה מלאה';
       return `<span class="sline ${isDone(d,b)?'done':''}" style="--c:var(--${b.type})"><i></i>${lbl}</span>`}).join('');
     h+=`<button class="dc ${d===todayIso()?'is-today':''} ${all?'all-done':''} ${d===V.sel?'sel':''}" data-act="sel" data-date="${d}" aria-pressed="${d===V.sel}">${all?'<span class="ok">בוצע ✓</span>':''}<div class="top-r"><span class="dn">${DAYS[i]}</span><span class="dt">${fmtShort(d)}</span></div><div class="ses">${lines}</div></button>`}
-  h+='</div>';
-  if(V.sel&&info(V.sel).st==='in'&&info(V.sel).week===w)h+=`<div id="dayp" class="dayp">${dayView(V.sel,info(V.sel),true)}</div>`;
+  h+='</div>'+kp;
   h+=`<section class="panel"><span class="eyebrow">שילוב האימונים</span><p style="margin-top:8px">אימון הרגליים בשישי קרוב לריצה הארוכה בשבת. כבדות או כאבים → להפחית את עומס הרגליים או להזיז אותו בעזרת המאמן. לא מבצעים אימון רגליים קשה יום לפני הריצה הארוכה.</p></section></div>`;
   return h}
 
@@ -2657,10 +2658,10 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'cfg':{const k=a.dataset.k;S.cfg[k]=Math.max(0,Math.min(30,S.cfg[k]+ +a.dataset.v));save();render();break}
     case 'rest-add':R.endAt+=30000;paintPill();break;
     case 'rest-cancel':R.endAt=0;paintPill();break;
-    case 'wk-prev':V.week=Math.max(1,V.week-1);render();break;
-    case 'wk-next':V.week=Math.min(12,V.week+1);render();break;
-    case 'wk-now':V.week=currentWeek();render();break;
-    case 'wk-go':V.week=+a.dataset.w;go('week');break;
+    case 'wk-prev':V.week=Math.max(1,V.week-1);syncSel();render();break;
+    case 'wk-next':V.week=Math.min(12,V.week+1);syncSel();render();break;
+    case 'wk-now':V.week=currentWeek();V.sel=null;syncSel();render();break;
+    case 'wk-go':V.week=+a.dataset.w;syncSel();V.scrollTo=null;go('week');window.scrollTo(0,0);break;
     case 'k10-fresh':S.k10Fresh=todayIso();save();render();break;
     case 'import':openImport('');break;
     case 'pick-files':$('#fileIn').click();break;
