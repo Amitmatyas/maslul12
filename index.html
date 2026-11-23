@@ -1007,9 +1007,12 @@ function viewToday(){const t=todayIso(),It=info(t);
   if(It.st==='in')h+=nudges(d,I,true);
   if(planOf(d))h+=coachLine(d);
   const todo=bl.filter(b=>b.type!=='rest');
+  // what still needs doing today: morning check first, then the workouts, then a rating once they are done
+  let sg=null;if(It.st==='in'&&todo.length){if(!(e.sleep&&e.sore))h+=readyCard(d,I);else{sg=readySuggest(d,I);if(sg)h+=sugg(sg,d)}}
   if(It.st==='in'&&todo.length&&todo.every(b=>isDone(d,b)))h+=`<section class="s-alldone">${ic('check')}<div><b>סיימת את היום!</b><span>כל הכבוד. מחר: ${dayBlocks(addDays(d,1)).map(blkName).join(' + ')||'סוף המחזור'}.</span></div></section>`;
   h+=bl.map(b=>simpleTask(d,b,It.st==='in')).join('');
-  if(It.st==='in'&&todo.some(b=>!isDone(d,b)))h+=`<button class="s-easy" data-act="easy-mode" data-d="${d}">${e.easyMode?`${ic('check')}<span><b>גרסה קלה פעילה</b> · לחזור לתוכנית הרגילה</span>`:`${ic('bolt')}<span>עייף או כבד היום? <b>עבור לגרסה קלה</b></span>`}</button>`;
+  if(It.st==='in'&&todo.some(b=>!isDone(d,b))&&!(sg&&sg.btn))h+=`<button class="s-easy" data-act="easy-mode" data-d="${d}">${e.easyMode?`${ic('check')}<span><b>גרסה קלה פעילה</b> · לחזור לתוכנית הרגילה</span>`:`${ic('bolt')}<span>עייף או כבד היום? <b>עבור לגרסה קלה</b></span>`}</button>`;
+  if(It.st==='in'&&todo.length&&todo.every(b=>isDone(d,b))&&!e.rpe)h+=`<section class="panel"><span class="eyebrow">עוד דבר אחד</span><h2 style="margin:4px 0 12px">כמה קשה היה היום?</h2>${scaleRow(d,'rpe',10,'rpe','קל מאוד','מקסימלי')}</section>`;
   h+=`<button class="s-more" data-act="day-full" data-d="${d}"><span><b>כל הפרטים</b>משקלים, רישום ריצה, בדיקת בוקר, ימים אחרים</span>${ic('prev')}</button>`;
   h+=`<p class="flagline">כאב שלא עובר, או כאב שמשנה את התנועה → עוצרים ומספרים להורה או למאמן.</p>`;
   return h+'</div>'}
