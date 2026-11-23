@@ -373,6 +373,9 @@ textarea.inp{width:100%;min-height:80px;resize:vertical}
 .msg.ai{align-self:flex-end;background:var(--ink3);border:1px solid var(--line2);border-bottom-left-radius:6px}
 .msg.ai .who{font-size:11.5px;letter-spacing:.12em;color:var(--tartan);font-weight:600;margin-bottom:4px}
 .msg ul{margin:6px 0;padding-inline-start:18px}
+.prop{margin-top:12px;padding:14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--tartan) 45%,var(--line2));background:color-mix(in srgb,var(--tartan) 8%,var(--ink2));display:flex;flex-direction:column;gap:8px;--c:var(--tartan)}
+.prop ul{margin:0}.prop .btnrow{display:flex;gap:8px;flex-wrap:wrap}.prop-st{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:8px;flex-wrap:wrap}.prop-st.ok{color:var(--easy);font-weight:600}
+.s-coach{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--mute);padding:10px 14px;border-radius:12px;border:1px solid var(--line2)}.s-coach span{flex:1}
 .msg.err{border-color:color-mix(in srgb,var(--bad) 50%,var(--line2))}
 .chatform{display:flex;gap:10px;align-items:flex-end;position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--ink2);border:1px solid var(--line2);border-radius:18px;padding:10px}
 .chatform textarea{flex:1;min-height:48px;max-height:160px;border:0;background:transparent;resize:none;padding:8px;outline:none;color:var(--chalk)}
@@ -756,7 +759,7 @@ function adaptFor(w){
   let lv=0,f=0;
   let pr=0,dr=0,pa=0,da=0;
   for(const d of dayRange(from7,cut)){if(d>=t)continue;const I=info(d);if(I.st!=='in')continue;const e=peek(d);
-    for(const id of BASE[I.dow]){if(id==='rest')continue;pa++;const did=e.done[id]||(e.runs[id]&&e.runs[id].km>0);if(did)da++;if(RUN_IDS.includes(id)){pr++;if(did)dr++}}}
+    for(const id of baseIds(d)){if(id==='rest')continue;pa++;const did=e.done[id]||(e.runs[id]&&e.runs[id].km>0);if(did)da++;if(RUN_IDS.includes(id)){pr++;if(did)dr++}}}
   const mr=pr-dr;
   if(pr>=3&&dr===0){lv=2;res.reasons.push('כמעט שבוע בלי ריצות רשומות → חוזרים בהדרגה במקום לקפוץ קדימה')}
   else if(mr>=2){lv=1;res.reasons.push(`פספסת ${mr} מתוך ${pr} ריצות בשבוע האחרון → מחזיקים את העומס של השבוע הקודם`)}
@@ -793,7 +796,17 @@ function effWeek(w){
     for(const c of aiChanges(X))changes.push('AI · '+c)}
   return {w,W,q,long,txt,easy,changes,lv,level:LV[lv],adaptLv:A.lv,A,ov,X,cond:!!W.cond&&lv===0,deload:isDeload(w)};
 }
-function blocksFor(w,dow,d){
+// changes the coach proposed and the user approved, per date: {src:date (swap), rest:1, km:[a,b], sets:-1}
+const planOf=d=>d&&S.plan&&S.plan[d]||null;
+function blocksFor(w,dow,d){const P=planOf(d);if(!P)return blocksBase(w,dow,d);
+  let bl;if(P.rest)bl=[{id:'rest',type:'rest',title:'מנוחה מלאה'}];
+  else if(P.src&&info(P.src).st==='in'){const J=info(P.src);bl=blocksBase(J.week,J.dow,d)}else bl=blocksBase(w,dow,d);
+  return bl.map(b=>{b={...b,coach:1};
+    if(P.km&&(b.type==='easy'||b.type==='long')){const mx=Math.min(b.max,P.km[1]);b.min=Math.min(mx,P.km[0]);b.max=mx}
+    if(P.sets&&b.type==='iron')b.ex=b.ex.map(x=>({...x,s:Math.max(1,x.s+P.sets)}));
+    return b})}
+function baseIds(d){const P=planOf(d);if(P&&P.rest)return ['rest'];return BASE[info(P&&P.src?P.src:d).dow]}
+function blocksBase(w,dow,d){
   const E=effWeek(w);const em=d?!!peek(d).easyMode:false;
   const strength=k=>{const base=STR[k];const light=em||E.lv>=2;const minus=Math.min(2,(E.deload?1:0)+(light&&!E.deload?1:0)+(E.X&&E.X.sets&&!light&&!E.deload?1:0));
     return {id:k,type:'iron',kind:k,title:base.title,sub:base.sub,dl:E.deload,taper:!!E.W.taper,light,
@@ -992,6 +1005,7 @@ function viewToday(){const t=todayIso(),It=info(t);
   if(It.st==='before'){const n=-It.n;h+=`<section class="countdown"><div class="stack" style="gap:6px"><span class="eyebrow">מתחילים ביום ראשון, ${fmtDate(S.start)}</span><h2>${n===1?'מחר יוצאים לדרך':`יוצאים לדרך בעוד ${n} ימים`}</h2><p class="muted">ככה נראה היום הראשון:</p></div><div class="cd-num">${n}</div></section>`}
   else h+=`<header class="s-head"><span class="eyebrow">שבוע ${I.week}/12 · ${fmtDate(d)}</span><h1>היום: יום <span>${DAYS[I.dow]}</span></h1></header>`;
   if(It.st==='in')h+=nudges(d,I,true);
+  if(planOf(d))h+=coachLine(d);
   const todo=bl.filter(b=>b.type!=='rest');
   if(It.st==='in'&&todo.length&&todo.every(b=>isDone(d,b)))h+=`<section class="s-alldone">${ic('check')}<div><b>סיימת את היום!</b><span>כל הכבוד. מחר: ${dayBlocks(addDays(d,1)).map(blkName).join(' + ')||'סוף המחזור'}.</span></div></section>`;
   h+=bl.map(b=>simpleTask(d,b,It.st==='in')).join('');
@@ -999,6 +1013,7 @@ function viewToday(){const t=todayIso(),It=info(t);
   h+=`<button class="s-more" data-act="day-full" data-d="${d}"><span><b>כל הפרטים</b>משקלים, רישום ריצה, בדיקת בוקר, ימים אחרים</span>${ic('prev')}</button>`;
   h+=`<p class="flagline">כאב שלא עובר, או כאב שמשנה את התנועה → עוצרים ומספרים להורה או למאמן.</p>`;
   return h+'</div>'}
+function coachLine(d){return `<p class="s-coach">${ic('chat')}<span>המאמן שינה את היום לפי מה שביקשת.</span><button class="linkbtn" data-act="plan-reset" data-d="${d}">חזרה לתוכנית</button></p>`}
 function simpleTask(d,b,act){const done=isDone(d,b);
   const sub=b.type==='iron'?`${b.ex.length} תרגילים · ${b.sub}${b.light||b.dl?' · סט אחד פחות':''}`:b.type==='easy'?`${range(b.min,b.max)} ק״מ · קצב שאפשר לדבר בו`:b.type==='long'?`${range(b.min,b.max)} ק״מ · קצב נוח`:b.type==='quality'?`${qShort(b.q)} · כולל חימום ושחרור`:b.type==='swim'?'35–45 דק׳':'אין אימון היום. שינה, אוכל ושתייה.';
   const name=b.type==='iron'?`כוח · ${b.title}`:b.type==='quality'?'אימון איכות':b.type==='rest'?'מנוחה':b.title;
@@ -1044,7 +1059,7 @@ function dayView(d,I){
     <div class="hero-main">
       <span class="eyebrow">שבוע ${I.week}/12 · ${ph.t}</span>
       <h1>יום <span>${DAYS[I.dow]}</span></h1>
-      <div class="hero-date">${fmtDate(d)} ${isT?'<span class="pill-today">היום</span>':''}${e.skipped?'<span class="chip sm">סומן כפספוס</span>':''}</div>
+      <div class="hero-date">${fmtDate(d)} ${isT?'<span class="pill-today">היום</span>':''}${e.skipped?'<span class="chip sm">סומן כפספוס</span>':''}${planOf(d)?'<span class="chip sm">שונה ע״י המאמן</span>':''}</div>
       <p class="hero-sum">${sumText(bl)}</p>
     </div>
     <div class="hero-side">
@@ -1061,6 +1076,7 @@ function dayView(d,I){
     h+=`<button role="listitem" class="sd ${dd===d?'sel':''} ${dd===todayIso()?'is-today':''} ${dayDone(dd)?'all-done':''}" data-act="sel" data-date="${dd}" aria-label="יום ${DAYS[i]} ${fmtDM(dd)}"><span class="dn">${DAYS[i]}</span><span class="dd">${parseIso(dd).getDate()}</span><span class="dots">${dots}</span></button>`}
   h+='</div>';
   if(isT)h+=nudges(d,I);
+  if(planOf(d))h+=coachLine(d);
   if(isT&&I.dow!==2)h+=readyCard(d,I);
   const next=bl.find(b=>!isDone(d,b)&&b.type!=='rest');
   if(isT&&next)h+=`<button class="golive" data-act="live" data-d="${d}" data-b="${next.id}"><div><b>יאללה: ${next.type==='iron'?next.title:T_LABEL[next.type]}</b><span>המאמן מוביל אותך בקול, שלב אחרי שלב</span></div><span class="playc">${ic('play')}</span></button>`;
@@ -1283,7 +1299,19 @@ const COACH_RULES=`אתה "המאמן" באפליקציית האימונים "ש
 - לא רצים לפי קצב היעד העתידי (39:50) כאילו הוא הקצב הנוכחי; עצימות לפי תחושת מאמץ.
 - מומלץ שמאמן ריצה אנושי שמכיר בני נוער ילווה את התהליך; אתה לא מחליף אותו.
 עקרונות התוכנית: מסגרת הדרגתית, 4 ריצות בשבוע (קלה 3–4/10, איכות ~7/10 לא ספרינט, יציב 6–7/10, ארוכה בקצב נוח), PPL עם 2–3 חזרות ברזרבה, שחייה בחמישי, מנוחה מלאה בשלישי, שבועות 4/8/12 הקלה, אימון רגליים בשישי מתון כי בשבת ריצה ארוכה.
-האפליקציה מתאימה את התוכנית אוטומטית (מחזיקה/מורידה עומס לפי פספוסים, עייפות, שינה, קצב ריצות קלות וכאב) ומעלה משקלים בכוח אחרי שעמדו ביעד פעמיים ברצף. אם המשתמש רוצה שינוי, הסבר מה לעשות באפליקציה (למשל "בדיקת בוקר" → גרסה קלה).
+האפליקציה מתאימה את התוכנית אוטומטית (מחזיקה/מורידה עומס לפי פספוסים, עייפות, שינה, קצב ריצות קלות וכאב) ומעלה משקלים בכוח אחרי שעמדו ביעד פעמיים ברצף.
+שינויים בתוכנית: אתה יכול להציע שינוי בתוכנית, והמשתמש יאשר או ידחה אותו בכפתור. כשהמשתמש מבקש שינוי (להזיז אימון, יום מנוחה, לקצר ריצה, להקל) או כשאתה ממליץ על שינוי, הסבר בקצרה ובסוף התשובה הוסף בלוק אחד בדיוק:
+\`\`\`plan
+{"summary":"משפט קצר בעברית","ops":[ ... ]}
+\`\`\`
+הפעולות האפשריות (תאריכים רק מתוך "הימים הקרובים" למטה, בפורמט YYYY-MM-DD, היום או בעתיד):
+- {"op":"swap","a":"תאריך","b":"תאריך"} מחליף בין האימונים של שני ימים.
+- {"op":"rest","date":"תאריך"} הופך את היום ליום מנוחה.
+- {"op":"easy","date":"תאריך"} גרסה קלה: איכות הופך לריצה קלה, ארוכה מתקצרת, סט אחד פחות בכוח.
+- {"op":"km","date":"תאריך","km":[מינימום,מקסימום]} מרחק הריצה ביום הזה. לא יותר ממה שכתוב בתוכנית.
+- {"op":"sets","date":"תאריך"} סט אחד פחות בכל תרגיל כוח ביום הזה.
+- {"op":"reset","date":"תאריך"} מבטל שינויים קודמים ביום הזה.
+אל תכתוב שהשינוי כבר בוצע: המשתמש צריך לאשר. בלי בלוק כשאין שינוי. אסור להציע הוספת אימונים או העלאת עומס. לא לשים שני אימונים קשים (איכות, ארוכה, רגליים) ביום אחד או בימים צמודים כשאפשר להימנע.
 הנתונים למטה הם הנתונים האמיתיים מהאפליקציה; השתמש בהם ואל תמציא נתונים שלא מופיעים.`;
 function coachContext(){const t=todayIso();const I=info(t);const out=[];
   out.push(`תאריך היום: ${t} (יום ${DAYS[parseIso(t).getDay()]}).`);
@@ -1292,6 +1320,8 @@ function coachContext(){const t=todayIso();const I=info(t);const out=[];
   const w=I.st==='in'?I.week:I.st==='before'?1:12;const E=effWeek(w);
   out.push(`מצב התאמה לשבוע ${w}: ${LV_T[E.level]}${E.ov?' (המשתמש בחר בתוכנית המקורית)':''}. סיבות: ${E.A.reasons.join('; ')||'אין'}. שינויים: ${E.changes.join('; ')||'אין'}. טוב: ${E.A.good.join('; ')||'—'}.`);
   out.push(`תוכנית השבוע: ${[0,1,2,3,4,5,6].map(i=>`${DAYS[i]}: ${sumText(blocksFor(w,i,dateOf(w,i)))}`).join(' | ')}.`);
+  const up=[];for(let i=0;i<14;i++){const d=addDays(t,i);if(info(d).st!=='in')continue;const e=peek(d);up.push(`${d} (${DAYS[parseIso(d).getDay()]}${i===0?', היום':i===1?', מחר':''}): ${sumText(dayBlocks(d))}${planOf(d)?' [שונה]':''}${e.easyMode?' [גרסה קלה]':''}${dayBlocks(d).length&&dayDone(d)?' [בוצע]':''}`)}
+  if(up.length)out.push('הימים הקרובים:\n'+up.join('\n'));
   const from=addDays(t,-14);const lines=[];
   for(const d of Object.keys(S.days).sort()){if(d<from||d>t)continue;const e=peek(d);const parts=[];const bl=dayBlocks(d);
     const dn=bl.filter(b=>e.done[b.id]).map(b=>b.type==='iron'?b.title:T_LABEL[b.type]);if(dn.length)parts.push('בוצע: '+dn.join(', '));
@@ -1304,9 +1334,9 @@ function coachContext(){const t=todayIso();const I=info(t);const out=[];
 function mdLite(s){const e=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');const lines=e.split('\n');let h='',inList=false;
   for(const ln of lines){const m=ln.match(/^\s*(?:[-•*]|\d+[.)])\s+(.*)/);if(m){if(!inList){h+='<ul>';inList=true}h+=`<li>${m[1]}</li>`}else{if(inList){h+='</ul>';inList=false}h+=ln.trim()?`<p>${ln}</p>`:''}}
   if(inList)h+='</ul>';return h}
-const QUICK=['מה האימון היום ולמה?','הרגליים כבדות ומחר ארוכה. מה לעשות?','פספסתי אימון, מה עכשיו?','תן לי סיכום של השבוע שלי','איך אני משתפר ב-10 ק״מ?','מה לאכול לפני ריצה ארוכה?'];
+const QUICK=['מה האימון היום ולמה?','אני לא יכול להתאמן מחר. תזיז את האימון?','הרגליים כבדות ומחר ארוכה. מה לעשות?','פספסתי אימון, מה עכשיו?','תן לי סיכום של השבוע שלי','איך אני משתפר ב-10 ק״מ?','מה לאכול לפני ריצה ארוכה?'];
 function viewChat(){const avail=SAMPLE?'yes':'no';
-  const msgs=CH.turns.map(t=>t.role==='user'?`<div class="msg me">${esc(t.content)}</div>`:`<div class="msg ai"><div class="who">המאמן</div>${mdLite(t.content)}</div>`).join('')
+  const msgs=CH.turns.map((t,i)=>t.role==='user'?`<div class="msg me">${esc(t.content)}</div>`:`<div class="msg ai"><div class="who">המאמן</div>${mdLite(t.content)}${t.prop?propCard(t,i):''}</div>`).join('')
     +(CH.busy?`<div class="msg ai" id="liveMsg"><div class="who">המאמן</div><div id="liveTxt">${CH.live?mdLite(CH.live):'<span class="typing"><i></i><i></i><i></i></span>'}</div></div>`:'')
     +(CH.err?`<div class="msg ai err"><div class="who">המאמן</div><p>${esc(CH.err)}</p></div>`:'');
   const intro=`<div class="msg ai"><div class="who">המאמן</div><p>היי! אני המאמן שלך בשרירץ. אני רואה את התוכנית, את מה שרשמת ביומן ואת ההתאמות של השבוע. תשאל אותי כל דבר על האימונים.</p></div>`;
@@ -1323,16 +1353,58 @@ function viewChat(){const avail=SAMPLE?'yes':'no';
   </div></div></div>`}
 async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!SAMPLE)return;
   CH.err=null;CH.turns.push({role:'user',content:text});saveChat();CH.busy=true;CH.live='';CH.ctl=new AbortController();if(V.view==='chat'){render();scrollChat()}
-  const hist=CH.turns.slice(-12);
+  const hist=CH.turns.slice(-12).map(t=>({role:t.role,content:t.content+(t.prop?`\n[הצעת שינוי: ${t.prop.summary||''} · ${({new:'ממתין לאישור',ok:'המשתמש אישר',no:'המשתמש דחה',undone:'המשתמש ביטל'})[t.prop.st]||''}]`:'')}));
   const input=[{role:'user',content:COACH_RULES+'\n\n=== נתונים עדכניים מהאפליקציה ===\n'+coachContext()},...hist];
-  try{const {text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,onText:({text})=>{CH.live=text;const el=$('#liveTxt');if(el){el.innerHTML=mdLite(text);scrollChat()}}});
-    CH.turns.push({role:'assistant',content:ans+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')});saveChat()}
+  try{const {text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,onText:({text})=>{CH.live=chatVis(text);const el=$('#liveTxt');if(el){el.innerHTML=mdLite(CH.live);scrollChat()}}});
+    const sp=splitPlan(ans);const turn={role:'assistant',content:(sp.text||'הנה ההצעה:')+(sp.bad?'\n\n(ניסיתי להציע שינוי שהאפליקציה לא יכולה לעשות. אפשר לבקש שוב במילים אחרות.)':'')+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')};if(sp.prop)turn.prop=sp.prop;CH.turns.push(turn);saveChat()}
   catch(e){const code=e&&e.code;if(code==='cancelled'){if(e.text)CH.turns.push({role:'assistant',content:e.text+' …'})}
     else if(code==='bad_key'||code==='no_key'){CH.err='המפתח לא תקין. בדוק אותו בהגדרות.'}
     else if(code==='rate_limited'){CH.err='יותר מדי הודעות כרגע. נסה שוב בעוד כמה דקות.'}
     else{if(e&&e.text)CH.turns.push({role:'assistant',content:e.text+' …'});CH.err='משהו השתבש בחיבור. נסה לשלוח שוב.'}
     saveChat()}
   CH.busy=false;CH.live='';CH.ctl=null;if(V.view==='chat'){render();scrollChat()}}
+const COACH_OPS=['swap','rest','easy','km','sets','reset'];
+const opDates=o=>o.op==='swap'?[o.a,o.b]:[o.date];
+function validOp(o){if(!o||typeof o!=='object'||!COACH_OPS.includes(o.op))return false;const t=todayIso();
+  for(const d of opDates(o)){if(typeof d!=='string'||!/^\d{4}-\d\d-\d\d$/.test(d)||d<t||info(d).st!=='in')return false}
+  if(o.op==='swap')return o.a!==o.b;
+  if(o.op==='km'){const k=Array.isArray(o.km)?o.km.map(Number):[Number(o.km),Number(o.km)];if(!(k[0]>0&&k[1]>=k[0]&&k[1]<=40))return false;o.km=k;const r=dayBlocks(o.date).find(b=>b.type==='easy'||b.type==='long');return !!r&&(k[1]<r.max||k[0]<r.min)}// only shorter, never longer than the plan
+  if(o.op==='sets')return dayBlocks(o.date).some(b=>b.type==='iron');
+  if(o.op==='rest')return dayBlocks(o.date).some(b=>b.type!=='rest');
+  if(o.op==='easy')return dayBlocks(o.date).some(b=>b.type!=='rest')&&!peek(o.date).easyMode;
+  if(o.op==='reset')return !!planOf(o.date)||!!peek(o.date).easyMode;
+  return true}
+const dayLbl=d=>`${d===todayIso()?'היום':d===addDays(todayIso(),1)?'מחר':'יום '+DAYS[parseIso(d).getDay()]} (${fmtDM(d)})`;
+const dayWhat=d=>dayBlocks(d).map(blkName).join(' + ')||'מנוחה';
+function opText(o){switch(o.op){
+  case 'swap':return `${dayLbl(o.a)} ↔ ${dayLbl(o.b)}: ${dayWhat(o.b)} יעבור ל${dayLbl(o.a).split(' (')[0]}, ו${dayWhat(o.a)} ל${dayLbl(o.b).split(' (')[0]}`;
+  case 'rest':return `${dayLbl(o.date)}: יום מנוחה במקום ${dayWhat(o.date)}`;
+  case 'easy':return `${dayLbl(o.date)}: גרסה קלה של ${dayWhat(o.date)}`;
+  case 'km':{const r=dayBlocks(o.date).find(b=>b.type==='easy'||b.type==='long');const mx=Math.min(r.max,o.km[1]),mn=Math.min(mx,o.km[0]);return `${dayLbl(o.date)}: ${blkName(r)} ${range(mn,mx)} ק״מ במקום ${range(r.min,r.max)}`}
+  case 'sets':return `${dayLbl(o.date)}: סט אחד פחות בכל תרגיל ב${dayBlocks(o.date).filter(b=>b.type==='iron').map(b=>b.title).join(', ')}`;
+  case 'reset':return `${dayLbl(o.date)}: חזרה לתוכנית המקורית`}}
+function applyOps(ops){S.plan=S.plan||{};const snap={};const touch=d=>{if(!(d in snap))snap[d]={plan:S.plan[d]?JSON.parse(JSON.stringify(S.plan[d])):null,easy:!!peek(d).easyMode}};
+  for(const o of ops){opDates(o).forEach(touch);if(o.op==='reset'&&planOf(o.date)&&planOf(o.date).src)touch(planOf(o.date).src);const P=d=>S.plan[d]||(S.plan[d]={});
+    if(o.op==='swap'){const pa=S.plan[o.a]||{},pb=S.plan[o.b]||{};S.plan[o.a]={...pb,src:pb.src||o.b};S.plan[o.b]={...pa,src:pa.src||o.a}}
+    else if(o.op==='rest')P(o.date).rest=1;
+    else if(o.op==='easy')ent(o.date).easyMode=true;
+    else if(o.op==='km')P(o.date).km=o.km;
+    else if(o.op==='sets')P(o.date).sets=-1;
+    else if(o.op==='reset'){resetDay(o.date);delete ent(o.date).easyMode}}
+  for(const [d,P] of Object.entries(S.plan)){if(P.src===d)delete P.src;if(!Object.keys(P).length)delete S.plan[d]}
+  save();return snap}
+function resetDay(d){const P=planOf(d);if(!P)return;if(P.src){const Q=S.plan[P.src];if(Q&&Q.src===d){delete Q.src;if(!Object.keys(Q).length)delete S.plan[P.src]}}delete S.plan[d]}// a swap is undone on both days
+function undoOps(snap){S.plan=S.plan||{};for(const [d,v] of Object.entries(snap||{})){if(v.plan)S.plan[d]=v.plan;else delete S.plan[d];const e=ent(d);if(v.easy)e.easyMode=true;else delete e.easyMode}save()}
+const PLAN_RE=/```\s*(?:plan|json)?\s*(\{[\s\S]*?\})\s*(?:```|$)/i;
+const chatVis=t=>String(t||'').split('```')[0].trim();
+function splitPlan(t){const m=String(t||'').match(PLAN_RE);if(!m)return {text:chatVis(t),prop:null};let prop=null;
+  try{const j=JSON.parse(m[1]);const ops=(Array.isArray(j.ops)?j.ops:[]).filter(validOp).slice(0,6);if(ops.length)prop={summary:String(j.summary||'').slice(0,200),ops,st:'new'}}catch(e){}
+  return {text:chatVis(t.replace(m[0],'')),prop,bad:!prop}}
+function propCard(t,i){const P=t.prop;const lines=P.lines||P.ops.filter(validOp).map(opText);
+  const st=P.st==='ok'?`<p class="prop-st ok">${ic('check')}אושר ונכנס לתוכנית <button class="linkbtn" data-act="prop-undo" data-i="${i}">ביטול</button></p>`
+    :P.st==='no'?'<p class="prop-st">לא אישרת. התוכנית נשארה כמו שהיא.</p>':P.st==='undone'?'<p class="prop-st">בוטל. התוכנית חזרה למה שהיה.</p>'
+    :lines.length?`<div class="btnrow"><button class="cta" data-act="prop-ok" data-i="${i}">${ic('check')}אשר את השינוי</button><button class="ghost" data-act="prop-no" data-i="${i}">לא תודה</button></div>`:'<p class="prop-st">ההצעה כבר לא רלוונטית.</p>';
+  return `<div class="prop"><span class="eyebrow">הצעה לשינוי בתוכנית</span>${P.summary?`<p><b>${esc(P.summary)}</b></p>`:''}<ul>${lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>${st}</div>`}
 function scrollChat(){const m=$('#msgs');if(m){const last=m.lastElementChild;if(last)last.scrollIntoView({block:'end',behavior:reduced()?'auto':'smooth'})}}
 
 let IMPORTS=[];
@@ -2351,6 +2423,7 @@ function cloudSection(){return `<div class="remind" id="sbsec"><span class="eyeb
 const GQ_LS='maslul12:groq',GQ_MODEL='openai/gpt-oss-120b',GQ_FALLBACK='llama-3.3-70b-versatile';
 const gqKey=()=>{try{return localStorage.getItem(GQ_LS)||''}catch(e){return ''}};
 async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw {code:'no_key'};
+  if(/fdbg/.test(location.search)){if(!window.FAKEAI)throw {code:'network',text:''};const text=await window.FAKEAI(messages,opt);if(opt.onText)opt.onText({text});return {text,truncated:false}}// test mode: never reaches the network
   const go=model=>fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',signal:opt.signal,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
     body:JSON.stringify(Object.assign({model,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?2000:2500,stream:!!opt.onText},model.startsWith('openai/')?{reasoning_effort:'low',include_reasoning:false}:{},opt.json?{response_format:{type:'json_object'}}:{}))});
   let r;try{r=await go(GQ_MODEL);if(r.status===400||r.status===404||r.status===503)r=await go(GQ_FALLBACK)}
@@ -2520,6 +2593,11 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'chat-q':chatSend(a.dataset.q);break;
     case 'chat-stop':if(CH.ctl)CH.ctl.abort();break;
     case 'chat-clear':CH.turns=[];CH.err=null;saveChat();render();break;
+    case 'prop-ok':{const t=CH.turns[+a.dataset.i];if(!t||!t.prop||t.prop.st!=='new')break;const ops=t.prop.ops.filter(validOp);if(!ops.length){toast('ההצעה כבר לא רלוונטית');render();break}
+      t.prop.lines=ops.map(opText);t.prop.snap=applyOps(ops);t.prop.st='ok';saveChat();render();toast('התוכנית עודכנה');break}
+    case 'prop-no':{const t=CH.turns[+a.dataset.i];if(t&&t.prop){t.prop.st='no';saveChat();render()}break}
+    case 'prop-undo':{const t=CH.turns[+a.dataset.i];if(t&&t.prop&&t.prop.st==='ok'){undoOps(t.prop.snap);t.prop.st='undone';saveChat();render();toast('השינוי בוטל')}break}
+    case 'plan-reset':{if(S.plan)resetDay(d);save();render();toast('היום חזר לתוכנית המקורית');break}
     case 'copy-backup':{const txt=JSON.stringify(S);const ta=$('#backup');ta.value=txt;
       try{navigator.clipboard.writeText(txt).then(()=>toast('הגיבוי הועתק'),()=>{ta.select();toast('סמן והעתק את הטקסט')})}catch(err){ta.select();toast('סמן והעתק את הטקסט')}break}
     case 'import-backup':{try{const o=JSON.parse($('#backup').value);if(!o||!o.start||!o.days)throw 0;S=normalize(o);save();initSel();render();toast('הנתונים שוחזרו')}catch(err){toast('הטקסט לא נראה כמו גיבוי תקין. העתק אותו שוב במלואו.')}break}
