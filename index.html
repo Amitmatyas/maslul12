@@ -339,6 +339,10 @@ textarea.inp{width:100%;min-height:80px;resize:vertical}
 .wctl .wu{font-size:12px;color:var(--mute)}
 .rchips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;direction:ltr}
 .rchips button{width:58px;height:58px;border-radius:16px;border:2px solid color-mix(in srgb,var(--c) 45%,var(--line2));font-family:var(--num);font-size:28px;color:var(--chalk)}
+.wctl input.wv{width:130px;background:transparent;border:0;border-bottom:2px solid var(--line2);color:var(--chalk);padding:0;-moz-appearance:textfield}
+.wctl input.wv::-webkit-inner-spin-button,.wctl input.wv::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.rchips.r20{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;max-width:340px;margin:0 auto;align-self:center}
+.rchips.r20 button{width:auto;height:54px;font-size:24px}
 .rchips button.tgt{background:color-mix(in srgb,var(--c) 18%,transparent)}
 .rchips button:active{transform:scale(.94)}
 .feelbig{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
@@ -1245,13 +1249,13 @@ function viewLive(){
         <button class="tbtn" data-act="l-next" aria-label="לשלב הבא">${ic('skip')}</button></div>
       ${s.t==='open'?`<button class="cta" data-act="l-next">${ic('check')}סיימתי את הריצה</button>`:''}`;
   } else if(s.t==='set'){const x=s.x;const eq=equipOf(x.k);const E=EQ[eq];const w=liveWeight(x);const usesW=E.inc!==0&&!x.time;
-    const [lo,hi]=x.range;const vals=x.time?[30,35,40,45,50,55,60]:Array.from({length:Math.min(9,hi-lo+5)},(_,i)=>Math.max(1,lo-2+i));
+    const [lo,hi]=x.range;const vals=x.time?[30,35,40,45,50,55,60]:Array.from({length:20},(_,i)=>i+1);const prevL=L.d?peek(L.d).lifts[x.k]:null;const pr=s.s>0&&prevL&&prevL.reps&&prevL.reps[s.s-1]>0?{r:prevL.reps[s.s-1],w:(prevL.ws&&prevL.ws[s.s-1]!=null)?prevL.ws[s.s-1]:prevL.w}:null;
     body=`<div class="setcard"><span class="eyebrow">${E.t}</span><span class="exn">${esc(x.n)}</span><span class="setn">סט ${s.s+1} / ${x.s}</span>
-      ${usesW?`<div class="wctl"><button class="iconbtn" data-act="l-w" data-k="${x.k}" data-v="-1" aria-label="פחות משקל">−</button><div><div class="wv">${w!=null?fmtKg(w):'?'}</div><div class="wu">${E.unit}</div></div><button class="iconbtn" data-act="l-w" data-k="${x.k}" data-v="1" aria-label="יותר משקל">+</button></div>
-      ${w==null?`<label class="km">משקל<input class="inp" type="number" inputmode="decimal" id="lwIn" data-lwlive="${x.k}" placeholder="ק״ג"></label>`:''}`:''}
+      ${usesW?`<div class="wctl"><button class="iconbtn" data-act="l-w" data-k="${x.k}" data-v="-1" aria-label="פחות משקל">−</button><div><input class="wv" type="number" inputmode="decimal" step="0.25" min="0" id="lwIn" data-lwlive="${x.k}" value="${w!=null?w:''}" placeholder="?" aria-label="משקל לסט הזה"><div class="wu">${E.unit} · לסט הזה</div></div><button class="iconbtn" data-act="l-w" data-k="${x.k}" data-v="1" aria-label="יותר משקל">+</button></div>
+      ${pr?`<p class="hint">סט קודם: ${pr.w!=null&&usesW?fmtKg(pr.w)+' '+E.unit+' × ':''}${pr.r}</p>`:''}`:''}
       <p class="muted">${x.time?`יעד: ${hi} שניות`:`יעד: ${range(lo,hi)} חזרות`} · 2–3 ברזרבה</p>
       <p style="font-weight:600">כמה ${x.time?'שניות':'חזרות'} עשית?</p>
-      <div class="rchips">${vals.map(v=>`<button class="${v>=lo&&v<=hi?'tgt':''}" data-act="l-rep" data-v="${v}">${v}</button>`).join('')}</div></div>
+      <div class="rchips${x.time?'':' r20'}">${vals.map(v=>`<button class="${v>=lo&&v<=hi?'tgt':''}" data-act="l-rep" data-v="${v}">${v}</button>`).join('')}</div></div>
       ${nxt?`<p class="tnext">אחרי זה: <b>${esc(nxt)}</b></p>`:''}
       <div class="tctl"><button class="tbtn" data-act="l-prev" aria-label="שלב קודם">${ic('back')}</button><button class="tbtn" data-act="l-next">דלג על הסט</button></div>`;
   } else if(s.t==='feel'){body=`<div class="setcard"><span class="exn">${esc(s.x.n)}</span><p style="font-weight:600;font-size:18px">איך הרגיש התרגיל?</p>
@@ -1329,7 +1333,7 @@ function coachContext(){const t=todayIso();const I=info(t);const out=[];
   for(const d of Object.keys(S.days).sort()){if(d<from||d>t)continue;const e=peek(d);const parts=[];const bl=dayBlocks(d);
     const dn=bl.filter(b=>e.done[b.id]).map(b=>b.type==='iron'?b.title:T_LABEL[b.type]);if(dn.length)parts.push('בוצע: '+dn.join(', '));
     for(const [bid,r] of Object.entries(e.runs))if(r&&r.km>0)parts.push(`ריצה ${({quality:'איכות',easy0:'קלה',easy3:'קלה',long:'ארוכה'})[bid]||'נוספת'}:${r.km} ק״מ${r.sec?` ב-${mmss(r.sec)} (${mmss(r.sec/r.km)}/ק״מ)`:''}${r.hr?` דופק ${r.hr}`:''}`);
-    for(const [k,l] of Object.entries(e.lifts))if(l&&l.reps&&l.reps.some(x=>x>0))parts.push(`${EX[k]?EX[k].n:k}: ${l.w!=null?l.w+' ק״ג ':''}${l.reps.filter(x=>x>0).join('/')}${l.feel?` (${{easy:'קל',ok:'טוב',hard:'קשה'}[l.feel]})`:''}`);
+    for(const [k,l] of Object.entries(e.lifts))if(l&&l.reps&&l.reps.some(x=>x>0))parts.push(`${EX[k]?EX[k].n:k}: ${liftTxt(l)}${l.feel?` (${{easy:'קל',ok:'טוב',hard:'קשה'}[l.feel]})`:''}`);
     if(e.rpe)parts.push('מאמץ '+e.rpe);if(e.sleep)parts.push('שינה '+e.sleep+'/5');if(e.sore)parts.push('עייפות '+e.sore+'/5');if(e.pain)parts.push('דיווח על כאב');if(e.easyMode)parts.push('גרסה קלה');if(e.note)parts.push('הערה: '+String(e.note).slice(0,120));
     if(parts.length)lines.push(`${d}: ${parts.join(' · ')}`)}
   out.push(lines.length?'יומן 14 הימים האחרונים:\n'+lines.join('\n'):'אין עדיין רישומים ביומן.');
@@ -2451,7 +2455,7 @@ function aiAdj(w,lv){const a=S.ai&&S.ai[w];if(!a||a.off)return null;const safe=l
   const wt={};for(const [k,f] of Object.entries(a.wt||{}))if(EX[k]){const c=clampN(f,0.9,safe?1:1.05,1);if(c!==1)wt[k]=c}
   return {run:clampN(a.run,0.85,safe?1:1.05,1),q:Math.round(clampN(a.q,-2,0,0)),sets:Math.round(clampN(a.sets,-1,0,0)),wt,summary:a.summary||'',why:a.why||[]}}
 function aiLifts(){const out=[];const t=todayIso();for(const s of Object.values(STR))for(const [k] of s.ex){const h=liftHist(k,addDays(t,1),equipOf(k));const l=h[h.length-1];
-  out.push(`${k} (${EX[k].n}): ${l?`${l.w!=null?l.w+' ק״ג, ':''}חזרות ${l.reps.filter(x=>x>0).join('/')}${l.feel?', '+l.feel:''} (${l.d})`:'אין עדיין רישום'}`)}return [...new Set(out)].join('\n')}
+  out.push(`${k} (${EX[k].n}): ${l?`${liftTxt(l)}${l.feel?', '+l.feel:''} (${l.d})`:'אין עדיין רישום'}`)}return [...new Set(out)].join('\n')}
 let AI_BUSY=false;
 async function aiReview(force){if(AI_BUSY||!gqKey())return;const t=todayIso(),I=info(t);if(I.st==='after')return;const w=I.st==='in'?I.week:1;
   S.ai=S.ai||{};if(!force&&(S.ai[w]||S.aiTry===t))return;AI_BUSY=true;S.aiTry=t;if(force)toast('ה-AI בודק את השבוע…');
@@ -2535,7 +2539,11 @@ $('.gear').innerHTML=ic('gear');
 
 function completeCheck(d,before){if(!before&&dayDone(d)){confetti();fanfare();vib([120,60,120]);toast(d===todayIso()?'היום הושלם. כל הכבוד!':'היום סומן כהושלם')}}
 function liftFull(d,blk){const e=peek(d);return blk.ex.every(x=>{const l=e.lifts[x.k];return l&&l.reps&&l.reps.slice(0,x.s).filter(r=>r>0).length>=x.s})}
-function recordSet(d,k,s,reps,w){if(!d)return;const e=ent(d);const l=e.lifts[k]||(e.lifts[k]={reps:[]});l.eq=equipOf(k);if(!Array.isArray(l.reps))l.reps=[];l.reps[s]=reps;if(w!=null&&w!==''&&!isNaN(+w))l.w=+w;
+function mainW(ws){const c={};let best=null,bn=0;for(const v of ws)if(v!=null&&!isNaN(v)){c[v]=(c[v]||0)+1;if(c[v]>bn||(c[v]===bn&&v>best)){bn=c[v];best=v}}return best}
+function liftTxt(l){const r=(l.reps||[]);const ws=Array.isArray(l.ws)?l.ws:[];const vary=ws.filter(v=>v!=null).some(v=>v!==l.w);
+  if(vary)return r.map((x,i)=>x>0?`${ws[i]!=null?ws[i]:l.w!=null?l.w:'?'}×${x}`:'').filter(Boolean).join(', ')+' (ק״ג×חזרות)';
+  return `${l.w!=null?l.w+' ק״ג, ':''}חזרות ${r.filter(x=>x>0).join('/')}`}
+function recordSet(d,k,s,reps,w){if(!d)return;const e=ent(d);const l=e.lifts[k]||(e.lifts[k]={reps:[]});l.eq=equipOf(k);if(!Array.isArray(l.reps))l.reps=[];l.reps[s]=reps;if(w!=null&&w!==''&&!isNaN(+w)){if(!Array.isArray(l.ws))l.ws=[];l.ws[s]=+w;l.w=mainW(l.ws)}
   const I=info(d);if(I.st==='in'){for(const blk of blocksFor(I.week,I.dow,d))if(blk.type==='iron'&&blk.ex.some(x=>x.k===k)&&liftFull(d,blk)&&!e.done[blk.id]){const before=dayDone(d);e.done[blk.id]=true;save();toast(`${blk.title} הושלם!`);completeCheck(d,before);return true}}
   save();return false}
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a||a.disabled)return;ac();
@@ -2572,8 +2580,8 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'l-next':liveNext();break;
     case 'l-prev':livePrev();break;
     case 'l-exit':if(!V.exitArm){V.exitArm=true;render();setTimeout(()=>{V.exitArm=false;if(V.view==='live'&&L.on)render()},3000)}else{V.exitArm=false;liveEnd();go('today')}break;
-    case 'l-w':{const s=L.steps[L.i];const x=s.x;const step=Math.abs(incOf(x.k))||1;const cur=liveWeight(x)??0;L.w[x.k]=Math.max(0,roundTo(cur+(+a.dataset.v)*step,step));render();break}
-    case 'l-rep':{const s=L.steps[L.i];const inp=$('#lwIn');if(inp&&inp.value)L.w[s.x.k]=+inp.value;recordSet(L.d,s.x.k,s.s,+a.dataset.v,L.w[s.x.k]);beep(784,.12);if(!L.run){L.run=true;L.lastT=Date.now();wakeOn()}liveNext();break}
+    case 'l-w':{const s=L.steps[L.i];const x=s.x;const step=Math.abs(incOf(x.k))||1;const inp=$('#lwIn');if(inp&&inp.value!==''&&!isNaN(+inp.value))L.w[x.k]=+inp.value;const cur=liveWeight(x)??0;L.w[x.k]=Math.max(0,roundTo(cur+(+a.dataset.v)*step,step));render();break}
+    case 'l-rep':{const s=L.steps[L.i];const inp=$('#lwIn');if(inp&&inp.value!==''&&!isNaN(+inp.value))L.w[s.x.k]=Math.max(0,+inp.value);recordSet(L.d,s.x.k,s.s,+a.dataset.v,L.w[s.x.k]);beep(784,.12);if(!L.run){L.run=true;L.lastT=Date.now();wakeOn()}liveNext();break}
     case 'l-feel':{const s=L.steps[L.i];if(L.d){const E=ent(L.d);const l=E.lifts[s.x.k]||(E.lifts[s.x.k]={reps:[]});l.eq=equipOf(s.x.k);l.feel=a.dataset.v;save()}liveNext();break}
     case 'l-save':{if(L.d){const E=ent(L.d);const before=dayDone(L.d);const s=L.steps[L.i];
         if(s.kind==='run'){const km=parseFloat(($('#lKm')||{}).value);const sec=parseTime(($('#lSec')||{}).value);const r=E.runs[L.bid]||{};if(!isNaN(km)&&km>0)r.km=Math.min(60,km);if(sec)r.sec=sec;if(!r.src)r.src='live';E.runs[L.bid]=r}
@@ -2626,7 +2634,8 @@ document.addEventListener('submit',e=>{if(e.target.id==='chatf'){e.preventDefaul
 document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.rkm){const E=ent(t.dataset.d);const r=E.runs[t.dataset.rkm]||(E.runs[t.dataset.rkm]={});const v=parseFloat(t.value);if(isNaN(v))delete r.km;else r.km=Math.max(0,Math.min(60,v));save();const p=$('#pace-'+t.dataset.rkm);if(p)p.innerHTML=paceText(r)}
   else if(t.dataset.rsec){const s=parseTime(t.value);if(s||!t.value.trim()){const E=ent(t.dataset.d);const r=E.runs[t.dataset.rsec]||(E.runs[t.dataset.rsec]={});if(s)r.sec=s;else delete r.sec;save();const p=$('#pace-'+t.dataset.rsec);if(p)p.innerHTML=paceText(r)}}
-  else if(t.dataset.lw){const E=ent(t.dataset.d);const l=E.lifts[t.dataset.lw]||(E.lifts[t.dataset.lw]={reps:[]});l.eq=equipOf(t.dataset.lw);const v=parseFloat(t.value);if(isNaN(v))delete l.w;else l.w=v;save()}
+  else if(t.dataset.lw){const E=ent(t.dataset.d);const l=E.lifts[t.dataset.lw]||(E.lifts[t.dataset.lw]={reps:[]});l.eq=equipOf(t.dataset.lw);const v=parseFloat(t.value);if(isNaN(v))delete l.w;else l.w=v;delete l.ws;save()}
+  else if(t.dataset.lwlive){const v=parseFloat(t.value);if(!isNaN(v)&&v>=0)L.w[t.dataset.lwlive]=v}
   else if(t.dataset.note){ent(t.dataset.d).note=t.value;save()}
   else if(t.id==='chatin'){t.style.height='auto';t.style.height=Math.min(160,t.scrollHeight)+'px'}
 });
