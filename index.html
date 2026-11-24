@@ -1458,25 +1458,25 @@ const COACH_RULES=`אתה "המאמן" באפליקציית האימונים "ש
 אל תכתוב שהשינוי כבר בוצע: המשתמש צריך לאשר. בלי בלוק כשאין שינוי. אסור להציע הוספת אימונים או העלאת עומס. לא לשים שני אימונים קשים (איכות, ארוכה, רגליים) ביום אחד או בימים צמודים כשאפשר להימנע.
 הנתונים למטה הם הנתונים האמיתיים מהאפליקציה; השתמש בהם ואל תמציא נתונים שלא מופיעים.`;
 const hardDay=d=>dayBlocks(d).some(b=>b.type==='quality'||b.type==='long'||(b.type==='iron'&&/legs/i.test(b.title)));
-function coachContext(){const t=todayIso();const I=info(t);const out=[];
+function coachContext(lvl){lvl=lvl||0;const t=todayIso();const I=info(t);const out=[];
   out.push(`תאריך היום: ${t} (יום ${DAYS[parseIso(t).getDay()]}).`);
   out.push(I.st==='in'?`שבוע ${I.week} מתוך 12, יום ${I.n+1}. שלב: ${phaseOf(I.week).t}.`:I.st==='before'?`התוכנית מתחילה ב-${S.start} (בעוד ${-I.n} ימים).`:'מחזור 1 הסתיים.');
   out.push(`פרופיל: גיל 14. נפח פתיחה 30–40 ק״מ בשבוע. שיאים: 5 ק״מ ${S.prs.k5||'—'}, 10 ק״מ ${S.prs.k10||'—'}${S.k10Fresh?` (עודכן ${S.k10Fresh})`:' (תוצאה ישנה)'}, חצי מרתון ${S.prs.hm||'לא נמדד'}. יעדים: 5 ק״מ 19:55, 10 ק״מ 39:50, חצי 1:29:55 (תוך כ-18 חודשים).`);
   const w=I.st==='in'?I.week:I.st==='before'?1:12;const E=effWeek(w);
   out.push(`מצב התאמה לשבוע ${w}: ${LV_T[E.level]}${E.ov?' (המשתמש בחר בתוכנית המקורית)':''}. סיבות: ${E.A.reasons.join('; ')||'אין'}. שינויים: ${E.changes.join('; ')||'אין'}. טוב: ${E.A.good.join('; ')||'—'}.`);
   out.push(`תוכנית השבוע: ${[0,1,2,3,4,5,6].map(i=>`${DAYS[i]}: ${sumText(blocksFor(w,i,dateOf(w,i)))}`).join(' | ')}.`);
-  const up=[];for(let i=0;i<14;i++){const d=addDays(t,i);if(info(d).st!=='in')continue;const e=peek(d);up.push(`${d} (${DAYS[parseIso(d).getDay()]}${i===0?', היום':i===1?', מחר':''}): ${sumText(dayBlocks(d))}${hardDay(d)?' [קשה]':''}${planOf(d)?' [שונה]':''}${e.easyMode?' [גרסה קלה]':''}${dayBlocks(d).length&&dayDone(d)?' [בוצע]':''}${planOf(d)&&planOf(d).note?` [הנחיה: ${planOf(d).note}]`:''}${i<8?dayBlocks(d).filter(b=>b.type==='iron').map(b=>{const J=info(d);const lv=effWeek(J.week).lv;return '\n   '+b.title+': '+b.ex.map(x=>{const R=recommend(x,d,J.week,lv);return `${x.k} ${x.s}×${x.r}${x.time?'שנ׳':''}${R.usesW&&R.w!=null?` @${fmtKg(R.w)}ק״ג`:''}${x.mod?' (שונה)':''}`}).join(', ')}).join(''):''}`)}
+  const up=[];for(let i=0;i<(lvl>=2?8:14);i++){const d=addDays(t,i);if(info(d).st!=='in')continue;const e=peek(d);up.push(`${d} (${DAYS[parseIso(d).getDay()]}${i===0?', היום':i===1?', מחר':''}): ${sumText(dayBlocks(d))}${hardDay(d)?' [קשה]':''}${planOf(d)?' [שונה]':''}${e.easyMode?' [גרסה קלה]':''}${dayBlocks(d).length&&dayDone(d)?' [בוצע]':''}${planOf(d)&&planOf(d).note?` [הנחיה: ${planOf(d).note}]`:''}${i<(lvl>=2?3:8)?dayBlocks(d).filter(b=>b.type==='iron').map(b=>{const J=info(d);const lv=effWeek(J.week).lv;return '\n   '+b.title+': '+b.ex.map(x=>{const R=recommend(x,d,J.week,lv);return `${x.k} ${x.s}×${x.r}${x.time?'שנ׳':''}${R.usesW&&R.w!=null?` @${fmtKg(R.w)}ק״ג`:''}${x.mod?' (שונה)':''}`}).join(', ')}).join(''):''}`)}
   if(up.length)out.push('הימים הקרובים:\n'+up.join('\n'));
   {const by={};for(const k of Object.keys(EX))(by[GRP[k]||'אחר']=by[GRP[k]||'אחר']||[]).push(k);
-    out.push('רשימת התרגילים לפי קבוצת שריר (מפתח=שם, ציוד):\n'+Object.entries(by).map(([g,ks])=>`${g}: ${ks.map(k=>`${k}=${EX[k].n} (${EQ[EX[k].eq[0]].t}${EX[k].time?', זמן':''})`).join(', ')}`).join('\n'))}
-  const from=addDays(t,-14);const lines=[];
+    out.push((lvl?'רשימת התרגילים לפי קבוצת שריר (מפתחות):\n':'רשימת התרגילים לפי קבוצת שריר (מפתח=שם):\n')+Object.entries(by).map(([g,ks])=>`${g}: ${ks.map(k=>lvl?k:`${k}=${EX[k].n}${EX[k].time?' (זמן)':''}`).join(', ')}`).join('\n'))}
+  const from=addDays(t,lvl>=2?-5:lvl?-7:-14);const lines=[];
   for(const d of Object.keys(S.days).sort()){if(d<from||d>t)continue;const e=peek(d);const parts=[];const bl=dayBlocks(d);
     const dn=bl.filter(b=>e.done[b.id]).map(b=>b.type==='iron'?b.title:T_LABEL[b.type]);if(dn.length)parts.push('בוצע: '+dn.join(', '));
     for(const [bid,r] of Object.entries(e.runs))if(r&&r.km>0)parts.push(`ריצה ${({quality:'איכות',easy0:'קלה',easy3:'קלה',long:'ארוכה'})[bid]||'נוספת'}:${r.km} ק״מ${r.sec?` ב-${mmss(r.sec)} (${mmss(r.sec/r.km)}/ק״מ)`:''}${r.hr?` דופק ${r.hr}`:''}${r.an?` [ניתוח: ${r.an}]`:''}`);
     for(const [k,l] of Object.entries(e.lifts))if(l&&l.reps&&l.reps.some(x=>x>0))parts.push(`${EX[k]?EX[k].n:k}: ${liftTxt(l)}${l.feel?` (${{easy:'קל',ok:'טוב',hard:'קשה'}[l.feel]})`:''}`);
     if(e.rpe)parts.push('מאמץ '+e.rpe);if(e.sleep)parts.push('שינה '+e.sleep+'/5');if(e.sore)parts.push('עייפות '+e.sore+'/5');if(e.pain)parts.push('דיווח על כאב');if(e.easyMode)parts.push('גרסה קלה');if(e.note)parts.push('הערה: '+String(e.note).slice(0,120));
     if(parts.length)lines.push(`${d}: ${parts.join(' · ')}`)}
-  out.push(lines.length?'יומן 14 הימים האחרונים:\n'+lines.join('\n'):'אין עדיין רישומים ביומן.');
+  out.push(lines.length?`יומן ${lvl>=2?5:lvl?7:14} הימים האחרונים:\n`+lines.join('\n'):'אין עדיין רישומים ביומן.');
   return out.join('\n')}
 function mdLite(s){const e=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');const lines=e.split('\n');let h='',inList=false;
   for(const ln of lines){const m=ln.match(/^\s*(?:[-•*]|\d+[.)])\s+(.*)/);if(m){if(!inList){h+='<ul>';inList=true}h+=`<li>${m[1]}</li>`}else{if(inList){h+='</ul>';inList=false}h+=ln.trim()?`<p>${ln}</p>`:''}}
@@ -1498,11 +1498,22 @@ function viewChat(){const avail=SAMPLE?'yes':'no';
     <section class="panel"><span class="eyebrow">שאלות מהירות</span><div class="qchips" style="margin-top:12px">${QUICK.map(q=>`<button data-act="chat-q" data-q="${esc(q)}" ${avail!=='yes'||CH.busy?'disabled':''}>${q}</button>`).join('')}</div></section>
     <section class="panel"><p class="hint">המאמן ב-AI יכול לטעות, והוא לא מחליף מאמן אמיתי, הורה או רופא. כאב → עוצרים ומדברים עם מבוגר.</p>${CH.turns.length?`<button class="ghost sm" data-act="chat-clear" style="margin-top:12px">ניקוי השיחה</button>`:''}</section>
   </div></div></div>`}
+// what is sent each time: rules + app data + as much of the recent chat as fits. Groq's free tier allows ~8k tokens a minute,
+// so the request is kept small; lvl 1 / 2 are slimmer versions used when the service says the request is too big
+const tokEst=t=>Math.ceil(String(t).length/2.4);
+function chatInput(lvl){const sys=COACH_RULES+'\n\n=== נתונים עדכניים מהאפליקציה ===\n'+coachContext(lvl);const budget=[5200,4200,3200][lvl]-tokEst(sys);
+  const tag=t=>t.prop?`\n[הצעת שינוי: ${t.prop.summary||''} · ${({new:'ממתין לאישור',ok:'המשתמש אישר',no:'המשתמש דחה',undone:'המשתמש ביטל'})[t.prop.st]||''}]`:'';
+  const hist=[];let used=0;const T=CH.turns,maxN=[10,6,2][lvl];
+  for(let i=T.length-1;i>=0&&hist.length<maxN;i--){const t=T[i];let c=t.content;if(t.role==='assistant'&&i<T.length-2&&c.length>500)c=c.slice(0,500)+' …';c+=tag(t);
+    const k=tokEst(c);if(hist.length&&used+k>budget)break;used+=k;hist.unshift({role:t.role,content:c})}
+  while(hist.length>1&&hist[0].role!=='user')hist.shift();
+  return [{role:'user',content:sys},...hist]}
 async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!SAMPLE)return;
   CH.err=null;CH.turns.push({role:'user',content:text});saveChat();CH.busy=true;CH.live='';CH.ctl=new AbortController();if(V.view==='chat'){render();scrollChat()}
-  const hist=CH.turns.slice(-12).map(t=>({role:t.role,content:t.content+(t.prop?`\n[הצעת שינוי: ${t.prop.summary||''} · ${({new:'ממתין לאישור',ok:'המשתמש אישר',no:'המשתמש דחה',undone:'המשתמש ביטל'})[t.prop.st]||''}]`:'')}));
-  const input=[{role:'user',content:COACH_RULES+'\n\n=== נתונים עדכניים מהאפליקציה ===\n'+coachContext()},...hist];
-  try{const {text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,effort:'medium',onText:({text})=>{CH.live=chatVis(text);const el=$('#liveTxt');if(el){el.innerHTML=mdLite(CH.live);scrollChat()}}});
+  let input,ans,truncated;
+  try{for(let lvl=0;;lvl++){input=chatInput(lvl);
+      try{({text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,effort:'medium',onText:({text})=>{CH.live=chatVis(text);const el=$('#liveTxt');if(el){el.innerHTML=mdLite(CH.live);scrollChat()}}}));break}
+      catch(e){if(e&&e.code==='too_big'&&lvl<2){CH.live='';continue}throw e}}
     let sp=splitPlan(ans);
     if(sp.errs&&sp.errs.length&&!CH.ctl.signal.aborted){CH.live=(sp.text||'')+'\n\n_בודק שההצעה מתאימה לתוכנית…_';const el=$('#liveTxt');if(el)el.innerHTML=mdLite(CH.live);
       const fix=`האפליקציה בדקה את בלוק ה-plan ודחתה ${sp.errs.length} פעולות:\n${sp.errs.map(x=>`- ${x.raw} → ${x.e}`).join('\n')}\n${sp.prop?`הפעולות האחרות תקינות.`:''}\nכתוב מחדש את כל התשובה למשתמש (בלי להזכיר את הבדיקה הזו) עם בלוק plan מתוקן שכולל רק פעולות חוקיות לפי הכללים והנתונים. אם אי אפשר לעשות את מה שהמשתמש ביקש, הסבר בקצרה למה ותציע את החלופה הכי קרובה שכן אפשרית.`;
@@ -1511,8 +1522,9 @@ async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!S
     const turn={role:'assistant',content:(sp.text||'הנה ההצעה:')+(sp.bad&&sp.errs&&sp.errs.length?'\n\n(ניסיתי להציע שינוי שהאפליקציה לא יכולה לעשות. אפשר לבקש שוב במילים אחרות.)':'')+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')};if(sp.prop)turn.prop=sp.prop;CH.turns.push(turn);saveChat()}
   catch(e){const code=e&&e.code;if(code==='cancelled'){if(e.text)CH.turns.push({role:'assistant',content:e.text+' …'})}
     else if(code==='bad_key'||code==='no_key'){CH.err='המפתח לא תקין. בדוק אותו בהגדרות.'}
-    else if(code==='rate_limited'){CH.err='יותר מדי הודעות כרגע. נסה שוב בעוד כמה דקות.'}
-    else{if(e&&e.text)CH.turns.push({role:'assistant',content:e.text+' …'});CH.err='משהו השתבש בחיבור. נסה לשלוח שוב.'}
+    else if(code==='rate_limited'){const w=e.wait||0;CH.err=w>900?'הגעת למגבלה היומית של החשבון החינמי ב-Groq. היא מתאפסת תוך כמה שעות.':`המאמן הגיע למגבלת ההודעות לדקה של Groq. נסה שוב בעוד ${w?Math.max(5,Math.ceil(w))+' שניות':'דקה'}.`}
+    else if(code==='too_big'){CH.err='השיחה ארוכה מדי למאמן. לחץ על "ניקוי השיחה" ונסה שוב.'}
+    else{if(e&&e.text)CH.turns.push({role:'assistant',content:e.text+' …'});CH.err=`משהו השתבש בחיבור${e&&e.message?` (שגיאה ${e.message})`:''}. נסה לשלוח שוב.`}
     saveChat()}
   CH.busy=false;CH.live='';CH.ctl=null;if(V.view==='chat'){render();scrollChat()}}
 const COACH_OPS=['swap','rest','easy','km','sets','reset','ex','replace','drop','note'];
@@ -2899,9 +2911,9 @@ async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw 
   if(/fdbg/.test(location.search)){if(!window.FAKEAI)throw {code:'network',text:''};const text=await window.FAKEAI(messages,opt);if(opt.onText)opt.onText({text});return {text,truncated:false}}// test mode: never reaches the network
   const go=model=>fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',signal:opt.signal,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
     body:JSON.stringify(Object.assign({model,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?2000:2500,stream:!!opt.onText},model.startsWith('openai/')?{reasoning_effort:opt.effort||'low',include_reasoning:false}:{},opt.json?{response_format:{type:'json_object'}}:{}))});
-  let r;try{r=await go(GQ_MODEL);if(r.status===400||r.status===404||r.status===503)r=await go(GQ_FALLBACK)}
+  let r,first=0;try{r=await go(GQ_MODEL);if([400,404,413,429,503].includes(r.status)){first=r.status;const wa=+r.headers.get('retry-after')||0;r=await go(GQ_FALLBACK);if(r.status===429&&first===429)r.wait0=wa}}
   catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'network',text:''}}
-  if(r.status===401)throw {code:'bad_key'};if(r.status===429)throw {code:'rate_limited'};if(!r.ok)throw {code:'http',message:String(r.status)};
+  if(r.status===401)throw {code:'bad_key'};if(r.status===429)throw {code:'rate_limited',wait:Math.min(+r.headers.get('retry-after')||1e9,r.wait0||1e9)<1e9?Math.min(+r.headers.get('retry-after')||1e9,r.wait0||1e9):0};if(r.status===413||(first===413&&r.status===400))throw {code:'too_big'};if(!r.ok)throw {code:'http',message:String(r.status)};
   if(!opt.onText){const j=await r.json();return {text:(j.choices&&j.choices[0].message.content)||'',truncated:j.choices&&j.choices[0].finish_reason==='length'}}
   const rd=r.body.getReader(),dec=new TextDecoder();let buf='',text='',fin='';
   try{for(;;){const {value,done}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
