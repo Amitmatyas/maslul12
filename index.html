@@ -517,6 +517,16 @@ details.adl[open]>summary{margin-bottom:6px}
 .d3m{position:absolute;bottom:30px;right:12px;font-size:12.5px;color:#cfd5e4;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:8px}
 .d3hint{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11.5px;color:#8a93a8;margin:0;pointer-events:none}
 .d3leg{display:flex;gap:14px;font-size:12.5px;margin:8px 0}.d3leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:5px}
+.pvids{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pvid{display:flex;flex-direction:column;gap:4px;width:150px;padding:0;border:1px solid var(--line,#333);border-radius:12px;overflow:hidden;background:#fff;color:#222;font-size:12.5px;cursor:pointer;text-align:start}.pvid video{width:100%;aspect-ratio:16/9;object-fit:contain;display:block}.pvid span{padding:4px 8px 6px}
+.anbtn{margin-top:8px}.s-imp{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px}
+.rchart{margin-top:4px;touch-action:pan-y}.rchart .rp-pace{fill:none;stroke:var(--tartan);stroke-width:2.2;stroke-linejoin:round}.rchart .rp-hr{fill:none;stroke:#ff5a7a;stroke-width:2;stroke-linejoin:round}
+.rchart .rp-alt{fill:none;stroke:var(--muted,#8a93a8);stroke-width:1.6}.rchart .rp-area{fill:var(--muted,#8a93a8);opacity:.18}.rchart .rp-n{fill:#fff;font-size:16px;font-weight:700}.rchart .axis{font-size:19px}.rchart .rt{font-weight:600;font-size:21px;fill:var(--chalk)}
+.rread{font-size:13px;min-height:1.4em;margin:10px 0 0;color:var(--muted)}.rread b{color:var(--chalk)}
+.rmarks{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:4px;font-size:13px}.rmarks b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--muted,#8a93a8);color:#fff;font-size:11px;margin-inline-end:6px}.rmarks .ok b{background:var(--good,#3ecf8e)}.rmarks .bad b{background:var(--bad)}
+.zbar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:12px}.zleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;margin:6px 0;color:var(--muted)}.zleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-inline-end:4px}
+.rh{font-size:15px;margin:16px 0 4px}.tscroll{overflow-x:auto}.rtab{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}.rtab th,.rtab td{padding:5px 6px;text-align:start;border-bottom:1px solid var(--line,#2a2f3d);white-space:nowrap}.rtab th{color:var(--muted);font-weight:600}.rtab .fast td{color:var(--good,#3ecf8e)}.rtab .slow td{color:var(--bad)}
+.rcl{padding-inline-start:18px;font-size:13px;margin:4px 0}.rmo li{margin:4px 0}.rmo b{font-variant-numeric:tabular-nums}.rk{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}
+.vbox{border-radius:14px;overflow:hidden;background:#fff;aspect-ratio:16/9;display:grid;place-items:center}.vbox video{width:100%;height:100%;object-fit:contain;display:block}.vmsg{color:#555;padding:20px;text-align:center}.vctl{display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap}.vctl [aria-pressed=true]{border-color:var(--tartan);color:var(--tartan)}
 .d3n{padding-inline-start:18px;margin:6px 0}.d3n li{margin:4px 0}
 .demo svg.dsv{width:100%;height:auto;background:var(--ink);border-radius:14px}
 .demo .fig line,.demo .fig path{stroke:var(--chalk);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;fill:none}
@@ -589,7 +599,7 @@ details.adl[open]>summary{margin-bottom:6px}
 <div class="pillbar" id="pill" hidden></div>
 <div class="sheet" id="sheet" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
-<input type="file" id="fileIn" accept=".gpx,.tcx,.xml,application/gpx+xml" multiple hidden>
+<input type="file" id="fileIn" accept=".gpx,.tcx,.fit,.xml,application/gpx+xml" multiple hidden>
 <canvas id="fx" hidden></canvas>
 <noscript><p style="padding:20px;color:#F1F3F9">צריך להפעיל JavaScript כדי להשתמש באתר.</p></noscript>
 
@@ -689,6 +699,82 @@ const EX={
   legext:{n:'פשיטת ברכיים',eq:['mc'],cue:'גב צמוד למושב. פושטים עד הסוף, עצירה קצרה למעלה ויורדים לאט.'},
   plank:{n:'פלאנק',eq:['bw'],cue:'גוף ישר, בטן ועכוז מכווצים. ממשיכים לנשום.',time:true}
 };
+// the wider exercise arsenal: the coach can swap a planned exercise for one of these (same muscle family)
+Object.assign(EX,{
+  dbbench:{n:'לחיצת חזה עם משקולות',eq:['db'],cue:'שכמות מכווצות, המשקולות יורדות לצדי החזה בשליטה, ודוחפים למעלה בלי להקיש ביניהן.'},
+  bbbench:{n:'לחיצת חזה עם מוט',eq:['bb'],cue:'שכמות מכווצות, רגליים על הרצפה. המוט יורד לאמצע החזה בשליטה. רק עם שומר.'},
+  mchest:{n:'לחיצת חזה במכונה',eq:['mc'],cue:'גב צמוד למשענת, ידיות בגובה אמצע החזה. דוחפים בלי לנעול את המרפקים בכוח.'},
+  cfly:{n:'פרפר בכבלים',eq:['cb'],inc:1.25,cue:'מרפקים מעט כפופים וקבועים. סוגרים בקשת רחבה לפנים, וחוזרים לאט עד מתיחה נוחה.'},
+  dbfly:{n:'פרפר עם משקולות',eq:['db'],cue:'שוכבים על ספסל, מרפקים מעט כפופים. פותחים לצדדים עד מתיחה נוחה וסוגרים מעל החזה.'},
+  incpush:{n:'שכיבות סמיכה בשיפוע',eq:['bw'],cue:'ידיים על ספסל או מוט, גוף ישר כמו קרש. גרסה קלה יותר של שכיבות סמיכה.'},
+  mshoulder:{n:'לחיצת כתפיים במכונה',eq:['mc'],cue:'גב צמוד למשענת, דוחפים למעלה בלי לקשת את הגב.'},
+  arnold:{n:'Arnold press',eq:['db'],cue:'מתחילים עם כפות הידיים לכיוון הפנים ומסובבים החוצה תוך כדי דחיפה למעלה. בשליטה.'},
+  dblateral:{n:'הרחקות לצדדים עם משקולות',eq:['db'],cue:'מרפקים מעט כפופים, מרימים עד גובה הכתפיים בלי תנופה. משקל קל.'},
+  benchdip:{n:'מקבילים על ספסל',eq:['bw'],cue:'ידיים על קצה ספסל. יורדים עד שהמרפקים ב-90 מעלות, הגב קרוב לספסל.'},
+  dips:{n:'מקבילים',eq:['wt'],cue:'הגוף נוטה מעט קדימה. יורדים עד 90 מעלות במרפק בשליטה, בלי לקפוץ.'},
+  chinup:{n:'מתח באחיזה הפוכה',eq:['wt'],cue:'כפות הידיים לכיוונך. מתחילים מתלייה מלאה ומושכים עד שהסנטר מעל המוט.'},
+  closelat:{n:'פולי עליון באחיזה צרה',eq:['cb'],cue:'ידית צרה. מושכים לחזה העליון, המרפקים צמודים לגוף.'},
+  dbrow:{n:'חתירה עם משקולת ביד אחת',eq:['db'],cue:'יד וברך על ספסל, גב ישר. מושכים את המשקולת לכיוון המותן.'},
+  mrow:{n:'חתירה במכונה',eq:['mc'],cue:'חזה צמוד לכרית. מושכים ומקרבים שכמות, וחוזרים לאט.'},
+  cstbar:{n:'חתירת T-Bar עם תמיכה לחזה',eq:['mc'],cue:'חזה על הכרית, גב ניטרלי. מושכים עד שהשכמות מתקרבות.'},
+  invrow:{n:'חתירה הפוכה',eq:['bw'],cue:'תלויים מתחת למוט נמוך, הגוף ישר. מושכים את החזה למוט.'},
+  ezcurl:{n:'כפיפת מרפקים עם מוט EZ',eq:['bb'],cue:'מרפקים צמודים לגוף, בלי לנדנד. יורדים לאט.'},
+  inclcurl:{n:'כפיפת מרפקים בספסל משופע',eq:['db'],cue:'יושבים על ספסל משופע, הידיים תלויות. מכופפים בלי להזיז את המרפקים קדימה.'},
+  preacher:{n:'כפיפת מרפקים בספסל כומר',eq:['bb'],cue:'הזרוע צמודה לכרית. יורדים לאט כמעט עד הסוף, בלי לנעול בכוח.'},
+  hacksq:{n:'האק סקוואט',eq:['mc'],cue:'גב צמוד למשענת, ברכיים בכיוון האצבעות. יורדים בשליטה עד עומק נוח.'},
+  splitsq:{n:'Split squat',eq:['db'],cue:'רגל אחת קדימה ואחת אחורה. יורדים ישר למטה עד שהברך האחורית כמעט נוגעת ברצפה.'},
+  wlunge:{n:'מכרעים בהליכה',eq:['db'],cue:'צעד ארוך, יורדים עד שהברך האחורית כמעט נוגעת. הגוף זקוף.'},
+  rlunge:{n:'מכרע אחורי',eq:['db'],cue:'צעד אחורה, יורדים ישר למטה ודוחפים דרך העקב של הרגל הקדמית.'},
+  stepup:{n:'עליות על ספסל',eq:['db'],cue:'כל כף הרגל על הספסל. עולים בכוח של הרגל העליונה ויורדים לאט.'},
+  hipthrust:{n:'Hip thrust',eq:['bb'],cue:'גב עליון על ספסל, מוט על האגן עם ריפוד. דוחפים את האגן למעלה ומכווצים עכוז.'},
+  gbridge:{n:'גשר עכוז',eq:['bw'],cue:'שוכבים על הגב, כפות הרגליים על הרצפה. מרימים את האגן עד קו ישר ומכווצים עכוז.'},
+  slcurl:{n:'כפיפת ברכיים בישיבה',eq:['mc'],cue:'גב צמוד, הכרית מעל הברכיים. מכופפים עד הסוף וחוזרים לאט.'},
+  dbcalf:{n:'הרמות תאומים עם משקולות',eq:['db'],cue:'קדמת כף הרגל על מדרגה. עולים עד הסוף ויורדים לאט עד מתיחה.'},
+  scalf:{n:'תאומים בישיבה',eq:['mc'],cue:'הכרית על הברכיים. עולים עד הסוף, עצירה קצרה, ויורדים לאט.'},
+  hkr:{n:'הרמות ברכיים בתלייה',eq:['bw'],cue:'תלייה מלאה. מרימים ברכיים לחזה בלי תנופה. גרסה קלה של הרמות רגליים.'},
+  ccrunch:{n:'כפיפות בטן בכבל',eq:['cb'],cue:'על הברכיים מול הכבל. מגלגלים את הגב למטה, האגן לא זז.'},
+  crunch:{n:'כפיפות בטן',eq:['bw'],cue:'גב תחתון צמוד לרצפה, מרימים את הכתפיים בגלגול. בלי למשוך בצוואר.'},
+  sideplank:{n:'פלאנק צידי',eq:['bw'],cue:'מרפק מתחת לכתף, הגוף בקו ישר מהראש לרגליים. מחליפים צד.',time:true},
+  deadbug:{n:'Dead bug',eq:['bw'],cue:'שוכבים על הגב, גב תחתון צמוד לרצפה. מורידים יד ורגל נגדיות לאט.'},
+  birddog:{n:'Bird dog',eq:['bw'],cue:'על ארבע. מושיטים יד ורגל נגדיות לקו ישר, בלי לסובב את האגן.'},
+  backext:{n:'פשיטות גב',eq:['bw'],cue:'על ספסל רומי, גב ישר. עולים עד קו הגוף, בלי לקשת מעבר.'},
+  pullthru:{n:'Pull-through בכבל',eq:['cb'],cue:'גב לכבל, ציר בירכיים כמו בדדליפט רומני. דוחפים את האגן קדימה ומכווצים עכוז.'},
+  skull:{n:'פשיטת מרפקים בשכיבה',eq:['bb'],cue:'שוכבים על ספסל, מרפקים מכוונים לתקרה וקבועים. מורידים את המוט לכיוון המצח לאט ופושטים.'},
+  cgbench:{n:'לחיצת חזה באחיזה צרה',eq:['bb'],cue:'ידיים ברוחב כתפיים, מרפקים צמודים לגוף. המוט יורד לתחתית החזה בשליטה. רק עם שומר.'},
+  smithsq:{n:'סקוואט בסמית',eq:['sm'],cue:'רגליים מעט לפני המוט, גב זקוף. יורדים בשליטה עד עומק נוח, ברכיים בכיוון האצבעות.'},
+  pendsq:{n:'Pendulum squat',eq:['mc'],cue:'גב צמוד לכרית, יורדים לאט עד עומק נוח ודוחפים דרך כל כף הרגל.'},
+  ngpull:{n:'פולי עליון באחיזה ניטרלית',eq:['cb'],cue:'כפות ידיים זו מול זו. מושכים לחזה העליון, חזה פתוח, מרפקים למטה.'},
+  sapull:{n:'משיכה בידיים ישרות בכבל',eq:['cb'],inc:1.25,cue:'ידיים כמעט ישרות, מושכים את המוט בקשת עד הירכיים. מרגישים את הגב, לא את הידיים.'},
+  apull:{n:'מתח בעזרת מכונה',eq:['mc'],cue:'המשקל במכונה עוזר. מתחילים מתלייה מלאה ומושכים עד שהסנטר מעל המוט. יותר משקל = יותר עזרה.'},
+  bandpa:{n:'מתיחת גומייה לצדדים',eq:['bw'],cue:'ידיים ישרות מול החזה, מותחים את הגומייה לצדדים ומקרבים שכמות. חוזרים לאט.'},
+  abwheel:{n:'גלגל בטן',eq:['bw'],cue:'על הברכיים, גב תחתון לא שוקע. מתגלגלים קדימה רק כמה שאפשר לשמור על הגב ישר וחוזרים.'}
+});
+// muscle group of every exercise; a replacement must stay in the same family (push / pull / legs / core)
+const GRP={bench:'חזה',incline:'חזה',pushup:'חזה',dbbench:'חזה',bbbench:'חזה',mchest:'חזה',cfly:'חזה',dbfly:'חזה',incpush:'חזה',
+  ohp:'כתפיים',lateral:'כתפיים',mshoulder:'כתפיים',arnold:'כתפיים',dblateral:'כתפיים',
+  pushdown:'יד אחורית',benchdip:'יד אחורית',dips:'יד אחורית',
+  pullup:'גב',row:'גב',lat:'גב',crow:'גב',tbar:'גב',chinup:'גב',closelat:'גב',dbrow:'גב',mrow:'גב',cstbar:'גב',invrow:'גב',
+  face:'כתף אחורית',revfly:'כתף אחורית',curl:'יד קדמית',hammer:'יד קדמית',ezcurl:'יד קדמית',inclcurl:'יד קדמית',preacher:'יד קדמית',
+  goblet:'ירך קדמית',legpress:'ירך קדמית',bss:'ירך קדמית',legext:'ירך קדמית',hacksq:'ירך קדמית',splitsq:'ירך קדמית',wlunge:'ירך קדמית',rlunge:'ירך קדמית',stepup:'ירך קדמית',
+  rdl:'ירך אחורית',bbrdl:'ירך אחורית',legcurl:'ירך אחורית',slcurl:'ירך אחורית',backext:'ירך אחורית',hipthrust:'עכוז',gbridge:'עכוז',pullthru:'עכוז',
+  calf:'תאומים',hackcalf:'תאומים',dbcalf:'תאומים',scalf:'תאומים',
+  hlr:'בטן',dcrunch:'בטן',plank:'בטן',hkr:'בטן',ccrunch:'בטן',crunch:'בטן',sideplank:'בטן',deadbug:'בטן',birddog:'בטן'};
+Object.assign(GRP,{skull:'יד אחורית',cgbench:'יד אחורית',smithsq:'ירך קדמית',pendsq:'ירך קדמית',ngpull:'גב',sapull:'גב',apull:'גב',bandpa:'כתף אחורית',abwheel:'בטן'});
+const FAM_OF={'חזה':'push','כתפיים':'push','יד אחורית':'push','גב':'pull','כתף אחורית':'pull','יד קדמית':'pull','ירך קדמית':'legs','ירך אחורית':'legs','עכוז':'legs','תאומים':'legs','בטן':'core'};
+const famOf=k=>FAM_OF[GRP[k]]||'';
+// demo videos (2D animation of the movement) for every exercise in the arsenal
+const VID={bench:'smith_machine_bench_press',incline:'incline_dumbbell_bench_press',ohp:'seated_dumbbell_shoulder_press',lateral:'cable_lateral_raise',pushdown:'tricep_pushdown',pushup:'push_ups',
+  pullup:'pull_ups',row:'seated_cable_row',lat:'lat_pulldown',face:'face_pull',curl:'dumbbell_curl',hammer:'hammer_curl',goblet:'goblet_squat',rdl:'dumbbell_romanian_deadlift',legcurl:'lying_leg_curl',
+  calf:'machine_calf_raise',hlr:'hanging_leg_raise',dcrunch:'decline_crunch',crow:'seated_cable_row',tbar:'t_bar_row',revfly:'cable_reverse_fly',bss:'bulgarian_split_squat',hackcalf:'hack_squat_calf_raise',
+  bbrdl:'romanian_deadlift',legext:'leg_extension',plank:'plank',dbbench:'dumbbell_bench_press',bbbench:'bench_press',mchest:'chest_press',cfly:'cable_fly',dbfly:'dumbbell_fly',incpush:'incline_push_ups',
+  mshoulder:'machine_shoulder_press',arnold:'arnold_press',dblateral:'dumbbell_lateral_raise',benchdip:'bench_dips',dips:'dips',chinup:'chin_ups',closelat:'close_grip_lat_pulldown',dbrow:'dumbbell_row',
+  mrow:'machine_row',cstbar:'chest_supported_t_bar_row',invrow:'inverted_row',ezcurl:'ez_bar_curl',inclcurl:'incline_dumbbell_curl',preacher:'preacher_curl',hacksq:'hack_squat',splitsq:'split_squat',
+  wlunge:'walking_lunge',rlunge:'reverse_lunge',stepup:'step_ups',hipthrust:'hip_thrust',gbridge:'glute_bridge',slcurl:'seated_leg_curl',dbcalf:'dumbbell_calf_raise',scalf:'seated_calf_raise',
+  hkr:'hanging_knee_raise',ccrunch:'cable_crunch',crunch:'crunches',sideplank:'side_plank',deadbug:'dead_bug',birddog:'bird_dog',backext:'back_extension',pullthru:'cable_pull_through',
+  legpress:'sled_leg_press',skull:'lying_tricep_extension',cgbench:'close_grip_bench_press',smithsq:'smith_machine_squat',pendsq:'pendulum_squat',ngpull:'neutral_grip_lat_pulldown',sapull:'straight_arm_pulldown',apull:'assisted_pull_ups',bandpa:'band_pull_apart',abwheel:'ab_wheel_rollout'};
+const vidUrl=k=>VID[k]?`https://gymbros.b-cdn.net/exercises/videos/${VID[k]}_gymbros.mp4`:null;
+const hasDemo=k=>!!(VID[k]||DEMO[k]||(typeof D3!=='undefined'&&D3[k]));
+const canForm=k=>!!(FORM[k]||(EX[k]&&!EX[k].time));
 const incOf=k=>{const v=EX[k].inc;return v!=null?v:EQ[EX[k].eq[0]].inc};
 const STR={
   push:{title:'Push',sub:'חזה · כתפיים · יד אחורית · בטן',ex:[['bench',3,'8–12'],['incline',2,'10'],['ohp',2,'10'],['lateral',2,'12–15'],['pushdown',2,'12'],['hlr',3,'10–15']]},
@@ -932,7 +1018,7 @@ function runLog(d,b){const r=peek(d).runs[b.id]||{};
   <label class="km">זמן<input class="inp sm" data-rsec="${b.id}" data-d="${d}" value="${r.sec?mmss(r.sec):''}" placeholder="mm:ss" inputmode="numeric" style="direction:ltr" aria-label="זמן ריצה"></label>
   <span class="pace" id="pace-${b.id}">${paceText(r)}</span>${r.src==='watch'?'<span class="chip sm">מהשעון</span>':''}
   <button class="ghost sm" data-act="import">${ic('watch')}ייבוא מהשעון</button></div>`}
-function loggedLine(d,b){const r=peek(d).runs[b.id];return r&&r.km>0?`<p class="pace">נרשם: <b>${r1(r.km)} ק״מ</b>${r.sec?` · ${paceText(r)}`:''}</p>`:''}
+function loggedLine(d,b){const r=peek(d).runs[b.id];return r&&r.km>0?`<p class="pace">נרשם: <b>${r1(r.km)} ק״מ</b>${r.sec?` · ${paceText(r)}`:''}</p>${r.tid?`<button class="ghost sm anbtn" data-act="run-an" data-d="${d}" data-b="${b.id}">📈 ניתוח הריצה</button>`:''}`:''}
 
 function bEasy(d,b){return card(d,b,'easy',`
   <div class="bt"><h3>${b.title}</h3><div class="big"><span class="bignum">${range(b.min,b.max)}</span><span class="unit">ק״מ</span></div></div>
@@ -964,7 +1050,7 @@ function liftRow(d,b,x,I,lv){
     <p class="rec ${R.up>0?'up':R.up<0?'down':''}">${R.usesW&&R.w!=null?`<b>${fmtKg(R.w)} ${E.unit}</b> · `:''}${R.why}</p>
     <div class="lrow">${R.usesW?`<label class="wbox">ק״ג<input class="inp" type="number" inputmode="decimal" step="0.25" min="0" data-lw="${x.k}" data-d="${d}" value="${wv}" placeholder="?"></label>`:''}
       <div class="reps">${inputs}</div></div>
-    ${DEMO[x.k]?`<div class="xtools"><button class="ghost sm" data-act="demo" data-k="${x.k}">▶ הדגמה</button>${FORM[x.k]?`<button class="ghost sm" data-act="form" data-k="${x.k}">📷 בדיקת טכניקה</button>`:''}</div>`:''}
+    ${hasDemo(x.k)||canForm(x.k)?`<div class="xtools">${hasDemo(x.k)?`<button class="ghost sm" data-act="demo" data-k="${x.k}">▶ הדגמה</button>`:''}${canForm(x.k)?`<button class="ghost sm" data-act="form" data-k="${x.k}">📷 בדיקת טכניקה</button>`:''}</div>`:''}
     <div class="feel">איך הרגיש? ${[['easy','קל'],['ok','טוב'],['hard','קשה']].map(([k,t])=>`<button class="${L.feel===k?'on':''}" data-act="feel" data-d="${d}" data-k="${x.k}" data-v="${k}">${t}</button>`).join('')}</div>
   </li>`}
 function bIron(d,b){const I=info(d);const E=effWeek(I.week);const phase=phaseOf(I.week);const e=peek(d);
@@ -1052,7 +1138,9 @@ function simpleTask(d,b,act){const done=isDone(d,b);const xk='sx'+d+b.id;
   const sub=b.type==='iron'?`${b.ex.length} תרגילים · ${b.sub}${b.light||b.dl?' · סט אחד פחות':''}`:b.type==='easy'?`${range(b.min,b.max)} ק״מ · קצב שאפשר לדבר בו`:b.type==='long'?`${range(b.min,b.max)} ק״מ · קצב נוח`:b.type==='quality'?`${qShort(b.q)} · כולל חימום ושחרור`:b.type==='swim'?'35–45 דק׳':'אין אימון היום. שינה, אוכל ושתייה.';
   const name=b.type==='iron'?`כוח · ${b.title}`:b.type==='quality'?'אימון איכות':b.type==='rest'?'מנוחה':b.title;
   const btns=!act?'':b.type==='rest'?doneBtn(d,b,'נחתי היום'):done?doneBtn(d,b):`<div class="actrow">${liveBtn(d,b,'התחל')}${doneBtn(d,b,'עשיתי')}</div>`;
-  return `<article class="s-task t-${b.type} ${done?'is-done':''}"><div class="s-top" data-act="s-exp" data-k="${xk}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(name)}: הצג פירוט"><span class="s-ic">${ic(b.type)}</span><div><h3>${name}</h3><p>${sub}</p><span class="s-peek">פירוט ותצוגה מקדימה ▾</span></div>${done?'<span class="s-ok">בוצע ✓</span>':''}</div>${btns}</article>`}
+  const rr=['easy','long','quality'].includes(b.type)?peek(d).runs[b.id]:null;
+  const rb=!act||!['easy','long','quality'].includes(b.type)?'':rr&&rr.tid?`<button class="ghost sm anbtn" data-act="run-an" data-d="${d}" data-b="${b.id}">📈 ניתוח הריצה${rr.an?'':''}</button>`:d<=todayIso()?`<button class="linkbtn s-imp" data-act="import">${ic('watch')}העלאת הריצה מהשעון לניתוח</button>`:'';
+  return `<article class="s-task t-${b.type} ${done?'is-done':''}"><div class="s-top" data-act="s-exp" data-k="${xk}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(name)}: הצג פירוט"><span class="s-ic">${ic(b.type)}</span><div><h3>${name}</h3><p>${sub}</p><span class="s-peek">פירוט ותצוגה מקדימה ▾</span></div>${done?'<span class="s-ok">בוצע ✓</span>':''}</div>${btns}${rb}</article>`}
 function viewDay(){
   const t=todayIso(),It=info(t);let h='<div class="stack"><button class="s-back" data-act="go-today">'+ic('next')+'חזרה למסך הפשוט</button>';
   if(It.st==='before'){const n=-It.n;h+=`<section class="countdown"><div class="stack" style="gap:6px"><span class="eyebrow">מחזור 1 · מסע של 18 חודשים</span><h2>${n===1?'מחר יוצאים לדרך':`יוצאים לדרך בעוד ${n} ימים`}</h2><p class="muted">שבוע 1 מתחיל ביום ראשון, ${fmtDate(S.start)}. ככה נראה האימון הראשון.</p></div><div class="cd-num">${n}</div></section>`}
@@ -1348,12 +1436,26 @@ const COACH_RULES=`אתה "המאמן" באפליקציית האימונים "ש
 - {"op":"sets","date":"תאריך"} סט אחד פחות בכל תרגיל כוח ביום הזה.
 - {"op":"reset","date":"תאריך"} מבטל שינויים קודמים ביום הזה.
 - {"op":"ex","date":"תאריך","k":"מפתח תרגיל","sets":מספר,"reps":[מינימום,מקסימום],"kg":משקל} משנה תרגיל אחד באותו יום. אפשר לשלוח רק חלק מהשדות. סטים: לא יותר ממה שבתוכנית. משקל: עד צעד אחד מעל המשקל המומלץ שמופיע. חזרות: 3–20 (בתרגילי זמן: שניות 10–120).
-- {"op":"replace","date":"תאריך","k":"מפתח תרגיל","to":"מפתח תרגיל אחר"} מחליף תרגיל בתרגיל אחר מהרשימה (למשל כשאין ציוד או משהו מציק). אפשר להוסיף באותה פעולה sets / reps / kg לתרגיל החדש.
+- {"op":"replace","date":"תאריך","k":"מפתח תרגיל","to":"מפתח תרגיל אחר"} מחליף תרגיל בתרגיל אחר מ"רשימת התרגילים" (למשל כשאין ציוד, המכונה תפוסה, או משהו מציק). רק מאותה משפחת שרירים: דחיפה (חזה, כתפיים, יד אחורית), משיכה (גב, כתף אחורית, יד קדמית), רגליים (ירך קדמית, ירך אחורית, עכוז, תאומים) או בטן. עדיף מאותה קבוצה בדיוק. אפשר להוסיף sets / reps; לתרגיל חדש בלי kg (האפליקציה תמליץ משקל). לכל תרגיל ברשימה יש סרטון הדגמה ובדיקת טכניקה באפליקציה.
 - {"op":"drop","date":"תאריך","k":"מפתח תרגיל"} מוריד תרגיל מהאימון של היום (נשארים לפחות 2).
 - {"op":"note","date":"תאריך","text":"הנחיה קצרה"} הנחיה מהמאמן שתופיע על היום (למשל דגש טכני או קצב).
 מפתחות התרגילים מופיעים ב"הימים הקרובים" וב"רשימת התרגילים" למטה. אפשר כמה פעולות בבלוק אחד (עד 10).
+איך מתכננים שינוי טוב (תחשוב על זה לפני שאתה כותב את הבלוק):
+1. מבינים מה הבעיה האמיתית (יום שנופל, עייפות, כאב, ציוד תפוס, מעט זמן) ומה המטרה של היום והשבוע.
+2. בודקים ב"הימים הקרובים" אילו ימים מסומנים [קשה] ואילו ימי מנוחה. אימון שמזיזים עובר ליום מנוחה או ליום קל, לא ליום צמוד לאימון קשה אחר.
+3. משנים כמה שפחות. שינוי קטן ומדויק עדיף על הפיכת כל השבוע.
+4. מעט זמן: מורידים תרגיל עזר (בידוד או בטן) או סט אחד, ומשאירים את התרגיל הראשי (הראשון באימון).
+5. עייפות או שינה גרועה: easy או km קצר יותר. ריצה ארוכה מחר: רגליים היום בגרסה קלה.
+6. כאב: לא מחליפים לתרגיל שמעמיס על אותו מקום. מציעים easy או rest ואומרים לדבר עם מבוגר או פיזיותרפיסט.
+7. תאריכים: מעתיקים בדיוק מ"הימים הקרובים". מפתחות תרגילים: רק כאלה שמופיעים באימון של אותו יום (k) וברשימה (to).
+דוגמאות (התאריכים והמפתחות כאן רק להמחשה, תמיד לפי הנתונים למטה):
+- "מכונת הסמית תפוסה" → {"op":"replace","date":"<היום>","k":"bench","to":"dbbench"}
+- "יש לי רק 40 דקות לכוח מחר" → [{"op":"drop","date":"<מחר>","k":"<תרגיל עזר>"},{"op":"note","date":"<מחר>","text":"אימון קצר: 90 שנ׳ מנוחה בין סטים"}]
+- "אני לא יכול לרוץ ביום רביעי" → {"op":"swap","a":"<רביעי>","b":"<יום המנוחה הקרוב שלא צמוד לאימון קשה>"}
+- "כואב לי בכתף בלחיצות" → {"op":"drop"} או {"op":"replace"} לתרגיל שלא כואב, עם הנחיה לעצור אם כואב, ולדבר עם מבוגר אם זה נמשך.
 אל תכתוב שהשינוי כבר בוצע: המשתמש צריך לאשר. בלי בלוק כשאין שינוי. אסור להציע הוספת אימונים או העלאת עומס. לא לשים שני אימונים קשים (איכות, ארוכה, רגליים) ביום אחד או בימים צמודים כשאפשר להימנע.
 הנתונים למטה הם הנתונים האמיתיים מהאפליקציה; השתמש בהם ואל תמציא נתונים שלא מופיעים.`;
+const hardDay=d=>dayBlocks(d).some(b=>b.type==='quality'||b.type==='long'||(b.type==='iron'&&/legs/i.test(b.title)));
 function coachContext(){const t=todayIso();const I=info(t);const out=[];
   out.push(`תאריך היום: ${t} (יום ${DAYS[parseIso(t).getDay()]}).`);
   out.push(I.st==='in'?`שבוע ${I.week} מתוך 12, יום ${I.n+1}. שלב: ${phaseOf(I.week).t}.`:I.st==='before'?`התוכנית מתחילה ב-${S.start} (בעוד ${-I.n} ימים).`:'מחזור 1 הסתיים.');
@@ -1361,13 +1463,14 @@ function coachContext(){const t=todayIso();const I=info(t);const out=[];
   const w=I.st==='in'?I.week:I.st==='before'?1:12;const E=effWeek(w);
   out.push(`מצב התאמה לשבוע ${w}: ${LV_T[E.level]}${E.ov?' (המשתמש בחר בתוכנית המקורית)':''}. סיבות: ${E.A.reasons.join('; ')||'אין'}. שינויים: ${E.changes.join('; ')||'אין'}. טוב: ${E.A.good.join('; ')||'—'}.`);
   out.push(`תוכנית השבוע: ${[0,1,2,3,4,5,6].map(i=>`${DAYS[i]}: ${sumText(blocksFor(w,i,dateOf(w,i)))}`).join(' | ')}.`);
-  const up=[];for(let i=0;i<14;i++){const d=addDays(t,i);if(info(d).st!=='in')continue;const e=peek(d);up.push(`${d} (${DAYS[parseIso(d).getDay()]}${i===0?', היום':i===1?', מחר':''}): ${sumText(dayBlocks(d))}${planOf(d)?' [שונה]':''}${e.easyMode?' [גרסה קלה]':''}${dayBlocks(d).length&&dayDone(d)?' [בוצע]':''}${planOf(d)&&planOf(d).note?` [הנחיה: ${planOf(d).note}]`:''}${i<8?dayBlocks(d).filter(b=>b.type==='iron').map(b=>{const J=info(d);const lv=effWeek(J.week).lv;return '\n   '+b.title+': '+b.ex.map(x=>{const R=recommend(x,d,J.week,lv);return `${x.k} ${x.s}×${x.r}${x.time?'שנ׳':''}${R.usesW&&R.w!=null?` @${fmtKg(R.w)}ק״ג`:''}${x.mod?' (שונה)':''}`}).join(', ')}).join(''):''}`)}
+  const up=[];for(let i=0;i<14;i++){const d=addDays(t,i);if(info(d).st!=='in')continue;const e=peek(d);up.push(`${d} (${DAYS[parseIso(d).getDay()]}${i===0?', היום':i===1?', מחר':''}): ${sumText(dayBlocks(d))}${hardDay(d)?' [קשה]':''}${planOf(d)?' [שונה]':''}${e.easyMode?' [גרסה קלה]':''}${dayBlocks(d).length&&dayDone(d)?' [בוצע]':''}${planOf(d)&&planOf(d).note?` [הנחיה: ${planOf(d).note}]`:''}${i<8?dayBlocks(d).filter(b=>b.type==='iron').map(b=>{const J=info(d);const lv=effWeek(J.week).lv;return '\n   '+b.title+': '+b.ex.map(x=>{const R=recommend(x,d,J.week,lv);return `${x.k} ${x.s}×${x.r}${x.time?'שנ׳':''}${R.usesW&&R.w!=null?` @${fmtKg(R.w)}ק״ג`:''}${x.mod?' (שונה)':''}`}).join(', ')}).join(''):''}`)}
   if(up.length)out.push('הימים הקרובים:\n'+up.join('\n'));
-  out.push('רשימת התרגילים (מפתח=שם): '+Object.entries(EX).map(([k,x])=>`${k}=${x.n}${x.time?' (זמן)':''}`).join(', '));
+  {const by={};for(const k of Object.keys(EX))(by[GRP[k]||'אחר']=by[GRP[k]||'אחר']||[]).push(k);
+    out.push('רשימת התרגילים לפי קבוצת שריר (מפתח=שם, ציוד):\n'+Object.entries(by).map(([g,ks])=>`${g}: ${ks.map(k=>`${k}=${EX[k].n} (${EQ[EX[k].eq[0]].t}${EX[k].time?', זמן':''})`).join(', ')}`).join('\n'))}
   const from=addDays(t,-14);const lines=[];
   for(const d of Object.keys(S.days).sort()){if(d<from||d>t)continue;const e=peek(d);const parts=[];const bl=dayBlocks(d);
     const dn=bl.filter(b=>e.done[b.id]).map(b=>b.type==='iron'?b.title:T_LABEL[b.type]);if(dn.length)parts.push('בוצע: '+dn.join(', '));
-    for(const [bid,r] of Object.entries(e.runs))if(r&&r.km>0)parts.push(`ריצה ${({quality:'איכות',easy0:'קלה',easy3:'קלה',long:'ארוכה'})[bid]||'נוספת'}:${r.km} ק״מ${r.sec?` ב-${mmss(r.sec)} (${mmss(r.sec/r.km)}/ק״מ)`:''}${r.hr?` דופק ${r.hr}`:''}`);
+    for(const [bid,r] of Object.entries(e.runs))if(r&&r.km>0)parts.push(`ריצה ${({quality:'איכות',easy0:'קלה',easy3:'קלה',long:'ארוכה'})[bid]||'נוספת'}:${r.km} ק״מ${r.sec?` ב-${mmss(r.sec)} (${mmss(r.sec/r.km)}/ק״מ)`:''}${r.hr?` דופק ${r.hr}`:''}${r.an?` [ניתוח: ${r.an}]`:''}`);
     for(const [k,l] of Object.entries(e.lifts))if(l&&l.reps&&l.reps.some(x=>x>0))parts.push(`${EX[k]?EX[k].n:k}: ${liftTxt(l)}${l.feel?` (${{easy:'קל',ok:'טוב',hard:'קשה'}[l.feel]})`:''}`);
     if(e.rpe)parts.push('מאמץ '+e.rpe);if(e.sleep)parts.push('שינה '+e.sleep+'/5');if(e.sore)parts.push('עייפות '+e.sore+'/5');if(e.pain)parts.push('דיווח על כאב');if(e.easyMode)parts.push('גרסה קלה');if(e.note)parts.push('הערה: '+String(e.note).slice(0,120));
     if(parts.length)lines.push(`${d}: ${parts.join(' · ')}`)}
@@ -1397,8 +1500,13 @@ async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!S
   CH.err=null;CH.turns.push({role:'user',content:text});saveChat();CH.busy=true;CH.live='';CH.ctl=new AbortController();if(V.view==='chat'){render();scrollChat()}
   const hist=CH.turns.slice(-12).map(t=>({role:t.role,content:t.content+(t.prop?`\n[הצעת שינוי: ${t.prop.summary||''} · ${({new:'ממתין לאישור',ok:'המשתמש אישר',no:'המשתמש דחה',undone:'המשתמש ביטל'})[t.prop.st]||''}]`:'')}));
   const input=[{role:'user',content:COACH_RULES+'\n\n=== נתונים עדכניים מהאפליקציה ===\n'+coachContext()},...hist];
-  try{const {text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,onText:({text})=>{CH.live=chatVis(text);const el=$('#liveTxt');if(el){el.innerHTML=mdLite(CH.live);scrollChat()}}});
-    const sp=splitPlan(ans);const turn={role:'assistant',content:(sp.text||'הנה ההצעה:')+(sp.bad?'\n\n(ניסיתי להציע שינוי שהאפליקציה לא יכולה לעשות. אפשר לבקש שוב במילים אחרות.)':'')+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')};if(sp.prop)turn.prop=sp.prop;CH.turns.push(turn);saveChat()}
+  try{const {text:ans,truncated}=await SAMPLE(input,{signal:CH.ctl.signal,effort:'medium',onText:({text})=>{CH.live=chatVis(text);const el=$('#liveTxt');if(el){el.innerHTML=mdLite(CH.live);scrollChat()}}});
+    let sp=splitPlan(ans);
+    if(sp.errs&&sp.errs.length&&!CH.ctl.signal.aborted){CH.live=(sp.text||'')+'\n\n_בודק שההצעה מתאימה לתוכנית…_';const el=$('#liveTxt');if(el)el.innerHTML=mdLite(CH.live);
+      const fix=`האפליקציה בדקה את בלוק ה-plan ודחתה ${sp.errs.length} פעולות:\n${sp.errs.map(x=>`- ${x.raw} → ${x.e}`).join('\n')}\n${sp.prop?`הפעולות האחרות תקינות.`:''}\nכתוב מחדש את כל התשובה למשתמש (בלי להזכיר את הבדיקה הזו) עם בלוק plan מתוקן שכולל רק פעולות חוקיות לפי הכללים והנתונים. אם אי אפשר לעשות את מה שהמשתמש ביקש, הסבר בקצרה למה ותציע את החלופה הכי קרובה שכן אפשרית.`;
+      try{const r2=await SAMPLE([...input,{role:'assistant',content:ans},{role:'user',content:fix}],{signal:CH.ctl.signal,effort:'medium'});const sp2=splitPlan(r2.text);
+        const score=x=>(x.prop?x.prop.ops.length*2:0)-(x.errs?x.errs.length:0);if(sp2.text&&score(sp2)>=score(sp))sp=sp2}catch(e){if(e&&e.code==='cancelled')throw e}}
+    const turn={role:'assistant',content:(sp.text||'הנה ההצעה:')+(sp.bad&&sp.errs&&sp.errs.length?'\n\n(ניסיתי להציע שינוי שהאפליקציה לא יכולה לעשות. אפשר לבקש שוב במילים אחרות.)':'')+(truncated?'\n\n(התשובה נקטעה. אפשר לבקש המשך.)':'')};if(sp.prop)turn.prop=sp.prop;CH.turns.push(turn);saveChat()}
   catch(e){const code=e&&e.code;if(code==='cancelled'){if(e.text)CH.turns.push({role:'assistant',content:e.text+' …'})}
     else if(code==='bad_key'||code==='no_key'){CH.err='המפתח לא תקין. בדוק אותו בהגדרות.'}
     else if(code==='rate_limited'){CH.err='יותר מדי הודעות כרגע. נסה שוב בעוד כמה דקות.'}
@@ -1407,29 +1515,34 @@ async function chatSend(text){text=String(text||'').trim();if(!text||CH.busy||!S
   CH.busy=false;CH.live='';CH.ctl=null;if(V.view==='chat'){render();scrollChat()}}
 const COACH_OPS=['swap','rest','easy','km','sets','reset','ex','replace','drop','note'];
 const opDates=o=>o.op==='swap'?[o.a,o.b]:[o.date];
-function validOp(o){if(!o||typeof o!=='object'||!COACH_OPS.includes(o.op))return false;const t=todayIso();
-  for(const d of opDates(o)){if(typeof d!=='string'||!/^\d{4}-\d\d-\d\d$/.test(d)||d<t||info(d).st!=='in')return false}
-  if(o.op==='swap')return o.a!==o.b;
-  if(o.op==='km'){const k=Array.isArray(o.km)?o.km.map(Number):[Number(o.km),Number(o.km)];if(!(k[0]>0&&k[1]>=k[0]&&k[1]<=40))return false;o.km=k;const r=dayBlocks(o.date).find(b=>b.type==='easy'||b.type==='long');return !!r&&(k[1]<r.max||k[0]<r.min)}// only shorter, never longer than the plan
-  if(o.op==='sets')return dayBlocks(o.date).some(b=>b.type==='iron');
-  if(o.op==='rest')return dayBlocks(o.date).some(b=>b.type!=='rest');
-  if(o.op==='easy')return dayBlocks(o.date).some(b=>b.type!=='rest')&&!peek(o.date).easyMode;
-  if(o.op==='reset')return !!planOf(o.date)||!!peek(o.date).easyMode;
-  if(o.op==='note'){if(typeof o.text!=='string'||!o.text.trim())return false;o.text=o.text.trim().slice(0,160);return true}
-  if(o.op==='ex'||o.op==='replace'||o.op==='drop'){if(typeof o.k!=='string')return false;const f=ironSlot(o.date,o.k);if(!f)return false;
-    if(o.op==='drop')return f.b.ex.length>2;
-    if(o.op==='replace'&&(typeof o.to!=='string'||!EX[o.to]||f.b.ex.some(x=>x.k===o.to)))return false;
+// why an op can't be applied (null = fine). The reasons go back to the model so it can fix its proposal.
+function opErr(o){if(!o||typeof o!=='object')return 'פעולה לא תקינה';if(!COACH_OPS.includes(o.op))return `אין פעולה בשם "${o.op}". הפעולות: ${COACH_OPS.join(', ')}`;const t=todayIso();
+  for(const d of opDates(o)){if(typeof d!=='string'||!/^\d{4}-\d\d-\d\d$/.test(d))return `תאריך לא תקין: ${d}`;if(d<t)return `${d} כבר עבר`;if(info(d).st!=='in')return `${d} מחוץ לתוכנית`}
+  if(o.op==='swap')return o.a!==o.b?null:'אותו תאריך פעמיים';
+  if(o.op==='km'){const k=Array.isArray(o.km)?o.km.map(Number):[Number(o.km),Number(o.km)];if(!(k[0]>0&&k[1]>=k[0]&&k[1]<=40))return 'טווח ק״מ לא תקין';o.km=k;const r=dayBlocks(o.date).find(b=>b.type==='easy'||b.type==='long');
+    if(!r)return `אין ריצה קלה או ארוכה ב-${o.date} (km עובד רק עליהן)`;return k[1]<r.max||k[0]<r.min?null:`אפשר רק לקצר: בתוכנית ${r.min}–${r.max} ק״מ`}// only shorter, never longer than the plan
+  if(o.op==='sets')return dayBlocks(o.date).some(b=>b.type==='iron')?null:`אין אימון כוח ב-${o.date}`;
+  if(o.op==='rest')return dayBlocks(o.date).some(b=>b.type!=='rest')?null:`${o.date} כבר יום מנוחה`;
+  if(o.op==='easy'){if(!dayBlocks(o.date).some(b=>b.type!=='rest'))return `${o.date} יום מנוחה`;return peek(o.date).easyMode?`${o.date} כבר בגרסה קלה`:null}
+  if(o.op==='reset')return planOf(o.date)||peek(o.date).easyMode?null:`אין שינויים לבטל ב-${o.date}`;
+  if(o.op==='note'){if(typeof o.text!=='string'||!o.text.trim())return 'חסר טקסט להנחיה';o.text=o.text.trim().slice(0,160);return null}
+  if(o.op==='ex'||o.op==='replace'||o.op==='drop'){if(typeof o.k!=='string')return 'חסר k (מפתח התרגיל)';const f=ironSlot(o.date,o.k);
+    if(!f){const ks=dayBlocks(o.date).filter(b=>b.type==='iron').flatMap(b=>b.ex.map(x=>x.k));return ks.length?`התרגיל ${o.k} לא באימון של ${o.date}. התרגילים שם: ${ks.join(', ')}`:`אין אימון כוח ב-${o.date}`}
+    if(o.op==='drop')return f.b.ex.length>2?null:'חייבים להישאר לפחות 2 תרגילים באימון';
+    if(o.op==='replace'){if(typeof o.to!=='string'||!EX[o.to])return `אין תרגיל בשם "${o.to}" ברשימה`;if(f.b.ex.some(x=>x.k===o.to))return `${o.to} כבר נמצא באימון הזה`;
+      if(famOf(o.to)!==famOf(f.x.k))return `${o.to} (${GRP[o.to]}) לא מאותה משפחת שרירים כמו ${f.x.k} (${GRP[f.x.k]}). בחר תרגיל מקבוצה מתאימה`}
     return exMods(o,f)}
-  return true}
+  return null}
+const validOp=o=>!opErr(o);
 // optional sets / reps / kg on an exercise op: never more sets than planned, kg at most one step above the recommendation
 function exMods(o,f){const tk=o.op==='replace'?o.to:f.x.k;const tm=!!EX[tk].time;
-  if(o.op==='ex'&&o.sets==null&&o.reps==null&&o.kg==null)return false;
-  if(o.sets!=null){const n=Math.round(+o.sets);if(!(n>=1&&n<=(f.x.s0??f.x.s)))return false;o.sets=n}
-  if(o.reps!=null){const r=(Array.isArray(o.reps)?o.reps:[o.reps,o.reps]).map(v=>Math.round(+v));const mn=tm?10:3,mx=tm?120:20;if(!(r[0]>=mn&&r[1]>=r[0]&&r[1]<=mx))return false;o.reps=r}
-  if(o.kg!=null){const v=+o.kg;if(!(v>=0&&v<=300))return false;const I=info(o.date);
-    const R=recommend({...f.x,k:tk,time:tm,wo:undefined,range:o.reps||f.x.range},o.date,I.week,effWeek(I.week).lv);if(!R.usesW)return false;
-    const step=Math.abs(incOf(tk))||1;if(R.w!=null&&v>R.w+step+1e-9)return false;o.kg=Math.round(v*4)/4}
-  return true}
+  if(o.op==='ex'&&o.sets==null&&o.reps==null&&o.kg==null)return 'פעולת ex צריכה לפחות אחד מ-sets / reps / kg';
+  if(o.sets!=null){const n=Math.round(+o.sets);const mx=f.x.s0??f.x.s;if(!(n>=1&&n<=mx))return `סטים: 1 עד ${mx} (לא יותר ממה שבתוכנית)`;o.sets=n}
+  if(o.reps!=null){const r=(Array.isArray(o.reps)?o.reps:[o.reps,o.reps]).map(v=>Math.round(+v));const mn=tm?10:3,mx=tm?120:20;if(!(r[0]>=mn&&r[1]>=r[0]&&r[1]<=mx))return `${tm?'שניות':'חזרות'}: ${mn}–${mx}`;o.reps=r}
+  if(o.kg!=null){const v=+o.kg;if(!(v>=0&&v<=300))return 'משקל לא תקין';const I=info(o.date);
+    const R=recommend({...f.x,k:tk,time:tm,wo:undefined,range:o.reps||f.x.range},o.date,I.week,effWeek(I.week).lv);if(!R.usesW)return `${tk} בלי משקל, אל תשלח kg`;
+    const step=Math.abs(incOf(tk))||1;if(R.w!=null&&v>R.w+step+1e-9)return `משקל: עד ${fmtKg(R.w+step)} ק״ג (המומלץ ${fmtKg(R.w)})`;o.kg=Math.round(v*4)/4}
+  return null}
 const dayLbl=d=>`${d===todayIso()?'היום':d===addDays(todayIso(),1)?'מחר':'יום '+DAYS[parseIso(d).getDay()]} (${fmtDM(d)})`;
 const dayWhat=d=>dayBlocks(d).map(blkName).join(' + ')||'מנוחה';
 function opText(o){switch(o.op){
@@ -1463,55 +1576,286 @@ function undoOps(snap){S.plan=S.plan||{};for(const [d,v] of Object.entries(snap|
 const PLAN_RE=/```\s*(?:plan|json)?\s*(\{[\s\S]*?\})\s*(?:```|$)/i;
 const chatVis=t=>String(t||'').split('```')[0].trim();
 function splitPlan(t){const m=String(t||'').match(PLAN_RE);if(!m)return {text:chatVis(t),prop:null};let prop=null;
-  try{const j=JSON.parse(m[1]);const ops=(Array.isArray(j.ops)?j.ops:[]).filter(validOp).slice(0,10);if(ops.length)prop={summary:String(j.summary||'').slice(0,200),ops,st:'new'}}catch(e){}
-  return {text:chatVis(t.replace(m[0],'')),prop,bad:!prop}}
+  const errs=[];try{const j=JSON.parse(m[1]);const ops=[];for(const o of (Array.isArray(j.ops)?j.ops:[])){const raw=JSON.stringify(o);const e=opErr(o);if(e)errs.push({raw,e});else ops.push(o)}
+    if(ops.length)prop={summary:String(j.summary||'').slice(0,200),ops:ops.slice(0,10),st:'new'}}catch(e){errs.push({raw:m[1].slice(0,200),e:'ה-JSON לא תקין'})}
+  return {text:chatVis(t.replace(m[0],'')),prop,bad:!prop,errs}}
 function propCard(t,i){const P=t.prop;const lines=P.lines||P.ops.filter(validOp).map(opText);
   const st=P.st==='ok'?`<p class="prop-st ok">${ic('check')}אושר ונכנס לתוכנית <button class="linkbtn" data-act="prop-undo" data-i="${i}">ביטול</button></p>`
     :P.st==='no'?'<p class="prop-st">לא אישרת. התוכנית נשארה כמו שהיא.</p>':P.st==='undone'?'<p class="prop-st">בוטל. התוכנית חזרה למה שהיה.</p>'
     :lines.length?`<div class="btnrow"><button class="cta" data-act="prop-ok" data-i="${i}">${ic('check')}אשר את השינוי</button><button class="ghost" data-act="prop-no" data-i="${i}">לא תודה</button></div>`:'<p class="prop-st">ההצעה כבר לא רלוונטית.</p>';
-  return `<div class="prop"><span class="eyebrow">הצעה לשינוי בתוכנית</span>${P.summary?`<p><b>${esc(P.summary)}</b></p>`:''}<ul>${lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>${st}</div>`}
+  const vids=[...new Set(P.ops.filter(o=>o.op==='replace'&&VID[o.to]).map(o=>o.to))].map(k=>`<button class="pvid" data-act="demo" data-k="${k}" aria-label="הדגמה של ${esc(EX[k].n)}"><video src="${vidUrl(k)}" autoplay loop muted playsinline preload="metadata"></video><span>▶ ${esc(EX[k].n)}</span></button>`).join('');
+  return `<div class="prop"><span class="eyebrow">הצעה לשינוי בתוכנית</span>${P.summary?`<p><b>${esc(P.summary)}</b></p>`:''}<ul>${lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>${vids?`<div class="pvids">${vids}</div>`:''}${st}</div>`}
 function scrollChat(){const m=$('#msgs');if(m){const last=m.lastElementChild;if(last)last.scrollIntoView({block:'end',behavior:reduced()?'auto':'smooth'})}}
 
 let IMPORTS=[];
 function hav(a,b){const R=6371000,t=Math.PI/180;const dLa=(b[0]-a[0])*t,dLo=(b[1]-a[1])*t;const s=Math.sin(dLa/2)**2+Math.cos(a[0]*t)*Math.cos(b[0]*t)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
 function childText(el,tag){for(const c of el.children)if(c.localName===tag)return c.textContent;return null}
-function parseGPX(x,name){const pts=[...x.getElementsByTagName('trkpt')];let dist=0,mov=0,prev=null,pt=null,t0=null,t1=null;const hr=[];
-  for(const p of pts){const ll=[+p.getAttribute('lat'),+p.getAttribute('lon')];const tm=p.getElementsByTagName('time')[0];const t=tm?Date.parse(tm.textContent):NaN;
-    let dd=0;if(prev){dd=hav(prev,ll);dist+=dd}
-    if(!isNaN(t)){if(t0==null)t0=t;t1=t;if(pt!=null){const dt=(t-pt)/1000;if(dt>0&&dt<=30&&dd/dt>0.5)mov+=dt}pt=t}
-    prev=ll;const h=p.getElementsByTagNameNS('*','hr')[0];if(h)hr.push(+h.textContent)}
-  if(t0==null||dist<100)throw new Error('empty');const el=(t1-t0)/1000;
-  return {name,start:t0,km:dist/1000,sec:Math.round(mov>el*0.6?mov:el),hr:hr.length?Math.round(avg(hr)):null}}
-function parseTCX(x,name){const laps=[...x.getElementsByTagName('Lap')];let sec=0,m=0,hw=0,ht=0,t0=null;
+// ===== run files: full track (time, distance, heart rate, elevation, cadence) =====
+const tagNS=(el,n)=>el.getElementsByTagNameNS('*',n)[0]||null;
+const numOr=(x,f)=>{const v=x==null?NaN:parseFloat(x.textContent!=null?x.textContent:x);return isFinite(v)?v:f};
+function parseGPX(x,name){const pts=[];
+  for(const p of x.getElementsByTagName('trkpt')){const tm=tagNS(p,'time');const t=tm?Date.parse(tm.textContent):NaN;if(isNaN(t))continue;
+    pts.push({t,lat:+p.getAttribute('lat'),lon:+p.getAttribute('lon'),alt:numOr(tagNS(p,'ele'),null),hr:numOr(tagNS(p,'hr'),null),cad:numOr(tagNS(p,'cad'),null)})}
+  return runFromPts(name,pts)}
+function parseTCX(x,name){const pts=[];
+  for(const p of x.getElementsByTagName('Trackpoint')){const tm=tagNS(p,'Time');const t=tm?Date.parse(tm.textContent):NaN;if(isNaN(t))continue;const hb=tagNS(p,'HeartRateBpm');
+    pts.push({t,lat:numOr(tagNS(p,'LatitudeDegrees'),null),lon:numOr(tagNS(p,'LongitudeDegrees'),null),alt:numOr(tagNS(p,'AltitudeMeters'),null),d:numOr(tagNS(p,'DistanceMeters'),null),hr:hb?numOr(tagNS(hb,'Value'),null):null,cad:numOr(tagNS(p,'RunCadence')||tagNS(p,'Cadence'),null)})}
+  if(pts.length>=20)return runFromPts(name,pts);
+  // no track: the lap totals only
+  const laps=[...x.getElementsByTagName('Lap')];let sec=0,m=0,hw=0,ht=0,t0=null;
   for(const l of laps){const st=Date.parse(l.getAttribute('StartTime'));if(!isNaN(st)&&(t0==null||st<t0))t0=st;const ts=+(childText(l,'TotalTimeSeconds')||0),dm=+(childText(l,'DistanceMeters')||0);sec+=ts;m+=dm;
     const ah=[...l.children].find(c=>c.localName==='AverageHeartRateBpm');if(ah){const v=+(ah.textContent.trim()||0);if(v){hw+=v*ts;ht+=ts}}}
   if(t0==null){const id=x.getElementsByTagName('Id')[0];if(id)t0=Date.parse(id.textContent)}
   if(t0==null||!m)throw new Error('empty');return {name,start:t0,km:m/1000,sec:Math.round(sec),hr:ht?Math.round(hw/ht):null}}
-async function parseFile(f){const txt=await f.text();const x=new DOMParser().parseFromString(txt,'application/xml');if(x.getElementsByTagName('parsererror').length)throw new Error('xml');
-  if(x.getElementsByTagName('trkpt').length)return parseGPX(x,f.name);if(x.getElementsByTagName('Lap').length)return parseTCX(x,f.name);throw new Error('format')}
+// FIT (Garmin / HealthFit / Strava "export original"): only the record messages are read
+function parseFIT(buf,name){const dv=new DataView(buf);if(buf.byteLength<16)throw new Error('fit');const hs=dv.getUint8(0);
+  if(String.fromCharCode(dv.getUint8(8),dv.getUint8(9),dv.getUint8(10),dv.getUint8(11))!=='.FIT')throw new Error('fit');
+  const end=Math.min(buf.byteLength-2,hs+dv.getUint32(4,true));let p=hs,lastTs=0;const defs={},pts=[];
+  const INV={1:0x7F,2:0xFF,3:0x7FFF,4:0xFFFF,5:0x7FFFFFFF,6:0xFFFFFFFF,10:0,11:0,12:0,0:0xFF};
+  const read=D=>{const o={};for(const [num,size,bt] of D.f){const t=bt&31;let v=null;
+      try{if(size===1&&(t===0||t===2||t===10))v=dv.getUint8(p);else if(size===1&&t===1)v=dv.getInt8(p);else if(size===2&&(t===4||t===11))v=dv.getUint16(p,D.le);else if(size===2&&t===3)v=dv.getInt16(p,D.le);
+        else if(size===4&&(t===6||t===12))v=dv.getUint32(p,D.le);else if(size===4&&t===5)v=dv.getInt32(p,D.le)}catch(e){}
+      if(v!=null&&INV[t]!=null&&v===INV[t])v=null;o[num]=v;p+=size}p+=D.dev;return o};
+  const use=(g,r)=>{if(g!==20||r[253]==null)return;const sc=180/2147483648;const alt=r[78]!=null?r[78]/5-500:r[2]!=null?r[2]/5-500:null;
+    pts.push({t:(r[253]+631065600)*1000,lat:r[0]!=null?r[0]*sc:null,lon:r[1]!=null?r[1]*sc:null,alt,hr:r[3],cad:r[4]!=null?r[4]+(r[53]!=null?r[53]/128:0):null,d:r[5]!=null?r[5]/100:null})};
+  while(p<end){const h=dv.getUint8(p++);
+    if(h&0x80){const D=defs[(h>>5)&3];if(!D)throw new Error('fit');const off=h&31;let ts=(lastTs&~31)+off;if(off<(lastTs&31))ts+=32;lastTs=ts;const r=read(D);r[253]=ts;use(D.g,r);continue}
+    const lt=h&15;
+    if(h&0x40){p++;const le=dv.getUint8(p++)===0;const g=dv.getUint16(p,le);p+=2;const nf=dv.getUint8(p++);const f=[];for(let i=0;i<nf;i++){f.push([dv.getUint8(p),dv.getUint8(p+1),dv.getUint8(p+2)]);p+=3}
+      let dev=0;if(h&0x20){const nd=dv.getUint8(p++);for(let i=0;i<nd;i++){dev+=dv.getUint8(p+1);p+=3}}defs[lt]={g,le,f,dev};continue}
+    const D=defs[lt];if(!D)throw new Error('fit');const r=read(D);if(r[253]!=null)lastTs=r[253];use(D.g,r)}
+  return runFromPts(name,pts)}
+// raw points → totals + an evenly spaced track on the moving clock (auto-pause and standing still are cut out)
+function runFromPts(name,pts){pts=pts.filter(p=>isFinite(p.t)).sort((a,b)=>a.t-b.t);if(pts.length<20)throw new Error('empty');
+  const hasD=pts.filter(p=>p.d!=null).length>pts.length*.8;let d=0,prev=null;
+  for(const p of pts){if(hasD){if(p.d!=null)d=Math.max(d,p.d)}else if(p.lat!=null&&p.lon!=null){if(prev){const s=hav([prev.lat,prev.lon],[p.lat,p.lon]);const dt=(p.t-prev.t)/1000;if(s<Math.max(60,dt*9))d+=s}prev=p}p.cd=d}
+  if(d<100)throw new Error('empty');
+  let mt=0,stops=0,still=0;pts[0].mt=0;
+  for(let i=1;i<pts.length;i++){const dt=(pts[i].t-pts[i-1].t)/1000,dd=pts[i].cd-pts[i-1].cd;if(dt>0&&dt<=20&&dd/dt>.6){mt+=dt;if(still>=15)stops++;still=0}else still+=Math.min(dt,600);pts[i].mt=mt}
+  const el=(pts[pts.length-1].t-pts[0].t)/1000,useM=mt>el*.6;if(!useM)pts.forEach(p=>p.mt=(p.t-pts[0].t)/1000);const dur=useM?mt:el;
+  const cads=pts.map(p=>p.cad).filter(c=>c>20),cadX=cads.length&&fMed(cads)<120?2:1;// stride rate (one foot) → steps per minute
+  const step=dur<=4000?1:dur<=8000?2:Math.ceil(dur/4000),P=[];let j=0;// every second (2 s for very long runs)
+  const near=(i,k)=>{for(let q=0;q<=10;q++){for(const z of [i-q,i+q]){const v=pts[z]&&pts[z][k];if(v!=null&&v>0)return v}}return null};
+  for(let T=0;T<=dur+1e-6;T+=step){while(j<pts.length-1&&pts[j+1].mt<T)j++;const a=pts[j],b=pts[Math.min(j+1,pts.length-1)];const f=b.mt>a.mt?Math.max(0,Math.min(1,(T-a.mt)/(b.mt-a.mt))):0;
+    const alt=a.alt!=null&&b.alt!=null?a.alt+(b.alt-a.alt)*f:(a.alt??b.alt);const hr=near(j,'hr'),cad=near(j,'cad');
+    P.push([Math.round(T),Math.round(a.cd+(b.cd-a.cd)*f),hr?Math.round(hr):0,alt==null?null:Math.round(alt*10),cad?Math.round(cad*cadX):0])}
+  const hrs=pts.map(p=>p.hr).filter(h=>h>0);
+  return {name,start:pts[0].t,km:d/1000,sec:Math.round(dur),hr:hrs.length?Math.round(avg(hrs)):null,trk:{v:1,start:pts[0].t,stops,p:P}}}
+async function parseFile(f){if(/\.fit$/i.test(f.name))return parseFIT(await f.arrayBuffer(),f.name);
+  const txt=await f.text();const x=new DOMParser().parseFromString(txt,'application/xml');if(x.getElementsByTagName('parsererror').length)throw new Error('xml');
+  if(x.getElementsByTagName('trkpt').length)return parseGPX(x,f.name);if(x.getElementsByTagName('Trackpoint').length||x.getElementsByTagName('Lap').length)return parseTCX(x,f.name);throw new Error('format')}
+// tracks live in their own storage key (they are big), the day keeps a short summary for the coach
+// second-by-second reading of the run: 10 s blocks merged bottom-up into stretches of similar effort and terrain,
+// plus moments (heart-rate jumps, sudden slow-downs / surges, cadence changes) found by scanning every second
+function runTimeline(T,D,V,GS,HR,G,AS,CD,step,isInt,M){const n=T.length;const B=Math.max(1,Math.round(10/step));const terr=g=>g>.03?1:g<-.03?-1:0;
+  let sg=[];for(let a=0;a<n-1;a+=B){const b=Math.min(n-1,a+B);let s=0,h=0,hc=0,g=0;for(let q=a;q<b;q++){s+=GS[q];g+=G[q];if(HR[q]){h+=HR[q];hc++}}const k=b-a;sg.push({a,b,s:s/k,g:g/k,h:hc?h/hc:null,k})}
+  const cost=(x,y)=>{const p=Math.abs(Math.log(Math.max(.3,x.s)/Math.max(.3,y.s)));return p+(terr(x.g)!==terr(y.g)?.06:0)+(x.h&&y.h?Math.abs(x.h-y.h)/400:0)};
+  const merge=i=>{const x=sg[i],y=sg[i+1],k=x.k+y.k;sg.splice(i,2,{a:x.a,b:y.b,s:(x.s*x.k+y.s*y.k)/k,g:(x.g*x.k+y.g*y.k)/k,h:x.h&&y.h?(x.h*x.k+y.h*y.k)/k:(x.h||y.h),k})};
+  const maxSeg=Math.max(6,Math.min(40,Math.round((T[n-1]-T[0])/90)));
+  for(;;){if(sg.length<2)break;let bi=-1,bc=1e9;for(let i=0;i<sg.length-1;i++){const c=cost(sg[i],sg[i+1]);if(c<bc){bc=c;bi=i}}if(bc<.045||sg.length>maxSeg)merge(bi);else break}
+  for(let i=0;i<sg.length;i++){if(sg.length<2)break;if(T[sg[i].b]-T[sg[i].a]>=30)continue;const l=i>0?cost(sg[i-1],sg[i]):1e9,r=i<sg.length-1?cost(sg[i],sg[i+1]):1e9;merge(l<=r?i-1:i);i=-1}
+  const av=(a,b,arr)=>{let s=0,c=0;for(let q=a;q<=b;q++)if(arr[q]){s+=arr[q];c++}return c?s/c:null};const w10=Math.max(1,Math.round(10/step));
+  const tl=sg.map((x,i)=>{const a=x.a,b=x.b,dist=Math.max(1,D[b]-D[a]),sec=T[b]-T[a];let mx=0;for(let q=a;q<=b;q++)if(HR[q]>mx)mx=HR[q];
+    const gr=AS[a]!=null&&AS[b]!=null?(AS[b]-AS[a])/dist:0;return {t0:T[a],t1:T[b],d0:D[a],d1:D[b],pace:sec/(dist/1000),gap:1000/Math.max(.3,x.s),hr0:av(a,Math.min(b,a+w10),HR),hr1:av(Math.max(a,b-w10),b,HR),hrMax:mx||null,grade:gr,cad:av(a,b,CD),terr:terr(gr)}});
+  tl.forEach((x,i)=>{const p=tl[i-1];x.chg=!p?'':x.gap<p.gap*.95?'מהיר יותר':x.gap>p.gap*1.05?'איטי יותר':''});
+  // moments
+  const SW=Math.max(1,Math.round(10/step)),SG=GS.map((v,i)=>{let s=0,c=0;for(let q=Math.max(0,i-SW);q<=Math.min(n-1,i+SW);q++){s+=GS[q];c++}return s/c});
+  const mo=[];let skip=-1;const J=Math.round(30/step),P60=Math.round(60/step),N20=Math.round(20/step);
+  for(let i=0;i+J<n;i++){if(i<skip)continue;const j=i+J;
+    if(T[i]>=180&&HR[i]&&HR[j]&&HR[j]-HR[i]>=12){const why=G[j]>.03||G[i+(J>>1)]>.03?'בעלייה':SG[j]>SG[i]*1.06?'אחרי האצה':'בלי שינוי בקצב';mo.push({t:T[j],d:D[j],mag:(HR[j]-HR[i])/12,txt:`הדופק עלה מ-${HR[i]} ל-${HR[j]} תוך 30 שניות, ${why}${HR[j]>=M*.93?' (אזור מקסימלי)':''}`});skip=j+P60;continue}
+    if(!isInt&&i>=P60&&i+N20<n&&Math.abs(G[i])<.02){let pb=0,pa=0;for(let q=i-P60;q<i;q++)pb+=SG[q];for(let q=i;q<i+N20;q++)pa+=SG[q];pb/=P60;pa/=N20;
+      if(pa<pb*.85&&pb>1.5){mo.push({t:T[i],d:D[i],mag:(pb-pa)/pb*6,txt:`האטה חדה בשטח מישורי: מ-${mmss(1000/pb)} ל-${mmss(1000/pa)} לק״מ`});skip=i+P60;continue}
+      if(pa>pb*1.15&&pb>1){mo.push({t:T[i],d:D[i],mag:(pa-pb)/pb*6,txt:`האצה: מ-${mmss(1000/pb)} ל-${mmss(1000/pa)} לק״מ`});skip=i+P60;continue}}}
+  if(CD.filter(Boolean).length>n*.6){const cw=Math.round(60/step);for(let i=cw;i+cw<n;i+=cw){const a=av(i-cw,i,CD),b=av(i,i+cw,CD);if(a&&b&&a-b>=8&&Math.abs(G[i])<.03)mo.push({t:T[i],d:D[i],mag:(a-b)/8,txt:`קצב הצעדים ירד מ-${Math.round(a)} ל-${Math.round(b)} לדקה`})}}
+  mo.sort((a,b)=>b.mag-a.mag);const keep=[];for(const m of mo){if(keep.length>=12)break;if(keep.some(k=>Math.abs(k.t-m.t)<60))continue;keep.push(m)}keep.sort((a,b)=>a.t-b.t);
+  return {tl,mo:keep}}
+const TERR=['ירידה','מישור','עלייה'];
+// the run as a compact table for the AI coach: every R seconds, averages over that window (every second is counted)
+function runSeries(A,R){const n=A.T.length,k=Math.max(1,Math.round(R/A.step)),rows=[];
+  for(let a=0;a<n-1;a+=k){const b=Math.min(n-1,a+k);let v=0,c=0,h=0,hc=0,hm=0,g=0,cd=0,cc=0;for(let q=a;q<b;q++){v+=A.V[q];g+=A.G[q];c++;if(A.HR[q]){h+=A.HR[q];hc++;if(A.HR[q]>hm)hm=A.HR[q]}if(A.CD[q]){cd+=A.CD[q];cc++}}
+    if(!c)continue;const sp=v/c;rows.push(`${mmss(A.T[a])},${(A.D[a]/1000).toFixed(2)},${sp>.8?Math.round(1000/sp):''},${hc?Math.round(h/hc):''},${hm||''},${Math.round(g/c*100)},${cc?Math.round(cd/cc):''}`)}
+  return 'זמן,ק״מ,קצב(שנ׳ לק״מ),דופק ממוצע,דופק שיא,שיפוע%,צעדים\n'+rows.join('\n')}
+const TRK_LS='maslul12:trk';
+function trkAll(){try{return JSON.parse(localStorage.getItem(TRK_LS)||'{}')||{}}catch(e){return {}}}
+function trkGet(id){return id?trkAll()[id]||null:null}
+function trkPut(id,tr){const all=trkAll();all[id]={...tr,at:Date.now()};const old=()=>Object.keys(all).filter(k=>k!==id).sort((a,b)=>(all[a].at||0)-(all[b].at||0))[0];
+  while(Object.keys(all).length>12)delete all[old()];
+  for(;;){try{localStorage.setItem(TRK_LS,JSON.stringify(all));return true}catch(e){const k=old();if(!k)return false;delete all[k]}}}
+
+// ===== run analysis =====
+const ZC=['#7aa7ff','#3ecf8e','#ffc24b','#ff8a3d','#ff4d4d'],ZN=['קל מאוד','קל','בינוני','קשה','מקסימלי'];
+const gapF=g=>g>=0?1+3.3*Math.min(g,.3):(-g<=.1?1-1.8*-g:.82+(-g-.1));// grade-adjusted effort: uphill costs, gentle downhill helps, steep downhill brakes
+const hrMaxOf=hrs=>S.cfg.hrMax||Math.max(205,Math.round(fPct(hrs,.995)||0));
+const zoneOf=(h,M)=>{const r=h/M;return r<.7?0:r<.8?1:r<.87?2:r<.93?3:4};
+const RTYPE={easy:'ריצה קלה',long:'ריצה ארוכה',quality:'אימון איכות',extra:'ריצה'};
+function runCtx(d,id){const b=dayBlocks(d).find(b=>b.id===id);return {type:b&&['easy','long','quality'].includes(b.type)?b.type:'extra',b}}
+function runAnalyze(tr,ctx){ctx=ctx||{};const P=tr.p,n=P.length;if(n<10)return null;
+  const T=P.map(p=>p[0]),D=P.map(p=>p[1]),HR=P.map(p=>p[2]||null),AL=P.map(p=>p[3]==null?null:p[3]/10),CD=P.map(p=>p[4]||null);
+  const step=(T[n-1]-T[0])/(n-1)||5,W=Math.max(1,Math.round(15/step));
+  const V=T.map((t,i)=>{const a=Math.max(0,i-W),b=Math.min(n-1,i+W);return T[b]>T[a]?(D[b]-D[a])/(T[b]-T[a]):0});
+  const hasAlt=AL.filter(x=>x!=null).length>n*.7,hasHR=HR.filter(Boolean).length>n*.6,hasCad=CD.filter(Boolean).length>n*.6;
+  const AW=Math.max(2,Math.round(20/step));const AS=AL.map((v,i)=>{if(!hasAlt)return null;let s=0,c=0;for(let q=Math.max(0,i-AW);q<=Math.min(n-1,i+AW);q++)if(AL[q]!=null){s+=AL[q];c++}return c?s/c:null});
+  const G=new Array(n).fill(0);if(hasAlt){let a=0,b=0;for(let i=0;i<n;i++){while(a<i&&D[i]-D[a+1]>=50)a++;while(b<n-1&&D[b]-D[i]<50)b++;const dd=D[b]-D[a];G[i]=dd>30&&AS[a]!=null&&AS[b]!=null?Math.max(-.3,Math.min(.3,(AS[b]-AS[a])/dd)):0}}
+  const GS=V.map((v,i)=>v*gapF(G[i]));
+  const km=D[n-1]/1000,sec=T[n-1]-T[0],pace=sec/km;
+  let gain=0,loss=0;if(hasAlt){let ref=AS.find(x=>x!=null);for(const a of AS){if(a==null)continue;if(a-ref>=2){gain+=a-ref;ref=a}else if(ref-a>=2){loss+=ref-a;ref=a}}}
+  const hrs=HR.filter(Boolean),M=hasHR?hrMaxOf(hrs):null,hrAvg=hasHR?Math.round(avg(hrs)):null,hrPeak=hasHR?Math.round(fPct(hrs,.99)):null;
+  const zones=[0,0,0,0,0];if(hasHR)for(let i=1;i<n;i++)if(HR[i])zones[zoneOf(HR[i],M)]+=T[i]-T[i-1];const zt=zones.reduce((a,b)=>a+b,0)||1;const zp=zones.map(z=>z/zt);
+  const seg=(i0,i1,t0,t1,dist)=>{let ds=0,fs=0,hs=[],cs=[];for(let q=Math.max(1,i0);q<=i1;q++){const dd=D[q]-D[q-1];ds+=dd;fs+=dd*gapF(G[q]);if(HR[q])hs.push(HR[q]);if(CD[q])cs.push(CD[q])}
+    const s=t1-t0,p=s/(dist/1000),fac=ds>0?fs/ds:1;let gn=0;if(hasAlt){let ref=AS[i0];for(let q=i0;q<=i1;q++){if(AS[q]==null||ref==null)continue;if(AS[q]-ref>=1){gn+=AS[q]-ref;ref=AS[q]}else if(ref-AS[q]>=1)ref=AS[q]}}
+    return {dist,sec:s,pace:p,gap:p/fac,hr:hs.length?Math.round(avg(hs)):null,gain:Math.round(gn),grade:hasAlt&&AS[i0]!=null&&AS[i1]!=null?(AS[i1]-AS[i0])/dist:0,cad:cs.length?Math.round(avg(cs)):null,i0,i1}};
+  const splits=[];{let i=1,pt=T[0],pi=0;for(let k=1;k*1000<=D[n-1];k++){while(i<n-1&&D[i]<k*1000)i++;const f=D[i]>D[i-1]?(k*1000-D[i-1])/(D[i]-D[i-1]):1;const tk=T[i-1]+f*(T[i]-T[i-1]);splits.push(seg(pi,i,pt,tk,1000));pt=tk;pi=i}
+    const rem=D[n-1]-splits.length*1000;if(rem>=300)splits.push(seg(pi,n-1,pt,T[n-1],rem))}
+  const half=D[n-1]/2;let hi=0;while(hi<n-1&&D[hi]<half)hi++;const H1=seg(0,hi,T[0],T[hi],D[hi]),H2=seg(hi,n-1,T[hi],T[n-1],D[n-1]-D[hi]);
+  // fast segments (intervals): grade-adjusted speed clearly above the run's typical speed for 40 s or more
+  const mv=GS.filter(v=>v>1),med=fMed(mv)||0;let reps=[];
+  {let s0=null;const raw=[];for(let i=0;i<n;i++){const f=GS[i]>med*1.12;if(f&&s0==null)s0=i;if((!f||i===n-1)&&s0!=null){raw.push([s0,f?i:i-1]);s0=null}}
+    const mg=[];for(const r of raw){const l=mg[mg.length-1];if(l&&T[r[0]]-T[l[1]]<=12)l[1]=r[1];else mg.push([...r])}
+    reps=mg.filter(([a,b])=>T[b]-T[a]>=40).map(([a,b])=>{const s=seg(a,b,T[a],T[b],Math.max(1,D[b]-D[a]));let pk=0;for(let q=a;q<=b;q++)if(HR[q]>pk)pk=HR[q];
+      let rec=null;if(hasHR){const e=T[b]+60;let q=b;while(q<n-1&&T[q]<e)q++;if(T[q]>=e-step&&HR[q]&&pk)rec=pk-HR[q]}return {...s,peak:pk||null,rec,dm:D[a]}}).filter(r=>r.gap<=(med>0?1000/med:1e9)/1.15)}
+  const isInt=reps.length>=(ctx.type==='quality'?2:3);
+  // climbs: 150 m or more above 3 %
+  const climbs=[];if(hasAlt){let s0=null;for(let i=0;i<n;i++){const up=G[i]>.03;if(up&&s0==null)s0=i;if((!up||i===n-1)&&s0!=null){const e=up?i:i-1;if(D[e]-D[s0]>=150){let pk=0;for(let q=s0;q<=Math.min(n-1,e+Math.round(30/step));q++)if(HR[q]>pk)pk=HR[q];
+      climbs.push({d0:D[s0],len:D[e]-D[s0],gain:Math.max(0,(AS[e]??0)-(AS[s0]??0)),grade:(AS[e]-AS[s0])/(D[e]-D[s0]),hr0:HR[s0],peak:pk||null,pace:(T[e]-T[s0])/((D[e]-D[s0])/1000)})}s0=null}}}
+  // decoupling: speed per heartbeat, first half vs second half (after a 10 % warm-up)
+  let dec=null;if(hasHR&&sec>=1200&&!isInt){const i0=Math.round(n*.1),im=Math.round((i0+n)/2);const ef=(a,b)=>{let s=0,h=0;for(let q=a;q<b;q++){if(!HR[q]||GS[q]<1)continue;s+=GS[q];h+=HR[q]}return h?s/h:null};const e1=ef(i0,im),e2=ef(im,n);if(e1&&e2)dec=(e1-e2)/e1}
+  let cad=null,cadDrop=null;if(hasCad){const cs=CD.filter(Boolean);cad=Math.round(fMed(cs));const a=CD.slice(Math.round(n*.05),Math.round(n*.5)).filter(Boolean),b=CD.slice(Math.round(n*.8)).filter(Boolean);if(a.length>5&&b.length>5)cadDrop=Math.round(fMed(a)-fMed(b))}
+  // ---- verdicts ----
+  const good=[],fix=[],ev=[],ty=ctx.type==='extra'?(isInt?'quality':'easy'):ctx.type,easyish=ty==='easy'||ty==='long';
+  const add=(arr,txt,o)=>{arr.push({txt,...(o||{})});if(o&&o.d!=null)ev.push({d:o.d,good:arr===good,txt:o.ev||txt})};
+  const z12=Math.round((zp[0]+zp[1])*100),z3p=Math.round((zp[2]+zp[3]+zp[4])*100),z4p=Math.round((zp[3]+zp[4])*100);
+  if(hasHR&&easyish){if(z3p>25)add(fix,`הריצה הייתה קשה מדי ל${RTYPE[ty]}: ${z3p}% מהזמן בדופק בינוני ומעלה (מעל ${Math.round(M*.8)}). ריצה קלה צריכה להיות ברובה באזורים 1–2, בקצב שאפשר לדבר בו במשפטים שלמים.`,{pr:1,next:`להאט עד שהדופק נשאר מתחת ל-${Math.round(M*.8)} רוב הזמן, גם אם זה מרגיש איטי.`});
+    else if(z3p<=10)add(good,`ריצה קלה באמת: ${z12}% מהזמן באזורים 1–2. ככה בונים בסיס בלי להתעייף.`)}
+  if(easyish&&splits.length>=3){const f=splits[0].gap,rest=fMed(splits.slice(1).filter(s=>s.dist>=900).map(s=>s.gap));if(rest){const df=rest-f;
+    if(df>rest*.04)add(fix,`הק״מ הראשון היה מהיר ב-${Math.round(df)} שניות מהקצב של שאר הריצה. מתחילים לאט יותר: הגוף צריך 5–10 דקות להתחמם.`,{pr:2,d:500,ev:'פתיחה מהירה',next:'ק״מ ראשון איטי בכוונה, 10–20 שניות לאט מהקצב הרגיל.'});
+    else if(df<=rest*.01)add(good,'פתיחה רגועה, בלי לצאת מהר מדי.',{d:300,ev:'פתיחה רגועה'})}}
+  if(!isInt&&km>=3){const r=H2.gap/H1.gap;
+    if(r<.985)add(good,`חלוקה שלילית: החצי השני היה מהיר יותר (${mmss(H2.gap)} מול ${mmss(H1.gap)} לק״מ, מותאם לשיפוע). ככה בונים ריצה נכון.`,{d:half,ev:'החצי השני מהיר יותר'});
+    else if(r>1.05){const hrUp=H1.hr&&H2.hr&&H2.hr>H1.hr+4;add(fix,`האטת בחצי השני: ${mmss(H2.gap)} מול ${mmss(H1.gap)} לק״מ (מותאם לשיפוע)${hrUp?`, והדופק עלה מ-${H1.hr} ל-${H2.hr}`:''}. ${ty==='long'?'בריצה ארוכה פותחים לאט, שותים לפני, ובריצה מעל שעה לוקחים מים.':'פותחים לאט יותר כדי שיישאר כוח לסוף.'}`,{pr:3,d:half,ev:'האטה בחצי השני',next:'לפתוח לאט יותר ולנסות לסיים את החצי השני באותו קצב או מהר יותר.'})}
+    else add(good,`קצב אחיד לאורך הריצה (${mmss(H1.gap)} ו-${mmss(H2.gap)} לק״מ בשני החצאים, מותאם לשיפוע).`)}
+  if(dec!=null){if(dec>.07)add(fix,`הדופק "ברח": באותו קצב, הדופק בחצי השני היה גבוה בכ-${Math.round(dec*100)}% (cardiac drift). סיבות נפוצות: חום, מעט שתייה, או קצב מהיר מדי לבסיס האירובי כרגע.`,{pr:4,next:'לשתות לפני הריצה, ולרוץ את הריצות הקלות לאט יותר. זה משתפר עם הזמן.'});
+    else if(dec<.04&&sec>=1800)add(good,`הדופק נשאר יציב ביחס לקצב לאורך כל הריצה (שינוי של ${Math.max(0,Math.round(dec*100))}% בלבד). סימן לבסיס אירובי טוב.`)}
+  if(hasHR&&climbs.length&&easyish){const hard=climbs.filter(c=>c.peak&&zoneOf(c.peak,M)>=3).sort((a,b)=>b.peak-a.peak);
+    if(hard.length){const c=hard[0];add(fix,`בעלייה בק״מ ${r1(c.d0/1000)} (${Math.round(c.len)} מ׳, שיפוע ${Math.round(c.grade*100)}%) הדופק טיפס ל-${c.peak}${hard.length>1?`, ועוד ${hard.length-1} עליות דומות`:''}. בעליות בריצה קלה מקצרים צעד ומאטים: שומרים על אותו מאמץ, לא על אותו קצב.`,{pr:5,d:c.d0+c.len/2,ev:`עלייה: דופק ${c.peak}`,next:'בעלייה הבאה: צעדים קצרים, להאט, ולהגיע לראש העלייה עם אותה נשימה.'})}
+    else add(good,`בעליות (${climbs.length}) שמרת על מאמץ סביר, הדופק לא נכנס לאזור קשה.`,{d:climbs[0].d0+climbs[0].len/2,ev:'עלייה במאמץ טוב'})}
+  if(isInt){const ps=reps.map(r=>r.gap),f=ps[0],l=ps[ps.length-1],mn=avg(ps),sp=(Math.max(...ps)-Math.min(...ps))/mn;
+    reps.forEach((r,i)=>ev.push({d:r.dm+r.dist/2,good:null,txt:`חזרה ${i+1}: ${mmss(r.pace)}`,rep:1}));
+    if(ctx.b&&ctx.b.q&&ctx.b.q.reps>1&&Math.abs(reps.length-ctx.b.q.reps)>=1)add(fix,`זיהיתי ${reps.length} חזרות מהירות, ובתוכנית היו ${ctx.b.q.reps}. אם זה לא מדויק, ייתכן שחלק מהחזרות היו איטיות מדי או קצרות מ-40 שניות.`,{pr:6});
+    if(reps.length>=3&&ps[0]<avg(ps.slice(1))*.95)add(fix,`יצאת מהר מדי בחזרה הראשונה (${mmss(reps[0].pace)} מול ממוצע ${mmss(avg(reps.slice(1).map(r=>r.pace)))} בשאר). מתחילים בקצב שאפשר להחזיק עד הסוף.`,{pr:2,next:'החזרה הראשונה בקצב של האחרונה, לא יותר מהר.'});
+    else if(l>f*1.05)add(fix,`החזרות האטו לקראת הסוף (${mmss(reps[0].pace)} בראשונה, ${mmss(reps[reps.length-1].pace)} באחרונה). בחזרות הראשונות מתאפקים קצת כדי לסיים חזק.`,{pr:2,next:'להתחיל את החזרות 3–5 שניות לק״מ לאט יותר.'});
+    else if(sp<.04)add(good,`חזרות אחידות מאוד (${reps.map(r=>mmss(r.pace)).join(', ')} לק״מ). שליטה מצוינת בקצב.`);
+    else if(l<=f)add(good,'סיימת את החזרות חזק: האחרונה מהירה כמו הראשונה או יותר.');
+    const rc=reps.map(r=>r.rec).filter(x=>x!=null);if(rc.length>=2){const ar=Math.round(avg(rc));if(ar>=25)add(good,`הדופק יורד מהר אחרי כל חזרה (בממוצע ${ar} פעימות בדקה הראשונה). התאוששות טובה.`);else if(ar<12)add(fix,`הדופק כמעט לא ירד בין החזרות (${ar} פעימות בדקה). כנראה המנוחה קצרה מדי או שהחזרות מהירות מדי.`,{pr:4})}
+    if(hasHR){const mx=reps.filter(r=>r.peak&&zoneOf(r.peak,M)>=4).length;if(mx>=Math.max(2,reps.length/2))add(fix,`ב-${mx} חזרות הדופק הגיע לאזור המקסימלי (מעל ${Math.round(M*.93)}). אימון איכות הוא בערך 7 מתוך 10, לא ספרינט.`,{pr:1,next:'החזרות בקצב שאפשר להמשיך בו עוד חזרה אחת בסוף.'})}}
+  else if(ty==='quality'&&hasHR){if(z4p>=15)add(good,`עבודה איכותית: ${z4p}% מהזמן באזור קשה.`);else add(fix,'לא זיהיתי חזרות מהירות ברורות בקובץ. אם עשית אינטרוולים, ייתכן שהקצב בחזרות היה קרוב מדי לקצב הקל.',{pr:6})}
+  if(cad){if(cad<155)add(fix,`קצב צעדים ממוצע ${cad} לדקה, נמוך יחסית. נסה צעדים קצרים ומהירים יותר (בערך 165–175 לדקה) בלי להאריך את הצעד. זה מוריד עומס מהברכיים והשוקיים.`,{pr:7,next:'2–3 פעמים בריצה, דקה של צעדים קצרים ומהירים.'});
+    else if(cad>=162)add(good,`קצב צעדים טוב: ${cad} לדקה.`);
+    if(cadDrop!=null&&cadDrop>=6)add(fix,`בסוף הריצה קצב הצעדים ירד ב-${cadDrop} צעדים לדקה. זה סימן לעייפות. בקטע האחרון חושבים על צעדים קלים ומהירים.`,{pr:8,d:D[Math.round(n*.85)],ev:'הצעדים התארכו'})}
+  if(hasHR){let pi=0;for(let i=1;i<n;i++)if((HR[i]||0)>(HR[pi]||0))pi=i;ev.push({d:D[pi],good:null,txt:`דופק שיא ${HR[pi]}`,pk:1})}
+  const notes=[];if(!hasHR)notes.push('בקובץ אין דופק, אז הניתוח לפי קצב ושיפוע בלבד. בייצוא מ-Strava (GPX) או מ-HealthFit (FIT) הדופק נכלל.');if(!hasAlt)notes.push('בקובץ אין גובה, אז אין ניתוח של עליות וירידות.');if(tr.stops>=3)notes.push(`היו ${tr.stops} עצירות באמצע הריצה. הניתוח לפי זמן תנועה בלבד.`);
+  const {tl,mo}=runTimeline(T,D,V,GS,HR,G,AS,CD,step,isInt,M);
+  fix.sort((a,b)=>(a.pr||9)-(b.pr||9));const next=(fix.find(f=>f.next)||{}).next||(good.length?'להמשיך בדיוק ככה, ולשמור על הריצות הקלות קלות.':'');
+  ev.sort((a,b)=>a.d-b.d);
+  return {tl,mo,step,ty,km,sec,pace,gain:Math.round(gain),loss:Math.round(loss),hasHR,hasAlt,hasCad,M,hrAvg,hrPeak,zp,splits,H1,H2,reps:isInt?reps:[],climbs,dec,cad,good,fix,next,ev,notes,T,D,V,GS,HR,AS,G,CD}}
+function anShort(A){if(!A)return '';const p=[];if(A.hasHR)p.push(`אזורים 1–2: ${Math.round((A.zp[0]+A.zp[1])*100)}%`);if(A.dec!=null)p.push(`סחף דופק ${Math.round(A.dec*100)}%`);
+  if(A.reps.length)p.push(`${A.reps.length} חזרות: ${A.reps.map(r=>mmss(r.pace)).join('/')}`);else if(A.km>=3)p.push(A.H2.gap<A.H1.gap*.985?'חצי שני מהיר':A.H2.gap>A.H1.gap*1.05?'האטה בחצי השני':'קצב אחיד');
+  if(A.gain)p.push(`טיפוס ${A.gain} מ׳`);if(A.cad)p.push(`צעדים ${A.cad}`);if(A.fix[0])p.push('עיקר לשיפור: '+A.fix[0].txt.split('.')[0]);return p.join(', ').slice(0,220)}
+const RNC={};
+function analysisFor(d,id){const r=peek(d).runs[id];if(!r||!r.tid)return null;const tr=trkGet(r.tid);if(!tr)return null;const k=r.tid+'|'+(S.cfg.hrMax||'')+'|'+id;
+  if(!RNC[k])RNC[k]=runAnalyze(tr,runCtx(d,id));return RNC[k]}
+function runChart(A){const W=640,pl=64,pr=10,ph=100,gp=44,top=34;const n=A.T.length,Dm=A.D[n-1]||1;const x=d=>W-pr-(W-pl-pr)*d/Dm;
+  const panels=[];const pc=A.GS.map((v,i)=>A.V[i]>.8?1000/A.V[i]:null);const pv=pc.filter(Boolean);let plo=fPct(pv,.03),phi=fPct(pv,.97);const pad=Math.max(10,(phi-plo)*.12);plo-=pad;phi+=pad;
+  panels.push({k:'pace',t:'קצב (דק׳/ק״מ)',vals:pc,lo:plo,hi:phi,inv:1,fmt:v=>mmss(v),cls:'rp-pace'});
+  if(A.hasHR){const hv=A.HR.filter(Boolean);panels.push({k:'hr',t:'דופק',vals:A.HR,lo:Math.max(60,Math.min(...hv)-8),hi:Math.max(...hv)+6,fmt:v=>Math.round(v),cls:'rp-hr',zones:1})}
+  if(A.hasAlt&&Math.max(...A.AS.filter(v=>v!=null))-Math.min(...A.AS.filter(v=>v!=null))>=3){const av=A.AS.filter(v=>v!=null);const lo=Math.min(...av),hi=Math.max(...av);const c=(lo+hi)/2,h=Math.max(20,hi-lo)*.6;panels.push({k:'alt',t:'גובה (מ׳)',vals:A.AS,lo:c-h,hi:c+h,fmt:v=>Math.round(v),cls:'rp-alt',area:1})}
+  const H=top+panels.length*(ph+gp)+6;let g='';
+  panels.forEach((P,pi)=>{const y0=top+pi*(ph+gp);const y=v=>P.inv?y0+ph*(v-P.lo)/(P.hi-P.lo):y0+ph*(1-(v-P.lo)/(P.hi-P.lo));P.y=y;P.y0=y0;
+    g+=`<text class="axis rt" x="${W-pr}" y="${y0-9}" text-anchor="start">${P.t}</text>`;
+    if(P.zones){for(let z=1;z<5;z++){const lo=[0,.7,.8,.87,.93][z]*A.M,hi=(z<4?[0,.7,.8,.87,.93][z+1]:1.1)*A.M;const a=Math.max(P.lo,lo),b=Math.min(P.hi,hi);if(b>a)g+=`<rect x="${pl}" width="${W-pl-pr}" y="${y(b)}" height="${y(a)-y(b)}" fill="${ZC[z]}" opacity=".12"/>`}}
+    for(let q=0;q<=2;q++){const v=P.lo+(P.hi-P.lo)*q/2;g+=`<line class="grid" x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${pl-6}" y="${y(v)+4}" text-anchor="end">${P.fmt(v)}</text>`}
+    const st=Math.max(1,Math.floor(n/900));let path='',on=false;for(let i=0;i<n;i+=st){const v=P.vals[i];if(v==null||v<P.lo-1e3){on=false;continue}const cv=Math.max(P.lo,Math.min(P.hi,v));path+=(on?'L':'M')+x(A.D[i]).toFixed(1)+','+y(cv).toFixed(1);on=true}
+    if(P.area)g+=`<path class="rp-area" d="${path} L${x(Dm).toFixed(1)},${y0+ph} L${x(0).toFixed(1)},${y0+ph} Z"/>`;
+    g+=`<path class="${P.cls}" d="${path}"/>`});
+  const stp=Dm>15000?5:Dm>8000?2:1;for(let k=0;k*1000<=Dm;k+=stp){const X=x(k*1000);g+=`<line class="grid" x1="${X}" x2="${X}" y1="${top}" y2="${H-14}" opacity=".5"/><text class="axis" x="${X}" y="${H-2}" text-anchor="middle">${k}</text>`}
+  const marks=A.ev.filter(e=>e.good!==null||e.pk);marks.forEach((e,i)=>{const X=x(e.d);const c=e.pk?'var(--muted,#8a93a8)':e.good?'var(--good,#3ecf8e)':'var(--bad,#ff5a5a)';e.n=i+1;
+    g+=`<line x1="${X}" x2="${X}" y1="${top}" y2="${H-14}" stroke="${c}" stroke-dasharray="3 4" opacity=".7"/><circle cx="${X}" cy="${top+11}" r="12" fill="${c}"/><text x="${X}" y="${top+17}" text-anchor="middle" class="rp-n">${i+1}</text>`});
+  A.reps.forEach(r=>{g+=`<rect x="${x(r.dm+r.dist)}" width="${Math.max(2,x(r.dm)-x(r.dm+r.dist))}" y="${top}" height="${ph}" fill="var(--quality,#ff7a1a)" opacity=".13"/>`});
+  return {svg:`<svg class="chart rchart" id="rnSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="גרף קצב, דופק וגובה לאורך הריצה" data-pl="${pl}" data-pr="${pr}" data-w="${W}">${g}<line id="rnCur" x1="0" x2="0" y1="${top}" y2="${H-14}" stroke="var(--chalk)" stroke-width="1.5" opacity="0"/></svg>`,marks}}
+function openRunAn(d,id){const r=peek(d).runs[id];const A=analysisFor(d,id);const el=$('#sheet');if(!r)return;
+  if(!A){el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="ניתוח ריצה"><div class="panel-h"><h2>ניתוח ריצה</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div><p>לריצה הזו אין מסלול מלא שמור בטלפון הזה. מייבאים שוב את הקובץ מהשעון כדי לקבל ניתוח.</p><button class="cta" data-act="import">${ic('watch')}ייבוא מהשעון</button></div>`;el.hidden=false;return}
+  const C=runChart(A);const li=(a,c)=>a.map(x=>`<li class="${c}">${c==='ok'?'✓':'✗'} ${esc(x.txt)}</li>`).join('');
+  const zb=A.hasHR?`<div class="zbar" role="img" aria-label="זמן באזורי דופק">${A.zp.map((p,i)=>p>.005?`<span style="flex:${p};background:${ZC[i]}" title="אזור ${i+1}: ${Math.round(p*100)}%"></span>`:'').join('')}</div><div class="zleg">${A.zp.map((p,i)=>`<span><i style="background:${ZC[i]}"></i>${i+1} ${ZN[i]} ${Math.round(p*100)}%</span>`).join('')}</div><p class="hint">אזורים לפי דופק מקסימלי ${A.M}${S.cfg.hrMax?'':' (משוער)'} · <label>שנה: <input class="inp sm" id="hrMaxIn" type="number" inputmode="numeric" min="170" max="230" value="${A.M}" data-d="${d}" data-b="${id}" style="width:70px;display:inline-block" aria-label="דופק מקסימלי"></label></p>`:'';
+  const fastest=Math.min(...A.splits.filter(s=>s.dist>=900).map(s=>s.gap)),slowest=Math.max(...A.splits.filter(s=>s.dist>=900).map(s=>s.gap));
+  const sp=`<div class="tscroll"><table class="rtab"><thead><tr><th>ק״מ</th><th>קצב</th><th>מותאם שיפוע</th>${A.hasHR?'<th>דופק</th>':''}${A.hasAlt?'<th>טיפוס</th>':''}${A.hasCad?'<th>צעדים</th>':''}</tr></thead><tbody>${A.splits.map((s,i)=>`<tr class="${s.dist>=900&&s.gap===fastest?'fast':s.dist>=900&&s.gap===slowest?'slow':''}"><td>${s.dist<990?r1((i*1000+s.dist)/1000):i+1}</td><td>${mmss(s.pace)}</td><td>${mmss(s.gap)}</td>${A.hasHR?`<td>${s.hr||'—'}</td>`:''}${A.hasAlt?`<td>${s.gain?'+'+s.gain:'0'} מ׳</td>`:''}${A.hasCad?`<td>${s.cad||'—'}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
+  const rp=A.reps.length?`<h3 class="rh">החזרות</h3><div class="tscroll"><table class="rtab"><thead><tr><th>#</th><th>זמן</th><th>מרחק</th><th>קצב</th>${A.hasHR?'<th>דופק שיא</th><th>ירידה בדקה</th>':''}</tr></thead><tbody>${A.reps.map((r,i)=>`<tr><td>${i+1}</td><td>${mmss(r.sec)}</td><td>${Math.round(r.dist)} מ׳</td><td>${mmss(r.pace)}</td>${A.hasHR?`<td>${r.peak||'—'}</td><td>${r.rec!=null?'−'+r.rec:'—'}</td>`:''}</tr>`).join('')}</tbody></table></div>`:'';
+  el.innerHTML=`<div class="panel rpanel" role="dialog" aria-modal="true" aria-label="ניתוח ריצה"><div class="panel-h"><div><span class="eyebrow">ניתוח ריצה · ${fmtDM(d)}</span><h2>${RTYPE[A.ty]||'ריצה'}</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+    <div class="kpis rk"><div class="kpi"><span class="v">${r1(A.km)}</span><span class="l">ק״מ</span></div><div class="kpi"><span class="v">${mmss(A.sec)}</span><span class="l">זמן תנועה</span></div><div class="kpi"><span class="v">${mmss(A.pace)}</span><span class="l">קצב ממוצע</span></div>${A.hasHR?`<div class="kpi"><span class="v">${A.hrAvg}</span><span class="l">דופק ממוצע · שיא ${A.hrPeak}</span></div>`:''}${A.hasAlt&&A.gain>0?`<div class="kpi"><span class="v">${A.gain}</span><span class="l">מ׳ טיפוס</span></div>`:''}${A.cad?`<div class="kpi"><span class="v">${A.cad}</span><span class="l">צעדים לדקה</span></div>`:''}</div>
+    <p class="rread" id="rnRead">געו בגרף כדי לראות את הנתונים בכל נקודה.</p>${C.svg}
+    ${C.marks.length?`<ol class="rmarks">${C.marks.map(e=>`<li class="${e.pk?'':e.good?'ok':'bad'}"><b>${e.n}</b> ${esc(e.txt)} · ק״מ ${r1(e.d/1000)}</li>`).join('')}</ol>`:''}
+    ${zb}
+    ${A.good.length?`<h3 class="rh">מה היה טוב</h3><ul class="fres">${li(A.good,'ok')}</ul>`:''}${A.fix.length?`<h3 class="rh">מה לשפר</h3><ul class="fres">${li(A.fix,'bad')}</ul>`:''}
+    ${A.next?`<div class="note" style="--c:var(--tartan);margin-top:10px"><b>לריצה הבאה:</b> ${esc(A.next)}</div>`:''}
+    <div id="rnAi">${r.ai?aiBox(r.ai):''}</div>
+    <div class="btnrow" style="margin-top:10px">${gqKey()?`<button class="ghost sm" data-act="run-ai" data-d="${d}" data-b="${id}">${r.ai?'ניתוח מחדש של המאמן':'ניתוח של המאמן (AI)'}</button><button class="ghost sm" data-act="run-ask" data-d="${d}" data-b="${id}">${ic('chat')}שאל את המאמן על הריצה</button>`:''}</div>
+    ${A.mo&&A.mo.length?`<h3 class="rh">רגעים בריצה</h3><ul class="rcl rmo">${A.mo.map(m=>`<li><b>${mmss(m.t)}</b> · ק״מ ${r1(m.d/1000)}: ${esc(m.txt)}</li>`).join('')}</ul>`:''}
+    ${A.tl&&A.tl.length?more('rtl'+id,`ציר הזמן של הריצה · ${A.tl.length} קטעים`,`<div class="tscroll"><table class="rtab"><thead><tr><th>זמן</th><th>ק״מ</th><th>שטח</th><th>קצב</th>${A.hasHR?'<th>דופק</th>':''}</tr></thead><tbody>${A.tl.map(x=>`<tr><td>${mmss(x.t0)}–${mmss(x.t1)}</td><td>${r1(x.d0/1000)}–${r1(x.d1/1000)}</td><td>${TERR[x.terr+1]}${x.terr?` ${Math.round(x.grade*100)}%`:''}</td><td>${mmss(x.pace)}${x.chg?` <span class="muted">(${x.chg})</span>`:''}</td>${A.hasHR?`<td>${x.hr0?Math.round(x.hr0):'—'}→${x.hr1?Math.round(x.hr1):'—'}</td>`:''}</tr>`).join('')}</tbody></table></div><p class="hint">האפליקציה עוברת על כל שנייה בריצה ומחלקת אותה לקטעים לפי מאמץ ושטח.</p>`):''}
+    <h3 class="rh">פיצול לפי ק״מ</h3>${sp}${rp}
+    ${A.climbs.length?`<h3 class="rh">עליות</h3><ul class="rcl">${A.climbs.map(c=>`<li>ק״מ ${r1(c.d0/1000)}: ${Math.round(c.len)} מ׳ בשיפוע ${Math.round(c.grade*100)}% (+${Math.round(c.gain)} מ׳) · קצב ${mmss(c.pace)}${c.peak?` · דופק עד ${c.peak}`:''}</li>`).join('')}</ul>`:''}
+    ${A.notes.length?`<p class="hint" style="margin-top:12px">${A.notes.map(esc).join(' ')}</p>`:''}
+    <p class="hint" style="margin-top:8px">"מותאם שיפוע" = הקצב שהמאמץ הזה היה שווה בשטח מישורי. האזורים: 1–2 קל, 3 בינוני, 4–5 קשה.</p></div>`;
+  el.hidden=false;const sv=$('#rnSvg');if(sv){const rd=$('#rnRead'),cur=$('#rnCur');const pl=+sv.dataset.pl,pr=+sv.dataset.pr,W=+sv.dataset.w,n=A.T.length,Dm=A.D[n-1];
+    const mv=ev=>{const b=sv.getBoundingClientRect();const px=(ev.clientX-b.left)/b.width*W;const dd=Math.max(0,Math.min(Dm,(W-pr-px)/(W-pl-pr)*Dm));let i=0;while(i<n-1&&A.D[i]<dd)i++;
+      cur.setAttribute('x1',px);cur.setAttribute('x2',px);cur.setAttribute('opacity','.6');
+      rd.innerHTML=`ק״מ <b>${r1(A.D[i]/1000)}</b> · ${mmss(A.T[i])} · קצב <b>${A.V[i]>.8?mmss(1000/A.V[i]):'—'}</b>${A.hasHR&&A.HR[i]?` · דופק <b>${A.HR[i]}</b>`:''}${A.hasAlt?` · שיפוע <b>${Math.round(A.G[i]*100)}%</b>`:''}${A.CD[i]?` · צעדים ${A.CD[i]}`:''}`};
+    sv.addEventListener('pointermove',mv);sv.addEventListener('pointerdown',mv)}
+  if(!r.ai&&gqKey())runAi(d,id)}
+const aiBox=t=>`<div class="coachb" style="margin-top:12px"><span class="av">מ</span><div>${mdLite(t)}</div></div>`;
+function runFacts(d,id,A){const c=runCtx(d,id),b=c.b;const L=[];
+  L.push(`סוג: ${RTYPE[A.ty]}${b&&b.type!=='quality'&&b.min!=null?` (בתוכנית ${range(b.min,b.max)} ק״מ)`:''}${b&&b.q?` (בתוכנית: ${qShort(b.q)})`:''}. מרחק ${r1(A.km)} ק״מ, זמן ${mmss(A.sec)}, קצב ממוצע ${mmss(A.pace)}/ק״מ.`);
+  if(A.hasHR)L.push(`דופק ממוצע ${A.hrAvg}, שיא ${A.hrPeak}, דופק מקסימלי ${A.M}. זמן באזורים 1–5: ${A.zp.map(p=>Math.round(p*100)+'%').join(' / ')}.`);
+  L.push('פיצולים (ק״מ: קצב / מותאם שיפוע / דופק / טיפוס): '+A.splits.map((s,i)=>`${i+1}: ${mmss(s.pace)} / ${mmss(s.gap)} / ${s.hr||'-'} / +${s.gain}`).join('; '));
+  L.push(`חצי ראשון ${mmss(A.H1.gap)} דופק ${A.H1.hr||'-'}, חצי שני ${mmss(A.H2.gap)} דופק ${A.H2.hr||'-'} (מותאם שיפוע).`);
+  if(A.dec!=null)L.push(`סחף דופק (decoupling): ${Math.round(A.dec*100)}%.`);if(A.reps.length)L.push('חזרות: '+A.reps.map((r,i)=>`${i+1}) ${Math.round(r.dist)} מ׳ ב-${mmss(r.sec)} (${mmss(r.pace)}/ק״מ), דופק שיא ${r.peak||'-'}, ירידה בדקה ${r.rec??'-'}`).join('; '));
+  if(A.climbs.length)L.push('עליות: '+A.climbs.map(c=>`ק״מ ${r1(c.d0/1000)} ${Math.round(c.len)} מ׳ ${Math.round(c.grade*100)}% דופק עד ${c.peak||'-'}`).join('; '));
+  if(A.cad)L.push(`צעדים לדקה: ${A.cad}.`);
+  if(A.tl&&A.tl.length)L.push('ציר זמן (קטעים שנבנו מכל שנייה בריצה; זמן, ק״מ, שטח, קצב, קצב מותאם שיפוע, דופק בתחילת/סוף הקטע, שיא):\n'+A.tl.map(x=>`${mmss(x.t0)}–${mmss(x.t1)} | ${r1(x.d0/1000)}–${r1(x.d1/1000)} | ${TERR[x.terr+1]} ${Math.round(x.grade*100)}% | ${mmss(x.pace)} | ${mmss(x.gap)} | ${x.hr0?Math.round(x.hr0):'-'}→${x.hr1?Math.round(x.hr1):'-'} | ${x.hrMax||'-'}${x.cad?` | צעדים ${Math.round(x.cad)}`:''}`).join('\n'));
+  if(A.mo&&A.mo.length)L.push('רגעים שזוהו: '+A.mo.map(m=>`${mmss(m.t)} (ק״מ ${r1(m.d/1000)}): ${m.txt}`).join('; '));
+  L.push('ממצאים של האפליקציה: טוב: '+(A.good.map(x=>x.txt).join(' | ')||'—')+' · לשיפור: '+(A.fix.map(x=>x.txt).join(' | ')||'—'));
+  const prev=runsIn(addDays(d,-28),addDays(d,-1),true);if(prev.length)L.push(`קצב ממוצע בריצות קלות בחודש האחרון: ${mmss(avg(prev.map(r=>r.pace)))}/ק״מ.`);
+  return L.join('\n')}
+const RUN_AI_SYS='אתה מאמן ריצה של נער בן 14 שמתאמן ל-10 ק״מ. קיבלת את כל הריצה: טבלה צפופה לאורך כל הריצה, ציר זמן של קטעים, רגעים מיוחדים, ופיצולים. אל תסתפק בממוצעים: עבור על הטבלה מההתחלה עד הסוף, מצא מה קרה בכל שלב (חימום, מעברים בין קטעים, עליות וירידות, האצות והאטות, איך הדופק הגיב לכל שינוי, מתי הופיעה עייפות), ושפוט כל מעבר: טוב או לא טוב, ולמה. ענה בעברית, בגובה העיניים, חם וענייני. מבנה: **מה קרה בריצה** (3–6 נקודות לפי סדר הזמן, כל אחת עם זמן או ק״מ מדויק ומספרים), **מה היה טוב**, **מה לשפר**, **לריצה הבאה**. בכל חלק 1–3 נקודות קצרות. השווה למה שהיה מתוכנן. אל תמציא נתונים שלא בטבלה. לא ספרינטים מקסימליים, לא ריצה דרך כאב. ריצות קלות צריכות להיות קלות באמת.';
+async function runAi(d,id){const el=$('#rnAi');const r=peek(d).runs[id];const A=analysisFor(d,id);if(!el||!r||!A||!gqKey())return;el.innerHTML='<p class="muted" style="margin-top:12px">המאמן עובר על הריצה שנייה אחרי שנייה…</p>';
+  try{const base=runFacts(d,id,A);const R0=Math.max(5,Math.ceil(A.sec/300/5)*5);let t=null;
+    // the densest table that fits the request size; coarser if the AI service says the request is too big
+    for(const R of [R0,R0*2,R0*4,0]){try{t=await gqCall([{role:'system',content:RUN_AI_SYS},{role:'user',content:base+(R?`\nטבלה לאורך כל הריצה (כל שורה = ${R} שניות, ממוצעים של כל השניות בחלון):\n${runSeries(A,R)}`:'')}],{effort:'medium'});break}
+      catch(e){if(!(e&&(e.code==='rate_limited'||(e.code==='http'&&/^(413|400)$/.test(e.message))))||!R)throw e}}
+    const txt=String((t&&t.text)||'').trim();if(!txt)throw 0;r.ai=txt.slice(0,2500);save();const e2=$('#rnAi');if(e2)e2.innerHTML=aiBox(r.ai)}
+  catch(e){const e2=$('#rnAi');if(e2)e2.innerHTML='<p class="muted" style="margin-top:12px">המאמן לא זמין כרגע. הניתוח של האפליקציה למעלה.</p>'}}
 function runTargets(d){const I=info(d);const opts=[];if(I.st==='in')for(const b of blocksFor(I.week,I.dow,d))if(['quality','easy','long'].includes(b.type))opts.push([b.id,b.type==='quality'?'אימון איכות':b.type==='long'?'ריצה ארוכה':'ריצה קלה']);opts.push(['extra','ריצה נוספת']);return opts}
 function bestTarget(d){const e=peek(d);const t=runTargets(d);const free=t.find(([id])=>id!=='extra'&&!(e.runs[id]&&e.runs[id].km>0));return (free||t[0])[0]}
 async function handleFiles(files){const out=[];let bad=0;for(const f of files){try{const a=await parseFile(f);a.date=iso(new Date(a.start));a.target=bestTarget(a.date);a.use=true;out.push(a)}catch(e){bad++}}
-  IMPORTS=IMPORTS.concat(out);openImport(bad?`${bad} קבצים לא נקראו. צריך GPX או TCX של ריצה.`:'')}
+  IMPORTS=IMPORTS.concat(out);openImport(bad?`${bad} קבצים לא נקראו. צריך קובץ GPX, TCX או FIT של ריצה.`:'')}
 function openImport(msg){const el=$('#sheet');
   const rows=IMPORTS.map((a,i)=>`<div class="improw"><input type="checkbox" ${a.use?'checked':''} data-impuse="${i}" aria-label="לייבא"><div style="min-width:0"><div><b>${r1(a.km)}</b> ק״מ · ${mmss(a.sec)} · ${mmss(a.sec/a.km)}/ק״מ${a.hr?` · דופק ${a.hr}`:''}</div><div class="muted" style="font-size:12.5px">${fmtDM(a.date)} · ${esc(a.name)}</div></div>
     <select class="eqsel" data-imptgt="${i}" aria-label="לאיזה אימון">${runTargets(a.date).map(([id,t])=>`<option value="${id}" ${a.target===id?'selected':''}>${t}</option>`).join('')}</select></div>`).join('');
   el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="ייבוא מהשעון"><div class="panel-h"><div><span class="eyebrow">Apple Watch</span><h2>ייבוא ריצות מהשעון</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="imp">
-      <div class="drop" id="drop">${ic('watch')}<span>גרור לכאן קבצי GPX או TCX, או</span><button class="cta" data-act="pick-files">בחר קבצים</button></div>
+      <div class="drop" id="drop">${ic('watch')}<span>גרור לכאן קובץ GPX, TCX או FIT, או</span><button class="cta" data-act="pick-files">בחר קבצים</button></div>
       ${msg?`<p class="note" style="--c:var(--iron)"><b>${esc(msg)}</b></p>`:''}
       ${rows?`<div class="imp">${rows}</div><button class="cta" data-act="imp-save">${ic('check')}שמור ${IMPORTS.filter(a=>a.use).length} ריצות ביומן</button>`:''}
       <details><summary class="muted" style="cursor:pointer">איך מוציאים קובץ מ-Apple Watch?</summary>
       <ol class="steps" style="margin-top:10px">
         <li>הדרך הפשוטה: לחבר את Apple Health ל-Strava (באפליקציית Strava: הגדרות → Applications, Services, and Devices → Health). כל ריצה מהשעון עוברת ל-Strava לבד.</li>
         <li>באתר strava.com (במחשב או בדפדפן בטלפון): פותחים את הריצה → כפתור שלוש הנקודות (···) → Export GPX.</li>
-        <li>אפשרות אחרת: אפליקציה כמו HealthFit או RunGap מייצאת ריצות מ-Apple Health כקובצי GPX או TCX ל-Files.</li>
-        <li>מעלים כאן את הקובץ. האפליקציה מזהה תאריך, מרחק, זמן ודופק ומשייך לאימון של אותו יום.</li>
+        <li>אפשרות אחרת: אפליקציה כמו HealthFit או RunGap מייצאת ריצות מ-Apple Health כקובצי FIT, GPX או TCX ל-Files (FIT שומר הכי הרבה נתונים: דופק, גובה וצעדים).</li>
+        <li>מעלים כאן את הקובץ. האפליקציה מזהה תאריך, מרחק, זמן ודופק, משייכת לאימון של אותו יום ומנתחת את הריצה: קצב, דופק, שיפוע וצעדים לאורך כל המסלול.</li>
       </ol><p class="hint" style="margin-top:8px">הקצב והמרחק מהשעון נכנסים להתאמה של התוכנית.</p></details>
     </div></div>`;el.hidden=false;
   const dr=$('#drop');if(dr){dr.addEventListener('dragover',ev=>{ev.preventDefault();dr.classList.add('over')});dr.addEventListener('dragleave',()=>dr.classList.remove('over'));dr.addEventListener('drop',ev=>{ev.preventDefault();dr.classList.remove('over');handleFiles([...ev.dataTransfer.files])})}}
-function saveImports(){let n=0;for(const a of IMPORTS){if(!a.use)continue;const e=ent(a.date);const id=a.target==='extra'?'x'+a.start:a.target;e.runs[id]={km:Math.round(a.km*100)/100,sec:a.sec,hr:a.hr,src:'watch'};if(id in {quality:1,easy0:1,easy3:1,long:1})e.done[id]=true;n++}
-  IMPORTS=[];save();closeSheet();render();toast(`${n} ריצות נשמרו ביומן`)}
+function saveImports(){let n=0,last=null;for(const a of IMPORTS){if(!a.use)continue;const e=ent(a.date);const id=a.target==='extra'?'x'+a.start:a.target;const rec={km:Math.round(a.km*100)/100,sec:a.sec,hr:a.hr,src:'watch'};
+    if(a.trk){const tid='t'+a.start;if(trkPut(tid,a.trk)){rec.tid=tid;e.runs[id]=rec;try{rec.an=anShort(runAnalyze(a.trk,runCtx(a.date,id)))}catch(err){}last=[a.date,id]}}
+    e.runs[id]=rec;if(id in {quality:1,easy0:1,easy3:1,long:1})e.done[id]=true;n++}
+  IMPORTS=[];save();closeSheet();render();toast(`${n} ריצות נשמרו ביומן`);if(n===1&&last)openRunAn(last[0],last[1])}
 
 function kmChart(){const W=640,H=240,pl=34,pr=10,pt=20,pb=34;const It=info(todayIso());const cw=It.st==='in'?It.week:0;
   const data=WEEKS.map((w,i)=>{const s=weekStats(i+1);const [lo,hi]=volRange(i+1);return {km:s.km,lo,hi}});
@@ -1776,7 +2120,8 @@ async function open3D(k){const D=D3[k],el=$('#sheet');const notes=D.notes||EX[k]
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="d3box"><div id="d3c"></div><div class="d3ph" id="d3ph"></div><div class="d3m" id="d3m" hidden></div><p class="d3hint">גוררים כדי לסובב · צובטים לזום</p></div>
     <div class="d3leg"><span><i style="background:#e01a12"></i>שריר עיקרי</span><span><i style="background:#f2734d"></i>שריר משני</span><span><i style="background:#e4e4e8;border:1px solid #bbb"></i>שאר הגוף</span></div>
-    <ul class="d3n">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
+    ${VID[k]?`<div class="vctl"><button class="ghost sm" data-act="demo-vid" data-k="${k}">▶ סרטון הדגמה</button></div>`:''}
+    <ul class="d3n">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${canForm(k)?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
     <p class="muted" style="font-size:11px;margin-top:10px">מודל אנטומי: Z-Anatomy (CC BY-SA 4.0)</p></div>`;
   el.hidden=false;const box=$('#d3c');box.innerHTML='<p class="muted" style="padding:40px 20px;text-align:center">טוען את המודל…</p>';
   let L3,gl;try{L3=await three();gl=await bodyGltf()}catch(e){box.innerHTML='<p class="muted" style="padding:20px">צריך חיבור לאינטרנט כדי לטעון את ההדגמה.</p>';return}
@@ -2069,11 +2414,19 @@ Object.assign(D3,{
     eq:K=>{K.box(.7,.008,2,[0,.004,.45],K.M.pad);return null}}
 });
 
-function openDemo(k){demoStop();if(D3[k])return open3D(k);const el=$('#sheet');
+function openDemo(k,mode){demoStop();if(D3[k]&&mode!=='vid')return open3D(k);if(VID[k])return openVid(k);if(!DEMO[k])return;const el=$('#sheet');
   el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><h2>${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     ${demoSvg(k)}<p style="margin-top:12px">${esc(EX[k].cue)}</p>${FORM[k]?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}</div>`;
   el.hidden=false;const t0=performance.now();DM={k};const loop=now=>{if(!DM)return;const ph=((now-t0)/2600)%1;if(!demoDraw(k,ph<.5?ph*2:2-ph*2)){DM=null;return}DM.raf=requestAnimationFrame(loop)};DM.raf=requestAnimationFrame(loop)}
 
+// video demo: a short looping clip of the movement, with the cues, a slow-motion toggle and the technique check
+function openVid(k){const el=$('#sheet');const notes=EX[k].cue.split(/(?<=\.)\s+/).filter(Boolean);
+  el.innerHTML=`<div class="panel demo" role="dialog" aria-modal="true" aria-label="הדגמה"><div class="panel-h"><div><span class="eyebrow">${esc(GRP[k]||'הדגמה')}</span><h2>${esc(EX[k].n)}</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+    <div class="vbox"><video id="dmV" src="${vidUrl(k)}" autoplay loop muted playsinline preload="auto" aria-label="סרטון הדגמה של ${esc(EX[k].n)}"></video><p class="vmsg" id="dmMsg" hidden>צריך חיבור לאינטרנט כדי לטעון את הסרטון.</p></div>
+    <div class="vctl"><button class="ghost sm" data-act="vid-slow" aria-pressed="false">🐢 הילוך איטי</button>${D3[k]?`<button class="ghost sm" data-act="demo3" data-k="${k}">חזרה לתלת מימד</button>`:''}</div>
+    <ul class="d3n">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>${canForm(k)?`<button class="cta" style="margin-top:12px;width:100%" data-act="form" data-k="${k}">📷 בדיקת טכניקה בסרטון</button>`:''}
+    <p class="muted" style="font-size:11px;margin-top:10px">סרטון הדגמה: GymBros</p></div>`;
+  el.hidden=false;const v=$('#dmV');v.addEventListener('error',()=>{const m=$('#dmMsg');if(m)m.hidden=false;v.hidden=true});const p=v.play();if(p&&p.catch)p.catch(()=>{})}
 // ===== technique-check engine (pure: frames in, verdict out) =====
 const LM={nose:0,ls:11,rs:12,le:13,re:14,lw:15,rw:16,lh:23,rh:24,lk:25,rk:26,la:27,ra:28,lf:31,rf:32};
 const FJ={elbow:['s','e','w'],shoulder:['h','s','e'],shoulderW:['h','s','w'],hip:['s','h','k'],knee:['h','k','a'],ankle:['k','a','f'],body:['s','h','a']};
@@ -2100,6 +2453,57 @@ const FORM={
   hackcalf:{j:'ankle',view:'side',min:95,max:110,work:'max',amp:25,pos:'stand',tip:'מצלמים מהצד, קרוב לכפות הרגליים.',lo:'לא יורדים עד מתיחה מלאה.',hi:'עולים לא מספיק גבוה על קצות האצבעות.'},
   plank:{static:1,view:'side',pos:'flat',tip:'מצלמים מהצד, כל הגוף בפריים.'}
 };
+Object.assign(FORM,{dbbench:{...FORM.bench,fix:'h',tip:'מניחים את הטלפון בצד הספסל, בגובה הספסל, כך שרואים את המרפק והמשקולת.'},bbbench:{...FORM.bench,tip:'מניחים את הטלפון בצד הספסל, בגובה הספסל, כך שרואים את המרפק והמוט.'},
+  mshoulder:{...FORM.ohp},arnold:{...FORM.ohp},dblateral:{...FORM.lateral},chinup:{...FORM.pullup},mrow:{...FORM.crow},ezcurl:{...FORM.curl},hammer:{...FORM.curl},
+  splitsq:{...FORM.bss},slcurl:{...FORM.legcurl},hkr:{...FORM.hlr},dbcalf:{...FORM.hackcalf},apull:{...FORM.pullup},ngpull:FORM.lat?{...FORM.lat}:undefined});
+for(const k in FORM)if(!FORM[k])delete FORM[k];
+const FGEN_TIP='מצלמים מהצד, כל הגוף בפריים.';
+const GJN={elbow:'המרפק',shoulder:'הכתף',hip:'האגן',knee:'הברך'};
+// technique check for an exercise with no rules of its own: find the joint that moves the most, count the reps on it,
+// then look at range, tempo, rep-to-rep consistency, left / right balance and body sway
+function formGeneric(frames,W,H){const fl=frames.filter(f=>f&&f.lm);if(fl.length<15)return {bad:'body'};
+  const P=(f,n)=>{const p=f.lm[LM[n]];return p&&(p.visibility==null||p.visibility>=.45)?{x:p.x*W,y:p.y*H}:null};
+  const J={elbow:['s','e','w'],shoulder:['h','s','e'],hip:['s','h','k'],knee:['h','k','a']};
+  const sm=a=>{const m=a.map((v,i)=>v==null?null:fMed(a.slice(Math.max(0,i-2),i+3)));return m.map((v,i)=>{if(v==null)return null;const w=m.slice(Math.max(0,i-1),i+2).filter(x=>x!=null);return w.reduce((t,x)=>t+x,0)/w.length})};
+  const ser={};for(const j in J)for(const sd of ['l','r'])ser[j+sd]=sm(fl.map(f=>fAng(P(f,sd+J[j][0]),P(f,sd+J[j][1]),P(f,sd+J[j][2]))));
+  const rgOf=a=>{const v=a.filter(x=>x!=null);return v.length>=fl.length*.5?fPct(v,.95)-fPct(v,.05):-1};
+  let best=null;for(const k in ser){const rg=rgOf(ser[k]);if(rg>0&&(!best||rg>best.rg))best={k,rg}}
+  if(!best)return {bad:'body'};if(best.rg<20)return {bad:'still'};
+  const jn=best.k.slice(0,-1),sd=best.k.slice(-1),T=fl.map(f=>f.t);
+  // a wide running median (~0.8 s) removes short tracking glitches (an arm that "jumps" for a few frames at the top of a rep)
+  const fps=(fl.length-1)/Math.max(.1,T[T.length-1]-T[0]),hw=Math.max(2,Math.round(.4*fps)),s0=ser[best.k];
+  const s=s0.map((v,i)=>v==null?null:fMed(s0.slice(Math.max(0,i-hw),i+hw+1)));
+  const lo=fPct(s,.05),hi=fPct(s,.95),A=lo+.3*(hi-lo),B=lo+.7*(hi-lo);
+  const first=s.find(v=>v!=null),hiHome=first>=(lo+hi)/2;// the rep starts from the side the set starts on
+  const home=v=>hiHome?v>B:v<A,away=v=>hiHome?v<A:v>B;
+  const reps=[];let st='home',hx=null,ht=null,ax=null,at=null,t0=null;
+  for(let i=0;i<s.length;i++){const v=s[i];if(v==null)continue;
+    if(st==='home'){if(hx==null||(hiHome?v>hx:v<hx)){hx=v;ht=T[i]}if(!home(v)&&t0==null)t0=T[i];if(home(v))t0=null;if(away(v)){st='away';ax=v;at=T[i];if(t0==null)t0=T[i]}}
+    else{if(hiHome?v<ax:v>ax){ax=v;at=T[i]}if(home(v)){const t1=T[i];const start=ht!=null&&ht<=at?ht:t0;const l=reps[reps.length-1];
+      if(l&&at-l.tA<.8){if(hiHome?ax<l.ax:ax>l.ax){l.ax=ax;l.tA=at}l.t1=t1;l.rng=Math.max(l.rng,Math.abs(hx-ax))}else reps.push({t0:start,tA:at,t1,ax,rng:Math.abs(hx-ax)});st='home';hx=v;ht=T[i];t0=null}}}
+  if(reps.length<2)return {bad:'reps'};
+  // body sway: for arm exercises the hip should stay put (relative to torso length)
+  const hipX=fl.map(f=>{const a=P(f,'lh'),b=P(f,'rh');return a&&b?(a.x+b.x)/2:(a||b)?(a||b).x:null}),tor=fMed(fl.map(f=>{const a=P(f,sd+'s'),b=P(f,sd+'h');return a&&b?Math.hypot(a.x-b.x,a.y-b.y):null}))||null;
+  const sway=(jn==='elbow'||jn==='shoulder')&&tor?(fPct(hipX,.95)-fPct(hipX,.05))/tor:null;
+  const other=ser[jn+(sd==='l'?'r':'l')],oR=rgOf(other);const front=fMed(fl.map(f=>{const a=P(f,'ls'),b=P(f,'rs'),h=P(f,sd+'h');return a&&b&&h?Math.abs(a.x-b.x)/Math.max(1,Math.abs(a.y-h.y)):null}));
+  const asym=front!=null&&front>.45&&oR>0?Math.abs(best.rg-oR)/Math.max(best.rg,oR):null;
+  return {gen:1,joint:jn,reps,sway,asym,amp:best.rg}}
+function genReport(k,r){const ok=s=>`<li class="ok">✓ ${s}</li>`,bad=s=>`<li class="bad">✗ ${s}</li>`,tip=` <span class="muted">${FGEN_TIP}</span>`;
+  if(r.bad==='body')return {html:`<p>לא זיהיתי מספיק את הגוף בסרטון.${tip} תאורה טובה, 3 חזרות לפחות.</p>`};
+  if(r.bad==='still')return {html:`<ul>${bad('לא זיהיתי תנועה של התרגיל בסרטון.')}</ul><p class="muted">${FGEN_TIP}</p>`};
+  if(r.bad==='reps')return {html:`<p>לא הצלחתי לספור חזרות. נסה שוב מזווית צד, עם 3 חזרות לפחות.</p>`};
+  const R=r.reps,n=R.length,L=[`<li><b>${n} חזרות</b> זוהו (לפי התנועה של ${GJN[r.joint]})</li>`],facts=[`${n} חזרות`];
+  const dur=R.map(x=>x.t1-x.t0),md=fMed(dur),halves=R.map(x=>Math.min(x.tA-x.t0,x.t1-x.tA));
+  const fast=halves.filter(h=>h<.45).length;
+  if(fast>n/2){L.push(bad(`חלק מהתנועה נעשה מהר מאוד (פחות מחצי שנייה) ב-${fast} חזרות. מאטים ושולטים במשקל בשני הכיוונים, במיוחד בדרך חזרה.`));facts.push('קצב מהיר מדי, בלי שליטה')}
+  else{L.push(ok(`קצב מבוקר: כ-${md.toFixed(1)} שניות לחזרה`));facts.push(`כ-${md.toFixed(1)} שניות לחזרה`)}
+  const rg=R.map(x=>x.rng),f2=(rg[0]+rg[1])/2,l2=(rg[n-1]+rg[n-2])/2,mean=rg.reduce((t,x)=>t+x,0)/n,cv=Math.sqrt(rg.reduce((t,x)=>t+(x-mean)**2,0)/n)/mean;
+  if(n>=4&&l2<f2*.8){L.push(bad('החזרות האחרונות קצרות יותר מהראשונות. זה סימן שהמשקל כבד מדי או שהגעת לעייפות. עוצרים כשהטווח מתקצר.'));facts.push('הטווח התקצר בחזרות האחרונות')}
+  else if(cv>.18){L.push(bad('הטווח לא אחיד בין החזרות. כל חזרה צריכה להגיע לאותה נקודה למעלה ולמטה.'));facts.push('טווח לא אחיד')}
+  else{L.push(ok('טווח תנועה אחיד בכל החזרות'));facts.push('טווח אחיד')}
+  if(r.sway!=null){if(r.sway>.25){L.push(bad('הגוף זז קדימה ואחורה בזמן החזרות, כלומר יש תנופה. מורידים משקל ושומרים על הגוף יציב.'));facts.push('תנופה בגוף')}else{L.push(ok('הגוף יציב, בלי תנופה'));facts.push('גוף יציב')}}
+  if(r.asym!=null){if(r.asym>.3){L.push(bad('צד אחד זז יותר מהשני. שימו לב ששתי הידיים או הרגליים עובדות באותו טווח.'));facts.push('חוסר סימטריה')}else facts.push('ימין ושמאל דומים')}
+  return {html:`<ul>${L.join('')}</ul><p class="muted" style="font-size:12.5px">לתרגיל הזה אין עדיין בדיקה מותאמת, אז זו בדיקה כללית: ספירת חזרות, קצב, אחידות ויציבות. השוו גם לסרטון ההדגמה.</p>`,facts:facts.join(', ')}}
 const FPOSMSG={lie:'לא זיהיתי שכיבה על ספסל. הגוף צריך להיות שוכב, והידיים מעל הכתפיים.',incl:'לא זיהיתי ישיבה על ספסל משופע.',up:'לא זיהיתי עמידה זקופה.',
   hang:'לא זיהיתי תלייה על מתח. הידיים צריכות להחזיק מעל הראש, והגוף תלוי מתחתיהן.',sit:'לא זיהיתי ישיבה במכשיר.',bent:'לא זיהיתי הטיה קדימה עם גב ישר.',
   stand:'לא זיהיתי עמידה. רגליים על הרצפה, כל הגוף בפריים.',flat:'לא זיהיתי פלאנק. הגוף צריך להיות אופקי, קרוב לרצפה.'};
@@ -2360,7 +2764,7 @@ function formReport(k,r){const F=FORM[k];const ok=s=>`<li class="ok">✓ ${s}</l
 let FM=null,POSE=null,FTS=0,FLAST=null;
 if(/fdbg/.test(location.search))window.FLASTGET=()=>FLAST;
 function formStop(){if(FM){FM.stop=1;try{FM.v&&FM.v.pause()}catch(e){}if(FM.url)URL.revokeObjectURL(FM.url);FM=null}}
-function openForm(k){demoStop();formStop();const F=FORM[k],el=$('#sheet');
+function openForm(k){demoStop();formStop();const F=FORM[k]||{tip:FGEN_TIP},el=$('#sheet');
   el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="בדיקת טכניקה"><div class="panel-h"><h2>בדיקת טכניקה · ${esc(EX[k].n)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <p class="muted">${esc(F.tip)} מצלמים 3–8 חזרות, הטלפון יציב (על משהו, לא ביד), כל הגוף בפריים. הניתוח נעשה כולו בטלפון, הסרטון לא נשלח לשום מקום.</p>
     <input type="file" id="formIn" accept="video/*" capture="environment" hidden data-k="${k}">
@@ -2405,9 +2809,9 @@ async function formRun(k,file){const out=$('#fOut');formStop();
       i=j}}
   if(me.stop)return;v.controls=true;st.textContent='';cx.clearRect(0,0,cv.width,cv.height);
   if(notReady>frames.length*.3){st.textContent='הטלפון לא הצליח לקרוא חלק גדול מהסרטון. נסה שוב.';return}
-  let res;try{res=formEngine(k,frames,v.videoWidth,v.videoHeight)}catch(e){res={bad:'body'}}
+  let res;try{res=FORM[k]?formEngine(k,frames,v.videoWidth,v.videoHeight):formGeneric(frames,v.videoWidth,v.videoHeight)}catch(e){res={bad:'body'}}
   FLAST={k,frames,W:v.videoWidth,H:v.videoHeight};
-  const R=formReport(k,res);out.insertAdjacentHTML('beforeend',`<div class="fres" style="margin-top:12px">${R.html}</div><div id="fAi"></div>`);
+  const R=FORM[k]?formReport(k,res):genReport(k,res);out.insertAdjacentHTML('beforeend',`<div class="fres" style="margin-top:12px">${R.html}</div><div id="fAi"></div>`);
   if(gqKey()&&R.facts)formAi(k,R.facts)}
 async function formAi(k,facts){const el=$('#fAi');if(!el)return;el.innerHTML='<p class="muted">המאמן מסכם…</p>';
   try{const t=await gqCall([{role:'system',content:'אתה מאמן כוח לנער בן 14. ענה בעברית, 2–3 משפטים קצרים: מה טוב ומה הדבר האחד הכי חשוב לתקן, עם רמז פשוט לביצוע. בלי מספרים מומצאים.'},{role:'user',content:`תרגיל: ${EX[k].n}. הנחיה: ${EX[k].cue}. תוצאות הניתוח: ${facts}`}]);
@@ -2492,7 +2896,7 @@ const gqKey=()=>{try{return localStorage.getItem(GQ_LS)||''}catch(e){return ''}}
 async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw {code:'no_key'};
   if(/fdbg/.test(location.search)){if(!window.FAKEAI)throw {code:'network',text:''};const text=await window.FAKEAI(messages,opt);if(opt.onText)opt.onText({text});return {text,truncated:false}}// test mode: never reaches the network
   const go=model=>fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',signal:opt.signal,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
-    body:JSON.stringify(Object.assign({model,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?2000:2500,stream:!!opt.onText},model.startsWith('openai/')?{reasoning_effort:'low',include_reasoning:false}:{},opt.json?{response_format:{type:'json_object'}}:{}))});
+    body:JSON.stringify(Object.assign({model,messages,temperature:opt.json?0.2:0.6,max_tokens:opt.json?2000:2500,stream:!!opt.onText},model.startsWith('openai/')?{reasoning_effort:opt.effort||'low',include_reasoning:false}:{},opt.json?{response_format:{type:'json_object'}}:{}))});
   let r;try{r=await go(GQ_MODEL);if(r.status===400||r.status===404||r.status===503)r=await go(GQ_FALLBACK)}
   catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'network',text:''}}
   if(r.status===401)throw {code:'bad_key'};if(r.status===429)throw {code:'rate_limited'};if(!r.ok)throw {code:'http',message:String(r.status)};
@@ -2504,7 +2908,7 @@ async function gqCall(messages,opt){opt=opt||{};const key=gqKey();if(!key)throw 
   catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'network',text}}
   return {text,truncated:fin==='length'}}
 function gqSample(input,opt){const msgs=typeof input==='string'?[{role:'user',content:input}]:input.map((m,i)=>i===0?{role:'system',content:m.content}:m);
-  return gqCall(msgs,{signal:opt&&opt.signal,onText:opt&&opt.onText})}
+  return gqCall(msgs,{signal:opt&&opt.signal,onText:opt&&opt.onText,effort:opt&&opt.effort})}
 function groqSection(){const k=gqKey();return `<div class="remind" id="gqsec"><span class="eyebrow">מאמן AI</span><div style="margin-top:10px">${k?
   `<p style="color:var(--easy);font-weight:600">✓ מחובר (<span dir="ltr">${esc(k.slice(0,4))}…${esc(k.slice(-4))}</span>)</p><p class="hint" style="margin-top:6px">הצ׳אט וההתאמה השבועית פעילים.</p><button class="ghost" data-act="gq-clear" style="margin-top:10px">מחיקת המפתח</button>`
   :`<p class="hint">מפעיל את הצ׳אט ואת ההתאמה השבועית. המפתח נשמר רק במכשיר הזה.</p>
@@ -2617,6 +3021,9 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'yday-skip':case 'today-skip':{const E=ent(d);E.skipped=true;save();render();toast(act==='yday-skip'?'נרשם. התוכנית תתאים את עצמה.':'בסדר. מחר ממשיכים.');break}
     case 'day-full':selDay(d||V.sel);break;
     case 'demo':openDemo(a.dataset.k);break;
+    case 'demo3':openDemo(a.dataset.k,'3d');break;
+    case 'demo-vid':openDemo(a.dataset.k,'vid');break;
+    case 'vid-slow':{const v=$('#dmV');if(v){const on=v.playbackRate>.9;v.playbackRate=on?.4:1;a.setAttribute('aria-pressed',on)}break}
     case 'form':openForm(a.dataset.k);break;
     case 'form-pick':$('#formIn').click();break;
     case 'day-prev':{const n=addDays(V.sel,-1);if(diffDays(S.start,n)>=0)selDay(n);break}
@@ -2666,6 +3073,9 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'import':openImport('');break;
     case 'pick-files':$('#fileIn').click();break;
     case 'imp-save':saveImports();break;
+    case 'run-an':openRunAn(a.dataset.d,a.dataset.b);break;
+    case 'run-ai':runAi(a.dataset.d,a.dataset.b);break;
+    case 'run-ask':closeSheet();go('chat');chatSend(`תנתח לי את הריצה מ-${fmtDM(a.dataset.d)}: מה היה טוב, מה לשפר, ומה לעשות בריצה הבאה?`);break;
     case 'chat-q':chatSend(a.dataset.q);break;
     case 'chat-stop':if(CH.ctl)CH.ctl.abort();break;
     case 'chat-clear':CH.turns=[];CH.err=null;saveChat();render();break;
@@ -2715,6 +3125,7 @@ document.addEventListener('change',e=>{const t=e.target;
   else if(t.dataset.pr){const k=t.dataset.pr;const v=t.value.trim();if(!v){S.prs[k]='';save();render();return}const s=parseTime(v);if(s==null){toast('פורמט זמן: דקות:שניות, למשל 48:30');return}S.prs[k]=mmss(s);if(k==='k10')S.k10Fresh=todayIso();save();render();toast('השיא עודכן')}
   else if(t.id==='startDate'&&t.value){S.start=sundayOf(t.value);save();initSel();openSettings();render();toast(`התוכנית מתחילה ב-${fmtDM(S.start)}`)}
   else if(t.id==='fileIn'){handleFiles([...t.files]);t.value=''}
+  else if(t.id==='hrMaxIn'){const v=Math.round(+t.value);if(v>=170&&v<=230){S.cfg.hrMax=v;save();openRunAn(t.dataset.d,t.dataset.b)}}
   else if(t.dataset.impuse!=null){IMPORTS[+t.dataset.impuse].use=t.checked;openImport('')}
   else if(t.dataset.imptgt!=null){IMPORTS[+t.dataset.imptgt].target=t.value}
 });
