@@ -519,7 +519,9 @@ details.adl[open]>summary{margin-bottom:6px}
 .d3hint{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11.5px;color:#8a93a8;margin:0;pointer-events:none}
 .d3leg{display:flex;gap:14px;font-size:12.5px;margin:8px 0}.d3leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:5px}
 .pvids{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pvid{display:flex;flex-direction:column;gap:4px;width:150px;padding:0;border:1px solid var(--line,#333);border-radius:12px;overflow:hidden;background:#fff;color:#222;font-size:12.5px;cursor:pointer;text-align:start}.pvid video{width:100%;aspect-ratio:16/9;object-fit:contain;display:block}.pvid span{padding:4px 8px 6px}
-.anbtn{margin-top:8px}.s-imp{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px}
+.anbtn{margin-top:8px}
+.s-run{display:flex;align-items:center;gap:12px;width:100%;text-align:start;padding:14px 16px;border-radius:16px;border:1px solid color-mix(in srgb,var(--tartan) 45%,var(--line2));background:color-mix(in srgb,var(--tartan) 8%,var(--ink));color:var(--chalk);cursor:pointer}.s-run svg{width:26px;height:26px;color:var(--tartan);flex:none}.s-run span{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--mute)}.s-run b{font-size:15.5px;color:var(--chalk)}
+.anlist{display:flex;flex-direction:column;gap:6px}.anrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--ink);color:var(--chalk);text-align:start;cursor:pointer;font-size:13.5px}.anrow .go{font-size:16px}.s-imp{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px}
 .rchart{margin-top:4px;touch-action:pan-y}.rchart .rp-pace{fill:none;stroke:var(--tartan);stroke-width:2.2;stroke-linejoin:round}.rchart .rp-hr{fill:none;stroke:#ff5a7a;stroke-width:2;stroke-linejoin:round}
 .rchart .rp-alt{fill:none;stroke:var(--muted,#8a93a8);stroke-width:1.6}.rchart .rp-area{fill:var(--muted,#8a93a8);opacity:.18}.rchart .rp-n{fill:#fff;font-size:16px;font-weight:700}.rchart .axis{font-size:19px}.rchart .rt{font-weight:600;font-size:21px;fill:var(--chalk)}
 .rread{font-size:13px;min-height:1.4em;margin:10px 0 0;color:var(--muted)}.rread b{color:var(--chalk)}
@@ -600,7 +602,7 @@ details.adl[open]>summary{margin-bottom:6px}
 <div class="pillbar" id="pill" hidden></div>
 <div class="sheet" id="sheet" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
-<input type="file" id="fileIn" accept=".gpx,.tcx,.fit,.xml,application/gpx+xml" multiple hidden>
+<input type="file" id="fileIn" multiple hidden>
 <canvas id="fx" hidden></canvas>
 <noscript><p style="padding:20px;color:#F1F3F9">צריך להפעיל JavaScript כדי להשתמש באתר.</p></noscript>
 
@@ -1120,6 +1122,7 @@ function viewToday(){const t=todayIso(),It=info(t);
   if(It.st==='in'&&todo.some(b=>!isDone(d,b))&&!(sg&&sg.btn))h+=`<button class="s-easy" data-act="easy-mode" data-d="${d}">${e.easyMode?`${ic('check')}<span><b>גרסה קלה פעילה</b> · לחזור לתוכנית הרגילה</span>`:`${ic('bolt')}<span>עייף או כבד היום? <b>עבור לגרסה קלה</b></span>`}</button>`;
   const allDone=todo.length&&todo.every(b=>isDone(d,b));
   if(It.st==='in'&&(V.eveEdit||(!e.eDone&&(new Date().getHours()>=19||allDone))))h+=eveningCard(d,todo);
+  if(It.st!=='before')h+=`<button class="s-run" data-act="analyze">${ic('watch')}<span><b>העלאת ריצה לניתוח</b>קובץ מהשעון (FIT, GPX או TCX): קצב, דופק, שיפוע וטיפים. רק ניתוח, לא נרשם ביומן</span></button>`;
   h+=`<p class="flagline">כאב שלא עובר, או כאב שמשנה את התנועה → עוצרים ומספרים להורה או למאמן.</p>`;
   return h+'</div>'}
 function morningCard(d,I){const e=peek(d);const sg=readySuggest(d,I);const ok=e.sleep&&e.sore;
@@ -1456,8 +1459,13 @@ const COACH_RULES=`אתה "המאמן" באפליקציית האימונים "ש
 - "אני לא יכול לרוץ ביום רביעי" → {"op":"swap","a":"<רביעי>","b":"<יום המנוחה הקרוב שלא צמוד לאימון קשה>"}
 - "כואב לי בכתף בלחיצות" → {"op":"drop"} או {"op":"replace"} לתרגיל שלא כואב, עם הנחיה לעצור אם כואב, ולדבר עם מבוגר אם זה נמשך.
 אל תכתוב שהשינוי כבר בוצע: המשתמש צריך לאשר. בלי בלוק כשאין שינוי. אסור להציע הוספת אימונים או העלאת עומס. לא לשים שני אימונים קשים (איכות, ארוכה, רגליים) ביום אחד או בימים צמודים כשאפשר להימנע.
-הנתונים למטה הם הנתונים האמיתיים מהאפליקציה; השתמש בהם ואל תמציא נתונים שלא מופיעים.`;
+הנתונים למטה הם הנתונים האמיתיים מהאפליקציה; השתמש בהם ואל תמציא נתונים שלא מופיעים.
+דיוק בביצועים: מה שהמשתמש עשה בפועל (חזרות, משקל, ק״מ, זמן) לוקחים רק מה"יומן", מהשדה "בפועל", סט אחרי סט ובדיוק כמו שכתוב. טווחים כמו 3×10–12 ב"תוכנית השבוע", ב"הימים הקרובים" או ב"היעד בתוכנית" הם יעדים, לא ביצוע. "בוצע" אומר רק שהאימון סומן, לא שעמדו ביעד. אם משהו לא רשום ביומן, תגיד שהוא לא רשום ואל תנחש.`;
 const hardDay=d=>dayBlocks(d).some(b=>b.type==='quality'||b.type==='long'||(b.type==='iron'&&/legs/i.test(b.title)));
+// one exercise as logged: every set with its weight and reps exactly as entered, and the plan's target kept apart
+function liftLog(d,k,l,bl){const x=bl.filter(b=>b.type==='iron').flatMap(b=>b.ex).find(x=>x.k===k);const n=Math.max(x?x.s:0,l.reps.length);const ws=Array.isArray(l.ws)?l.ws:[];const tm=EX[k]&&EX[k].time;
+  const sets=[];for(let i=0;i<n;i++){const r=l.reps[i];const w=ws[i]!=null?ws[i]:l.w;sets.push(r>0?`סט ${i+1}: ${w!=null&&w!==''?fmtKg(w)+' ק״ג × ':''}${r}${tm?' שנ׳':' חזרות'}`:`סט ${i+1}: לא נרשם`)}
+  return `${EX[k]?EX[k].n:k} — בפועל: ${sets.join(', ')}${x?` (היעד בתוכנית היה ${x.s}×${x.r}${tm?' שנ׳':''}, זה יעד ולא ביצוע)`:''}${l.feel?` · הרגיש ${{easy:'קל',ok:'טוב',hard:'קשה'}[l.feel]}`:''}`}
 function coachContext(lvl){lvl=lvl||0;const t=todayIso();const I=info(t);const out=[];
   out.push(`תאריך היום: ${t} (יום ${DAYS[parseIso(t).getDay()]}).`);
   out.push(I.st==='in'?`שבוע ${I.week} מתוך 12, יום ${I.n+1}. שלב: ${phaseOf(I.week).t}.`:I.st==='before'?`התוכנית מתחילה ב-${S.start} (בעוד ${-I.n} ימים).`:'מחזור 1 הסתיים.');
@@ -1473,9 +1481,9 @@ function coachContext(lvl){lvl=lvl||0;const t=todayIso();const I=info(t);const o
   for(const d of Object.keys(S.days).sort()){if(d<from||d>t)continue;const e=peek(d);const parts=[];const bl=dayBlocks(d);
     const dn=bl.filter(b=>e.done[b.id]).map(b=>b.type==='iron'?b.title:T_LABEL[b.type]);if(dn.length)parts.push('בוצע: '+dn.join(', '));
     for(const [bid,r] of Object.entries(e.runs))if(r&&r.km>0)parts.push(`ריצה ${({quality:'איכות',easy0:'קלה',easy3:'קלה',long:'ארוכה'})[bid]||'נוספת'}:${r.km} ק״מ${r.sec?` ב-${mmss(r.sec)} (${mmss(r.sec/r.km)}/ק״מ)`:''}${r.hr?` דופק ${r.hr}`:''}${r.an?` [ניתוח: ${r.an}]`:''}`);
-    for(const [k,l] of Object.entries(e.lifts))if(l&&l.reps&&l.reps.some(x=>x>0))parts.push(`${EX[k]?EX[k].n:k}: ${liftTxt(l)}${l.feel?` (${{easy:'קל',ok:'טוב',hard:'קשה'}[l.feel]})`:''}`);
+    for(const [k,l] of Object.entries(e.lifts))if(l&&l.reps&&l.reps.some(x=>x>0))parts.push(liftLog(d,k,l,bl));
     if(e.rpe)parts.push('מאמץ '+e.rpe);if(e.sleep)parts.push('שינה '+e.sleep+'/5');if(e.sore)parts.push('עייפות '+e.sore+'/5');if(e.pain)parts.push('דיווח על כאב');if(e.easyMode)parts.push('גרסה קלה');if(e.note)parts.push('הערה: '+String(e.note).slice(0,120));
-    if(parts.length)lines.push(`${d}: ${parts.join(' · ')}`)}
+    if(parts.length)lines.push(`${d} (${d===t?'היום':d===addDays(t,-1)?'אתמול':'יום '+DAYS[parseIso(d).getDay()]}): ${parts.join(' · ')}`)}
   out.push(lines.length?`יומן ${lvl>=2?5:lvl?7:14} הימים האחרונים:\n`+lines.join('\n'):'אין עדיין רישומים ביומן.');
   return out.join('\n')}
 function mdLite(s){const e=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');const lines=e.split('\n');let h='',inList=false;
@@ -1655,8 +1663,9 @@ function runFromPts(name,pts){pts=pts.filter(p=>isFinite(p.t)).sort((a,b)=>a.t-b
     P.push([Math.round(T),Math.round(a.cd+(b.cd-a.cd)*f),hr?Math.round(hr):0,alt==null?null:Math.round(alt*10),cad?Math.round(cad*cadX):0])}
   const hrs=pts.map(p=>p.hr).filter(h=>h>0);
   return {name,start:pts[0].t,km:d/1000,sec:Math.round(dur),hr:hrs.length?Math.round(avg(hrs)):null,trk:{v:1,start:pts[0].t,stops,p:P}}}
-async function parseFile(f){if(/\.fit$/i.test(f.name))return parseFIT(await f.arrayBuffer(),f.name);
-  const txt=await f.text();const x=new DOMParser().parseFromString(txt,'application/xml');if(x.getElementsByTagName('parsererror').length)throw new Error('xml');
+async function parseFile(f){const buf=await f.arrayBuffer();const h=new Uint8Array(buf.slice(0,12));// FIT is found by its header, whatever the file is called
+  if(/\.fit$/i.test(f.name)||(h.length>=12&&String.fromCharCode(h[8],h[9],h[10],h[11])==='.FIT'))return parseFIT(buf,f.name);
+  const txt=new TextDecoder().decode(buf);const x=new DOMParser().parseFromString(txt,'application/xml');if(x.getElementsByTagName('parsererror').length)throw new Error('xml');
   if(x.getElementsByTagName('trkpt').length)return parseGPX(x,f.name);if(x.getElementsByTagName('Trackpoint').length||x.getElementsByTagName('Lap').length)return parseTCX(x,f.name);throw new Error('format')}
 // tracks live in their own storage key (they are big), the day keeps a short summary for the coach
 // second-by-second reading of the run: 10 s blocks merged bottom-up into stretches of similar effort and terrain,
@@ -1775,7 +1784,12 @@ function anShort(A){if(!A)return '';const p=[];if(A.hasHR)p.push(`אזורים 1
   if(A.reps.length)p.push(`${A.reps.length} חזרות: ${A.reps.map(r=>mmss(r.pace)).join('/')}`);else if(A.km>=3)p.push(A.H2.gap<A.H1.gap*.985?'חצי שני מהיר':A.H2.gap>A.H1.gap*1.05?'האטה בחצי השני':'קצב אחיד');
   if(A.gain)p.push(`טיפוס ${A.gain} מ׳`);if(A.cad)p.push(`צעדים ${A.cad}`);if(A.fix[0])p.push('עיקר לשיפור: '+A.fix[0].txt.split('.')[0]);return p.join(', ').slice(0,220)}
 const RNC={};
-function analysisFor(d,id){const r=peek(d).runs[id];if(!r||!r.tid)return null;const tr=trkGet(r.tid);if(!tr)return null;const k=r.tid+'|'+(S.cfg.hrMax||'')+'|'+id;
+// runs uploaded only to be analysed live apart from the log (this device only): id "a:<track id>"
+const ANL_LS='maslul12:anl';
+function anlAll(){try{return JSON.parse(localStorage.getItem(ANL_LS)||'{}')||{}}catch(e){return {}}}
+function anlPut(r){const all=anlAll();all[r.tid]=r;const tr=trkAll();for(const k of Object.keys(all))if(!tr[k])delete all[k];try{localStorage.setItem(ANL_LS,JSON.stringify(all))}catch(e){}}
+const runRec=(d,id)=>String(id).startsWith('a:')?anlAll()[id.slice(2)]||null:peek(d).runs[id];
+function analysisFor(d,id){const r=runRec(d,id);if(!r||!r.tid)return null;const tr=trkGet(r.tid);if(!tr)return null;const k=r.tid+'|'+(S.cfg.hrMax||'')+'|'+id;
   if(!RNC[k])RNC[k]=runAnalyze(tr,runCtx(d,id));return RNC[k]}
 function runChart(A){const W=640,pl=64,pr=10,ph=100,gp=44,top=34;const n=A.T.length,Dm=A.D[n-1]||1;const x=d=>W-pr-(W-pl-pr)*d/Dm;
   const panels=[];const pc=A.GS.map((v,i)=>A.V[i]>.8?1000/A.V[i]:null);const pv=pc.filter(Boolean);let plo=fPct(pv,.03),phi=fPct(pv,.97);const pad=Math.max(10,(phi-plo)*.12);plo-=pad;phi+=pad;
@@ -1795,14 +1809,14 @@ function runChart(A){const W=640,pl=64,pr=10,ph=100,gp=44,top=34;const n=A.T.len
     g+=`<line x1="${X}" x2="${X}" y1="${top}" y2="${H-14}" stroke="${c}" stroke-dasharray="3 4" opacity=".7"/><circle cx="${X}" cy="${top+11}" r="12" fill="${c}"/><text x="${X}" y="${top+17}" text-anchor="middle" class="rp-n">${i+1}</text>`});
   A.reps.forEach(r=>{g+=`<rect x="${x(r.dm+r.dist)}" width="${Math.max(2,x(r.dm)-x(r.dm+r.dist))}" y="${top}" height="${ph}" fill="var(--quality,#ff7a1a)" opacity=".13"/>`});
   return {svg:`<svg class="chart rchart" id="rnSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="גרף קצב, דופק וגובה לאורך הריצה" data-pl="${pl}" data-pr="${pr}" data-w="${W}">${g}<line id="rnCur" x1="0" x2="0" y1="${top}" y2="${H-14}" stroke="var(--chalk)" stroke-width="1.5" opacity="0"/></svg>`,marks}}
-function openRunAn(d,id){const r=peek(d).runs[id];const A=analysisFor(d,id);const el=$('#sheet');if(!r)return;
+function openRunAn(d,id){const r=runRec(d,id);const A=analysisFor(d,id);const el=$('#sheet');if(!r)return;
   if(!A){el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="ניתוח ריצה"><div class="panel-h"><h2>ניתוח ריצה</h2><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div><p>לריצה הזו אין מסלול מלא שמור בטלפון הזה. מייבאים שוב את הקובץ מהשעון כדי לקבל ניתוח.</p><button class="cta" data-act="import">${ic('watch')}ייבוא מהשעון</button></div>`;el.hidden=false;return}
   const C=runChart(A);const li=(a,c)=>a.map(x=>`<li class="${c}">${c==='ok'?'✓':'✗'} ${esc(x.txt)}</li>`).join('');
   const zb=A.hasHR?`<div class="zbar" role="img" aria-label="זמן באזורי דופק">${A.zp.map((p,i)=>p>.005?`<span style="flex:${p};background:${ZC[i]}" title="אזור ${i+1}: ${Math.round(p*100)}%"></span>`:'').join('')}</div><div class="zleg">${A.zp.map((p,i)=>`<span><i style="background:${ZC[i]}"></i>${i+1} ${ZN[i]} ${Math.round(p*100)}%</span>`).join('')}</div><p class="hint">אזורים לפי דופק מקסימלי ${A.M}${S.cfg.hrMax?'':' (משוער)'} · <label>שנה: <input class="inp sm" id="hrMaxIn" type="number" inputmode="numeric" min="170" max="230" value="${A.M}" data-d="${d}" data-b="${id}" style="width:70px;display:inline-block" aria-label="דופק מקסימלי"></label></p>`:'';
   const fastest=Math.min(...A.splits.filter(s=>s.dist>=900).map(s=>s.gap)),slowest=Math.max(...A.splits.filter(s=>s.dist>=900).map(s=>s.gap));
   const sp=`<div class="tscroll"><table class="rtab"><thead><tr><th>ק״מ</th><th>קצב</th><th>מותאם שיפוע</th>${A.hasHR?'<th>דופק</th>':''}${A.hasAlt?'<th>טיפוס</th>':''}${A.hasCad?'<th>צעדים</th>':''}</tr></thead><tbody>${A.splits.map((s,i)=>`<tr class="${s.dist>=900&&s.gap===fastest?'fast':s.dist>=900&&s.gap===slowest?'slow':''}"><td>${s.dist<990?r1((i*1000+s.dist)/1000):i+1}</td><td>${mmss(s.pace)}</td><td>${mmss(s.gap)}</td>${A.hasHR?`<td>${s.hr||'—'}</td>`:''}${A.hasAlt?`<td>${s.gain?'+'+s.gain:'0'} מ׳</td>`:''}${A.hasCad?`<td>${s.cad||'—'}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
   const rp=A.reps.length?`<h3 class="rh">החזרות</h3><div class="tscroll"><table class="rtab"><thead><tr><th>#</th><th>זמן</th><th>מרחק</th><th>קצב</th>${A.hasHR?'<th>דופק שיא</th><th>ירידה בדקה</th>':''}</tr></thead><tbody>${A.reps.map((r,i)=>`<tr><td>${i+1}</td><td>${mmss(r.sec)}</td><td>${Math.round(r.dist)} מ׳</td><td>${mmss(r.pace)}</td>${A.hasHR?`<td>${r.peak||'—'}</td><td>${r.rec!=null?'−'+r.rec:'—'}</td>`:''}</tr>`).join('')}</tbody></table></div>`:'';
-  el.innerHTML=`<div class="panel rpanel" role="dialog" aria-modal="true" aria-label="ניתוח ריצה"><div class="panel-h"><div><span class="eyebrow">ניתוח ריצה · ${fmtDM(d)}</span><h2>${RTYPE[A.ty]||'ריצה'}</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+  el.innerHTML=`<div class="panel rpanel" role="dialog" aria-modal="true" aria-label="ניתוח ריצה"><div class="panel-h"><div><span class="eyebrow">ניתוח ריצה · ${fmtDM(d)}${String(id).startsWith('a:')?' · לא נרשם ביומן':''}</span><h2>${RTYPE[A.ty]||'ריצה'}</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="kpis rk"><div class="kpi"><span class="v">${r1(A.km)}</span><span class="l">ק״מ</span></div><div class="kpi"><span class="v">${mmss(A.sec)}</span><span class="l">זמן תנועה</span></div><div class="kpi"><span class="v">${mmss(A.pace)}</span><span class="l">קצב ממוצע</span></div>${A.hasHR?`<div class="kpi"><span class="v">${A.hrAvg}</span><span class="l">דופק ממוצע · שיא ${A.hrPeak}</span></div>`:''}${A.hasAlt&&A.gain>0?`<div class="kpi"><span class="v">${A.gain}</span><span class="l">מ׳ טיפוס</span></div>`:''}${A.cad?`<div class="kpi"><span class="v">${A.cad}</span><span class="l">צעדים לדקה</span></div>`:''}</div>
     <p class="rread" id="rnRead">געו בגרף כדי לראות את הנתונים בכל נקודה.</p>${C.svg}
     ${C.marks.length?`<ol class="rmarks">${C.marks.map(e=>`<li class="${e.pk?'':e.good?'ok':'bad'}"><b>${e.n}</b> ${esc(e.txt)} · ק״מ ${r1(e.d/1000)}</li>`).join('')}</ol>`:''}
@@ -1838,25 +1852,30 @@ function runFacts(d,id,A){const c=runCtx(d,id),b=c.b;const L=[];
   const prev=runsIn(addDays(d,-28),addDays(d,-1),true);if(prev.length)L.push(`קצב ממוצע בריצות קלות בחודש האחרון: ${mmss(avg(prev.map(r=>r.pace)))}/ק״מ.`);
   return L.join('\n')}
 const RUN_AI_SYS='אתה מאמן ריצה של נער בן 14 שמתאמן ל-10 ק״מ. קיבלת את כל הריצה: טבלה צפופה לאורך כל הריצה, ציר זמן של קטעים, רגעים מיוחדים, ופיצולים. אל תסתפק בממוצעים: עבור על הטבלה מההתחלה עד הסוף, מצא מה קרה בכל שלב (חימום, מעברים בין קטעים, עליות וירידות, האצות והאטות, איך הדופק הגיב לכל שינוי, מתי הופיעה עייפות), ושפוט כל מעבר: טוב או לא טוב, ולמה. ענה בעברית, בגובה העיניים, חם וענייני. מבנה: **מה קרה בריצה** (3–6 נקודות לפי סדר הזמן, כל אחת עם זמן או ק״מ מדויק ומספרים), **מה היה טוב**, **מה לשפר**, **לריצה הבאה**. בכל חלק 1–3 נקודות קצרות. השווה למה שהיה מתוכנן. אל תמציא נתונים שלא בטבלה. לא ספרינטים מקסימליים, לא ריצה דרך כאב. ריצות קלות צריכות להיות קלות באמת.';
-async function runAi(d,id){const el=$('#rnAi');const r=peek(d).runs[id];const A=analysisFor(d,id);if(!el||!r||!A||!gqKey())return;el.innerHTML='<p class="muted" style="margin-top:12px">המאמן עובר על הריצה שנייה אחרי שנייה…</p>';
+async function runAi(d,id){const el=$('#rnAi');const r=runRec(d,id);const A=analysisFor(d,id);if(!el||!r||!A||!gqKey())return;el.innerHTML='<p class="muted" style="margin-top:12px">המאמן עובר על הריצה שנייה אחרי שנייה…</p>';
   try{const base=runFacts(d,id,A);const R0=Math.max(5,Math.ceil(A.sec/300/5)*5);let t=null;
     // the densest table that fits the request size; coarser if the AI service says the request is too big
     for(const R of [R0,R0*2,R0*4,0]){try{t=await gqCall([{role:'system',content:RUN_AI_SYS},{role:'user',content:base+(R?`\nטבלה לאורך כל הריצה (כל שורה = ${R} שניות, ממוצעים של כל השניות בחלון):\n${runSeries(A,R)}`:'')}],{effort:'medium'});break}
       catch(e){if(!(e&&(e.code==='rate_limited'||(e.code==='http'&&/^(413|400)$/.test(e.message))))||!R)throw e}}
-    const txt=String((t&&t.text)||'').trim();if(!txt)throw 0;r.ai=txt.slice(0,2500);save();const e2=$('#rnAi');if(e2)e2.innerHTML=aiBox(r.ai)}
+    const txt=String((t&&t.text)||'').trim();if(!txt)throw 0;r.ai=txt.slice(0,2500);if(String(id).startsWith('a:'))anlPut(r);else save();const e2=$('#rnAi');if(e2)e2.innerHTML=aiBox(r.ai)}
   catch(e){const e2=$('#rnAi');if(e2)e2.innerHTML='<p class="muted" style="margin-top:12px">המאמן לא זמין כרגע. הניתוח של האפליקציה למעלה.</p>'}}
 function runTargets(d){const I=info(d);const opts=[];if(I.st==='in')for(const b of blocksFor(I.week,I.dow,d))if(['quality','easy','long'].includes(b.type))opts.push([b.id,b.type==='quality'?'אימון איכות':b.type==='long'?'ריצה ארוכה':'ריצה קלה']);opts.push(['extra','ריצה נוספת']);return opts}
 function bestTarget(d){const e=peek(d);const t=runTargets(d);const free=t.find(([id])=>id!=='extra'&&!(e.runs[id]&&e.runs[id].km>0));return (free||t[0])[0]}
-async function handleFiles(files){const out=[];let bad=0;for(const f of files){try{const a=await parseFile(f);a.date=iso(new Date(a.start));a.target=bestTarget(a.date);a.use=true;out.push(a)}catch(e){bad++}}
+async function analyzeFiles(files){let last=null,bad=0,lap=0;
+  for(const f of files){try{const a=await parseFile(f);if(!a.trk){lap++;continue}const tid='t'+a.start;if(!trkPut(tid,a.trk)){bad++;continue}
+    anlPut({tid,d:iso(new Date(a.start)),km:Math.round(a.km*100)/100,sec:a.sec,hr:a.hr,name:a.name});last=[iso(new Date(a.start)),'a:'+tid]}catch(e){bad++}}
+  if(last){render();openRunAn(last[0],last[1]);toast('הריצה נותחה. היא לא נרשמה ביומן.')}
+  else toast(lap?'בקובץ הזה אין מסלול מלא, רק סיכום. צריך קובץ FIT או GPX עם המסלול.':'הקובץ לא נקרא. צריך קובץ FIT, GPX או TCX של ריצה.')}
+async function handleFiles(files){if(V.anMode){V.anMode=false;return analyzeFiles(files)}const out=[];let bad=0;for(const f of files){try{const a=await parseFile(f);a.date=iso(new Date(a.start));a.target=bestTarget(a.date);a.use=true;out.push(a)}catch(e){bad++}}
   IMPORTS=IMPORTS.concat(out);openImport(bad?`${bad} קבצים לא נקראו. צריך קובץ GPX, TCX או FIT של ריצה.`:'')}
 function openImport(msg){const el=$('#sheet');
   const rows=IMPORTS.map((a,i)=>`<div class="improw"><input type="checkbox" ${a.use?'checked':''} data-impuse="${i}" aria-label="לייבא"><div style="min-width:0"><div><b>${r1(a.km)}</b> ק״מ · ${mmss(a.sec)} · ${mmss(a.sec/a.km)}/ק״מ${a.hr?` · דופק ${a.hr}`:''}</div><div class="muted" style="font-size:12.5px">${fmtDM(a.date)} · ${esc(a.name)}</div></div>
     <select class="eqsel" data-imptgt="${i}" aria-label="לאיזה אימון">${runTargets(a.date).map(([id,t])=>`<option value="${id}" ${a.target===id?'selected':''}>${t}</option>`).join('')}</select></div>`).join('');
-  el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="ייבוא מהשעון"><div class="panel-h"><div><span class="eyebrow">Apple Watch</span><h2>ייבוא ריצות מהשעון</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
+  el.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-label="ייבוא מהשעון"><div class="panel-h"><div><span class="eyebrow">Apple Watch · Garmin · Strava</span><h2>רישום ריצה מהשעון</h2></div><button class="iconbtn" data-act="close-sheet" aria-label="סגור">${ic('x')}</button></div>
     <div class="imp">
-      <div class="drop" id="drop">${ic('watch')}<span>גרור לכאן קובץ GPX, TCX או FIT, או</span><button class="cta" data-act="pick-files">בחר קבצים</button></div>
+      <div class="drop" id="drop">${ic('watch')}<span>קובץ FIT, GPX או TCX של הריצה</span><button class="cta" data-act="pick-files">בחר קובץ</button></div>
       ${msg?`<p class="note" style="--c:var(--iron)"><b>${esc(msg)}</b></p>`:''}
-      ${rows?`<div class="imp">${rows}</div><button class="cta" data-act="imp-save">${ic('check')}שמור ${IMPORTS.filter(a=>a.use).length} ריצות ביומן</button>`:''}
+      ${rows?`<div class="imp">${rows}</div><button class="cta" data-act="imp-save">${ic('check')}${IMPORTS.filter(a=>a.use).length===1?'שמור ונתח את הריצה':`שמור ${IMPORTS.filter(a=>a.use).length} ריצות ביומן`}</button>`:''}
       <details><summary class="muted" style="cursor:pointer">איך מוציאים קובץ מ-Apple Watch?</summary>
       <ol class="steps" style="margin-top:10px">
         <li>הדרך הפשוטה: לחבר את Apple Health ל-Strava (באפליקציית Strava: הגדרות → Applications, Services, and Devices → Health). כל ריצה מהשעון עוברת ל-Strava לבד.</li>
@@ -1887,6 +1906,11 @@ function paceChart(){const runs=runsIn('2000-01-01','2999-01-01',true);if(runs.l
   const area=path+` L${pts[pts.length-1][0].toFixed(1)},${H-pb} L${pts[0][0].toFixed(1)},${H-pb} Z`;
   const dots=pts.map(([px,py,r],i)=>`<circle class="${i===pts.length-1?'pend':'pdot'} ${r.bid==='long'?'lg':''}" cx="${px}" cy="${py}" r="${i===pts.length-1?5.5:4}"><title>${fmtDM(r.d)}: ${mmss(r.pace)}/ק״מ · ${r1(r.km)} ק״מ</title></circle>`).join('');
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="קצב הריצות הקלות לאורך זמן">${g}<path class="parea" d="${area}"/><path class="pline" d="${path}"/>${dots}<text class="axis" x="${W-pr}" y="${H-8}" text-anchor="end">${fmtShort(d0)}</text><text class="axis" x="${pl}" y="${H-8}" text-anchor="start">${fmtShort(runs[runs.length-1].d)}</text></svg>`}
+// runs with a full track on this device, newest first: each opens its analysis
+function analyzedRuns(){const rows=[];for(const d of Object.keys(S.days)){const e=peek(d);for(const [id,r] of Object.entries(e.runs))if(r&&r.tid&&r.km>0)rows.push([d,id,r])}
+  const tr=trkAll();for(const r of Object.values(anlAll()))if(tr[r.tid])rows.push([r.d,'a:'+r.tid,r]);rows.sort((a,b)=>(b[2].tid||'').localeCompare(a[2].tid||''));
+  if(!rows.length)return '';const ty=(d,id)=>RTYPE[runCtx(d,id).type]||'ריצה';
+  return `<section class="panel"><div class="panel-h"><h2>ריצות שנותחו</h2></div><div class="anlist">${rows.slice(0,12).map(([d,id,r])=>`<button class="anrow" data-act="run-an" data-d="${d}" data-b="${id}"><span><b>${ty(d,id)}</b> · ${fmtDM(d)}${String(id).startsWith('a:')?' <span class="muted">· ניתוח בלבד</span>':''}</span><span>${r1(r.km)} ק״מ${r.sec?` · ${mmss(r.sec/r.km)}/ק״מ`:''}${r.hr?` · דופק ${r.hr}`:''}</span><span class="go">📈</span></button>`).join('')}</div></section>`}
 function viewJournal(){const t=todayIso();let tot=0,dn=0,km=0;const rs=[];
   for(let w=1;w<=12;w++)for(let i=0;i<7;i++){const d=dateOf(w,i);if(d>t)continue;const bl=blocksFor(w,i,d);tot+=bl.length;dn+=bl.filter(b=>isDone(d,b)).length}
   for(const d of Object.keys(S.days)){km+=dayKm(d);if(S.days[d].rpe)rs.push(S.days[d].rpe)}
@@ -1896,7 +1920,8 @@ function viewJournal(){const t=todayIso();let tot=0,dn=0,km=0;const rs=[];
     return `<button class="entry" data-act="sel" data-date="${d}"><span class="ed"><b>${info(d).st==='in'?'יום '+DAYS[info(d).dow]:''}</b>${fmtDM(d)}</span><span style="min-width:0;display:flex;flex-direction:column;gap:4px"><span class="es">${chips}${runs}${e.pain?'<span class="chip sm" style="border-color:var(--bad);color:var(--bad)">כאב</span>':''}</span>${e.note?`<span class="en">${esc(e.note)}</span>`:''}</span><span class="rpe" title="תחושת מאמץ">${e.rpe||'–'}</span></button>`}).join('')
     :`<div class="empty">עוד אין רישומים. במסך "היום" או באימון החי רושמים ריצות, משקלים ותחושה, והכול מופיע כאן.</div>`;
   const lifts=Object.keys(EX).map(k=>{const h=liftHist(k,'2999-01-01',equipOf(k));const l=h[h.length-1];if(!l)return '';const f=h[0];return `<div class="sline" style="--c:var(--iron)"><i></i><b style="min-width:130px">${EX[k].n}</b><span class="muted">${l.w!=null?`${f.w!=null?fmtKg(f.w)+' → ':''}<b style="color:var(--chalk)">${fmtKg(l.w)}</b> ${EQ[equipOf(k)].unit}`:`${l.reps.filter(r=>r>0).join('/')} ${EX[k].time?'שנ׳':'חזרות'}`} · ${h.length} אימונים</span></div>`}).join('');
-  return `<div class="stack"><div class="panel-h" style="margin:0"><div><span class="eyebrow">יומן · גרפים · יעדים</span><h2 class="h-xl">ההתקדמות שלך</h2></div><button class="cta" data-act="import">${ic('watch')}ייבוא מהשעון</button></div>
+  return `<div class="stack"><div class="panel-h" style="margin:0"><div><span class="eyebrow">יומן · גרפים · יעדים</span><h2 class="h-xl">ההתקדמות שלך</h2></div><button class="cta" data-act="analyze">${ic('watch')}העלאת ריצה לניתוח</button></div>
+  ${analyzedRuns()}
   <div class="kpis">
     <div class="kpi"><span class="v">${r1(km)}</span><span class="l">ק״מ רשומים</span></div>
     <div class="kpi"><span class="v">${dn}/${tot}</span><span class="l">אימונים שבוצעו עד היום</span></div>
@@ -3084,12 +3109,14 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(
     case 'wk-now':V.week=currentWeek();V.sel=null;syncSel();render();break;
     case 'wk-go':V.week=+a.dataset.w;syncSel();V.scrollTo=null;go('week');window.scrollTo(0,0);break;
     case 'k10-fresh':S.k10Fresh=todayIso();save();render();break;
-    case 'import':openImport('');break;
-    case 'pick-files':$('#fileIn').click();break;
+    case 'import':V.anMode=false;openImport('');break;
+    case 'analyze':V.anMode=true;$('#fileIn').click();break;
+    case 'pick-files':V.anMode=false;$('#fileIn').click();break;
     case 'imp-save':saveImports();break;
     case 'run-an':openRunAn(a.dataset.d,a.dataset.b);break;
     case 'run-ai':runAi(a.dataset.d,a.dataset.b);break;
-    case 'run-ask':closeSheet();go('chat');chatSend(`תנתח לי את הריצה מ-${fmtDM(a.dataset.d)}: מה היה טוב, מה לשפר, ומה לעשות בריצה הבאה?`);break;
+    case 'run-ask':if(String(a.dataset.b).startsWith('a:')){const A=analysisFor(a.dataset.d,a.dataset.b);closeSheet();go('chat');if(A)chatSend(`תנתח לי ריצה שהעליתי רק לניתוח (היא לא רשומה ביומן) מ-${fmtDM(a.dataset.d)}: ${r1(A.km)} ק״מ ב-${mmss(A.sec)} (${mmss(A.pace)}/ק״מ)${A.hasHR?`, דופק ממוצע ${A.hrAvg}`:''}. ${anShort(A)}. מה היה טוב, מה לשפר, ומה לעשות בריצה הבאה?`);break}
+      closeSheet();go('chat');chatSend(`תנתח לי את הריצה מ-${fmtDM(a.dataset.d)}: מה היה טוב, מה לשפר, ומה לעשות בריצה הבאה?`);break;
     case 'chat-q':chatSend(a.dataset.q);break;
     case 'chat-stop':if(CH.ctl)CH.ctl.abort();break;
     case 'chat-clear':CH.turns=[];CH.err=null;saveChat();render();break;
