@@ -192,6 +192,7 @@ p{margin:0}
 .rec b{color:var(--chalk);font-weight:600}
 .rec.up b{color:var(--easy)} .rec.down b{color:var(--long)}
 .lrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sets{display:flex;flex-direction:column;gap:6px}.setrow{display:flex;align-items:center;gap:8px}.setrow .sn{min-width:38px;font-size:12px;color:var(--mute)}.setrow .sx{font-size:12px;color:var(--mute)}.setrow .sw{width:76px;text-align:center;height:42px}.setrow .sw:not(.own){color:var(--mute)}
 .wbox{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute)}
 .wbox input{width:72px;text-align:center}
 .reps{display:flex;gap:6px;flex-wrap:wrap}
@@ -1042,14 +1043,15 @@ function bLong(d,b){return card(d,b,'long',`
 function liftRow(d,b,x,I,lv){
   const e=peek(d);const L=e.lifts[x.k]||{};const R=recommend(x,d,I.week,lv);const E=R.E;
   const wv=L.w!=null?L.w:(R.w!=null?R.w:'');
-  const reps=L.reps||[];let full=true,inputs='';
-  for(let s=0;s<x.s;s++){const v=reps[s]>0?reps[s]:'';if(!v)full=false;
-    inputs+=`<input class="rep ${v?'on':''}" type="number" inputmode="numeric" min="0" max="200" data-rep="${x.k}" data-s="${s}" data-d="${d}" data-b="${b.id}" value="${v}" placeholder="${x.time?x.range[1]:R.up>0?x.range[0]:x.range[1]}" aria-label="${esc(x.n)} סט ${s+1}: ${x.time?'שניות':'חזרות'}">`}
+  const reps=L.reps||[],ws=Array.isArray(L.ws)?L.ws:[];let full=true,inputs='',cur=wv;
+  // one row per set: its own weight (pre-filled from the set before, so only a change needs typing) and its reps
+  for(let s=0;s<x.s;s++){const v=reps[s]>0?reps[s]:'';if(!v)full=false;const own=ws[s]!=null;if(own)cur=ws[s];
+    const rIn=`<input class="rep ${v?'on':''}" type="number" inputmode="numeric" min="0" max="200" data-rep="${x.k}" data-s="${s}" data-d="${d}" data-b="${b.id}" value="${v}" placeholder="${x.time?x.range[1]:R.up>0?x.range[0]:x.range[1]}" aria-label="${esc(x.n)} סט ${s+1}: ${x.time?'שניות':'חזרות'}">`;
+    inputs+=R.usesW?`<div class="setrow"><span class="sn">סט ${s+1}</span><input class="inp sw ${own?'own':''}" type="number" inputmode="decimal" step="0.25" min="0" data-sw="${x.k}" data-s="${s}" data-d="${d}" value="${cur}" placeholder="?" aria-label="${esc(x.n)} סט ${s+1}: משקל"><span class="sx">ק״ג ×</span>${rIn}<span class="sx">${x.time?'שנ׳':'חזרות'}</span></div>`:rIn}
   return `<li class="lift ${full?'full':''}" id="lift-${x.k}">
     <div class="lt"><b>${esc(x.n)}</b><span class="rx">${E.t} · ${x.s}×${x.r}${x.time?' שנ׳':''}</span></div>
     <p class="rec ${R.up>0?'up':R.up<0?'down':''}">${R.usesW&&R.w!=null?`<b>${fmtKg(R.w)} ${E.unit}</b> · `:''}${R.why}</p>
-    <div class="lrow">${R.usesW?`<label class="wbox">ק״ג<input class="inp" type="number" inputmode="decimal" step="0.25" min="0" data-lw="${x.k}" data-d="${d}" value="${wv}" placeholder="?"></label>`:''}
-      <div class="reps">${inputs}</div></div>
+    ${R.usesW?`<div class="sets">${inputs}</div>${E.unit&&E.unit!=='ק״ג'?`<p class="hint" style="margin-top:4px">משקל: ${E.unit}</p>`:''}`:`<div class="lrow"><div class="reps">${inputs}</div></div>`}
     ${hasDemo(x.k)||canForm(x.k)?`<div class="xtools">${hasDemo(x.k)?`<button class="ghost sm" data-act="demo" data-k="${x.k}">▶ הדגמה</button>`:''}${canForm(x.k)?`<button class="ghost sm" data-act="form" data-k="${x.k}">📷 בדיקת טכניקה</button>`:''}</div>`:''}
     <div class="feel">איך הרגיש? ${[['easy','קל'],['ok','טוב'],['hard','קשה']].map(([k,t])=>`<button class="${L.feel===k?'on':''}" data-act="feel" data-d="${d}" data-k="${x.k}" data-v="${k}">${t}</button>`).join('')}</div>
   </li>`}
@@ -3110,12 +3112,17 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.rkm){const E=ent(t.dataset.d);const r=E.runs[t.dataset.rkm]||(E.runs[t.dataset.rkm]={});const v=parseFloat(t.value);if(isNaN(v))delete r.km;else r.km=Math.max(0,Math.min(60,v));save();const p=$('#pace-'+t.dataset.rkm);if(p)p.innerHTML=paceText(r)}
   else if(t.dataset.rsec){const s=parseTime(t.value);if(s||!t.value.trim()){const E=ent(t.dataset.d);const r=E.runs[t.dataset.rsec]||(E.runs[t.dataset.rsec]={});if(s)r.sec=s;else delete r.sec;save();const p=$('#pace-'+t.dataset.rsec);if(p)p.innerHTML=paceText(r)}}
   else if(t.dataset.lw){const E=ent(t.dataset.d);const l=E.lifts[t.dataset.lw]||(E.lifts[t.dataset.lw]={reps:[]});l.eq=equipOf(t.dataset.lw);const v=parseFloat(t.value);if(isNaN(v))delete l.w;else l.w=v;delete l.ws;save()}
+  else if(t.dataset.sw){const d=t.dataset.d,k=t.dataset.sw,s=+t.dataset.s;const E=ent(d);const l=E.lifts[k]||(E.lifts[k]={reps:[]});l.eq=equipOf(k);if(!Array.isArray(l.ws))l.ws=[];
+    const v=parseFloat(t.value);if(isNaN(v)||v<0){l.ws[s]=null;t.classList.remove('own')}else{l.ws[s]=v;t.classList.add('own')}
+    // later sets without a weight of their own follow this one
+    document.querySelectorAll(`[data-sw="${k}"][data-d="${d}"]`).forEach(o=>{if(+o.dataset.s>s&&!o.classList.contains('own'))o.value=t.value});
+    const m=mainW(l.ws);if(m!=null)l.w=m;save()}
   else if(t.dataset.lwlive){const v=parseFloat(t.value);if(!isNaN(v)&&v>=0)L.w[t.dataset.lwlive]=v}
   else if(t.dataset.note){ent(t.dataset.d).note=t.value;save()}
   else if(t.id==='chatin'){t.style.height='auto';t.style.height=Math.min(160,t.scrollHeight)+'px'}
 });
 document.addEventListener('change',e=>{const t=e.target;
-  if(t.dataset.rep){const d=t.dataset.d,k=t.dataset.rep,s=+t.dataset.s;const v=parseInt(t.value,10);const wIn=document.querySelector(`[data-lw="${k}"][data-d="${d}"]`);
+  if(t.dataset.rep){const d=t.dataset.d,k=t.dataset.rep,s=+t.dataset.s;const v=parseInt(t.value,10);const wIn=document.querySelector(`[data-sw="${k}"][data-s="${s}"][data-d="${d}"]`)||document.querySelector(`[data-lw="${k}"][data-d="${d}"]`);
     if(isNaN(v)||v<=0){const E=ent(d);const l=E.lifts[k];if(l&&l.reps){l.reps[s]=0;save()}t.classList.remove('on');return}
     const finished=recordSet(d,k,s,v,wIn?wIn.value:null);t.classList.add('on');
     const li=$('#lift-'+k);if(li){const all=[...li.querySelectorAll('.rep')].every(x=>x.value);li.classList.toggle('full',all)}
